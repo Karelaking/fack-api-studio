@@ -13,7 +13,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
-import { db } from "@/db";
+import { db, storageConnection } from "@/db";
 import { endpoints, notes, projects, routes, webhooks } from "@/db/schema";
 
 /** Thrown when a request has no authenticated Clerk user. */
@@ -34,10 +34,15 @@ export class ForbiddenError extends Error {
 
 /**
  * Returns the authenticated Clerk user id.
+ * In local mode or unauthenticated self-hosted mode, returns "system".
  *
- * @throws {UnauthorizedError} when there is no signed-in user.
+ * @throws {UnauthorizedError} when there is no signed-in user and auth is required.
  */
 export async function requireUserId(): Promise<string> {
+  if (!storageConnection.authRequired || !process.env.CLERK_SECRET_KEY) {
+    return "system";
+  }
+
   const { userId } = await auth();
   if (!userId) {
     throw new UnauthorizedError();
@@ -49,11 +54,15 @@ export async function requireUserId(): Promise<string> {
  * Returns true when a project row is owned by the user.
  *
  * System-owned projects are shared and readable by any authenticated user.
+ * In local mode or when auth is bypassed, all projects are accessible.
  */
 export function isProjectOwnedBy(
   project: { userId: string | null },
   userId: string,
 ): boolean {
+  if (userId === "system" || !storageConnection.authRequired) {
+    return true;
+  }
   return project.userId === userId || project.userId === "system";
 }
 

@@ -14,6 +14,8 @@ import { HeaderNewProjectButton } from "@/components/dashboard/HeaderNewProjectB
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ImportOpenApiDialog } from "@/components/ai/ImportOpenApiDialog";
+import { storageConnection } from "@/db";
+import packageJson from "@/package.json";
 
 interface ProjectLayoutProps {
   children: React.ReactNode;
@@ -56,8 +58,10 @@ export default async function ProjectLayout({
   params,
 }: ProjectLayoutProps) {
   // Resource-based auth check (replaces path matching in the proxy): redirect
-  // unauthenticated visitors to sign-in instead of a misleading 404.
-  await auth.protect();
+  // unauthenticated visitors to sign-in in cloud mode; bypass in local mode.
+  if (storageConnection.authRequired && process.env.CLERK_SECRET_KEY) {
+    await auth.protect();
+  }
 
   const { slug: slugParam } = await params;
 
@@ -90,11 +94,14 @@ export default async function ProjectLayout({
       <SidebarProvider>
         <div className="bg-background flex h-dvh w-full max-w-full overflow-hidden">
           {/* Sidebar component */}
-          <DashboardSidebar initialProjects={projects} />
+          <DashboardSidebar
+            initialProjects={projects}
+            appVersion={packageJson.version}
+          />
 
           {/* Main Content Area */}
           <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-            <header className="border-border bg-card flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4">
+            <header className="border-border/60 bg-background/60 flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 backdrop-blur-md sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
               <div className="flex min-w-0 items-center gap-2">
                 <SidebarTrigger className="h-9 w-9 shrink-0" />
                 <Separator orientation="vertical" className="h-4 shrink-0" />

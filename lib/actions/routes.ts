@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { generateId } from "@/lib/utils";
 import { clearProjectCache, clearRouteCache } from "@/lib/cache";
 import { requireEndpointAccess, requireRouteAccess } from "@/lib/auth";
+import { markProjectDirty } from "@/lib/file-manager/dirty-tracker";
 import {
   createRouteSchema,
   updateRouteSchema,
@@ -133,6 +134,7 @@ export async function createRoute(input: CreateRouteInput): Promise<Route> {
     });
     if (parentEndpoint) {
       clearProjectCache(parentEndpoint.projectId);
+      markProjectDirty(parentEndpoint.projectId);
     }
     clearRouteCache(route.id);
     revalidatePath("/");
@@ -166,6 +168,7 @@ export async function updateRoute(input: UpdateRouteInput): Promise<Route> {
     });
     if (parentEndpoint) {
       clearProjectCache(parentEndpoint.projectId);
+      markProjectDirty(parentEndpoint.projectId);
     }
     clearRouteCache(route.id);
     revalidatePath("/");
@@ -193,6 +196,7 @@ export async function deleteRoute(id: string): Promise<void> {
       clearRouteCache(route.id);
       if (route.endpoint) {
         clearProjectCache(route.endpoint.projectId);
+        markProjectDirty(route.endpoint.projectId);
       }
     }
     revalidatePath("/");

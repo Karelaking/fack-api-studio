@@ -41,7 +41,7 @@ export const HeroSection = (): React.JSX.Element => {
           <svg
             viewBox="0 0 640 640"
             fill="none"
-            className="hero-graph absolute top-[48%] right-[-24%] block h-[min(62svh,440px)] w-auto opacity-30 sm:right-[-8%] sm:h-[min(66vh,540px)] sm:opacity-40 xl:top-1/2 xl:right-0 xl:h-[min(76vh,680px)] xl:-translate-y-1/2 xl:opacity-100"
+            className="hero-graph absolute top-[48%] right-[-24%] block h-[min(62svh,440px)] w-auto opacity-30 sm:right-[-8%] sm:h-[min(66svh,540px)] sm:opacity-40 xl:top-1/2 xl:right-0 xl:h-[min(76svh,680px)] xl:-translate-y-1/2 xl:opacity-100"
           >
             <g strokeWidth="1" vectorEffect="non-scaling-stroke">
               <path
@@ -146,10 +146,10 @@ export const HeroSection = (): React.JSX.Element => {
             <h1 className="font-display text-foreground max-w-[22ch] text-[clamp(2rem,9vw,5rem)] leading-[0.92] font-medium tracking-[-0.045em]">
               <span className="hero-line block">Design the mock API</span>
               <span className="hero-line hero-line--2 block">on a canvas.</span>
-              <span className="hero-line hero-line--3 text-muted-foreground hover:text-foreground mt-[0.14em] block transition-colors duration-500">
+              <span className="hero-line hero-line--3 text-muted-foreground mt-[0.14em] block">
                 Serve it from your
               </span>
-              <span className="hero-line hero-line--4 text-muted-foreground hover:text-foreground block transition-colors duration-500">
+              <span className="hero-line hero-line--4 text-muted-foreground block">
                 own machine.
               </span>
             </h1>
@@ -169,7 +169,7 @@ export const HeroSection = (): React.JSX.Element => {
                 href="https://github.com/Karelaking/fack-api"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group border-border/40 text-foreground hover:border-border hover:bg-muted/50 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border px-6 text-sm font-semibold transition-colors sm:w-auto"
+                className="group border-border/40 text-foreground hover:border-border hover:bg-muted/50 focus-visible:ring-ring/50 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border px-6 text-sm font-semibold transition-colors focus-visible:ring-3 focus-visible:outline-none sm:w-auto"
               >
                 <RiGithubFill
                   className="size-4 transition-transform duration-300 group-hover:-rotate-6"
@@ -181,29 +181,13 @@ export const HeroSection = (): React.JSX.Element => {
           </div>
 
           <div className="hero-tier hero-tier--meta border-border/40 flex flex-col gap-4 border-t py-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-muted-foreground text-caption flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono tracking-[0.14em] uppercase">
-              <span className="hover:text-foreground transition-colors duration-300">
-                Self-hosted
-              </span>
-              <span
-                aria-hidden="true"
-                className="bg-border size-1 rounded-full"
-              />
-              <span className="hover:text-foreground transition-colors duration-300">
-                One SQLite file
-              </span>
-              <span
-                aria-hidden="true"
-                className="bg-border size-1 rounded-full"
-              />
-              <span className="hover:text-foreground transition-colors duration-300">
-                MIT licensed
-              </span>
+            <p className="text-muted-foreground text-caption">
+              Self-hosted, one SQLite file, MIT licensed.
             </p>
 
             <a
               href="#how-to-start"
-              className="text-muted-foreground hover:text-foreground group text-caption inline-flex min-h-6 w-fit items-center gap-2 py-1.5 font-mono tracking-[0.14em] uppercase transition-colors duration-300"
+              className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 group text-caption inline-flex min-h-6 w-fit items-center gap-2 py-1.5 transition-colors focus-visible:ring-3 focus-visible:outline-none"
             >
               <span>How to start</span>
               <ArrowDown

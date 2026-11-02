@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { generateId } from "@/lib/utils";
 import { requireNoteAccess, requireProjectAccess } from "@/lib/auth";
+import { markProjectDirty } from "@/lib/file-manager/dirty-tracker";
 import {
   createNoteSchema,
   updateNoteSchema,
@@ -42,6 +43,7 @@ export async function createNote(input: CreateNoteInput): Promise<Note> {
     })
     .returning();
 
+  markProjectDirty(parsed.projectId);
   revalidatePath("/");
   return note;
 }
@@ -57,6 +59,7 @@ export async function updateNote(input: UpdateNoteInput): Promise<Note> {
     .where(eq(notes.id, id))
     .returning();
 
+  markProjectDirty(note.projectId);
   revalidatePath("/");
   return note;
 }

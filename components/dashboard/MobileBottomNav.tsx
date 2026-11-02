@@ -80,12 +80,19 @@ export function MobileBottomNav(): React.JSX.Element | null {
             href={tab.href}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "flex h-full flex-1 flex-col items-center justify-center gap-1 text-mini font-bold transition-colors active:scale-95",
+              "relative flex h-full flex-1 flex-col items-center justify-center gap-1 text-mini font-bold transition-[color,transform] duration-200 ease-out active:scale-95",
               isActive
                 ? "text-primary"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
+            <span
+              aria-hidden="true"
+              className={cn(
+                "bg-primary absolute inset-x-4 top-0 h-0.5 rounded-full transition-opacity duration-200",
+                isActive ? "opacity-100" : "opacity-0",
+              )}
+            />
             <Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
             <span>{tab.name}</span>
           </Link>

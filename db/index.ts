@@ -15,11 +15,13 @@ if (connection.warning) {
   dbLogger.warn(connection.warning);
 }
 
-dbLogger.info(
-  connection.mode === "local"
-    ? `Storage mode: LOCAL — all project data stays on this machine (${connection.display})`
-    : `Storage mode: CLOUD — project data is stored remotely (${connection.display})`,
-);
+const modeDescriptions = {
+  local: `Storage mode: LOCAL (Tier 1) — File-based on this machine (${connection.display})`,
+  selfhosted: `Storage mode: SELF-HOSTED (Tier 2) — User database connected (${connection.display})`,
+  saas: `Storage mode: SAAS (Tier 3) — Managed cloud database (${connection.display})`,
+};
+
+dbLogger.info(modeDescriptions[connection.mode]);
 
 const DATABASE_URL = connection.url;
 const DATABASE_AUTH_TOKEN = connection.authToken;

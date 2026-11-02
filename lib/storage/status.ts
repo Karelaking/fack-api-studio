@@ -6,13 +6,14 @@ import { db, storageConnection } from "@/db";
 import { notes, projects } from "@/db/schema";
 import { resolveDataDir } from "./data-dir";
 import { readWorkspaceConfig } from "./config-store";
+import type { StorageMode, TierFeatures } from "./tier-features";
 
 /**
  * Storage status shown in Settings → Storage & Data.
  * Never includes the database auth token — only masked, display-safe data.
  */
 export interface StorageStatus {
-  mode: "local" | "cloud";
+  mode: StorageMode;
   /** Safe-to-display target (file path or remote URL without credentials). */
   target: string;
   /** Absolute local database path (local mode only). */
@@ -26,6 +27,10 @@ export interface StorageStatus {
     notes: number;
   };
   lastBackupAt: string | null;
+  /** Tier-specific feature flags */
+  features: TierFeatures;
+  /** Whether Clerk auth is required */
+  authRequired: boolean;
 }
 
 export async function getStorageStatus(): Promise<StorageStatus> {
@@ -57,5 +62,7 @@ export async function getStorageStatus(): Promise<StorageStatus> {
       notes: noteCount?.value ?? 0,
     },
     lastBackupAt: config.lastBackupAt ?? null,
+    features: storageConnection.features,
+    authRequired: storageConnection.authRequired,
   };
 }

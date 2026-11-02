@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Copy,
@@ -8,9 +8,13 @@ import {
   Sparkles,
   Activity,
   ArrowRight,
+  Globe,
   Terminal,
   RefreshCw,
   Layers,
+  Timer,
+  TriangleAlert,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { HttpMethod } from "@/db/schema";
@@ -23,7 +27,7 @@ interface FieldItem {
   key: string;
   fakerProvider: string;
   enabled: boolean;
-  sampleValue: string | number | boolean;
+  sampleValue: string;
 }
 
 const DEFAULT_FIELDS: FieldItem[] = [
@@ -78,9 +82,79 @@ const DEFAULT_FIELDS: FieldItem[] = [
   },
 ];
 
+const FIRST_NAMES = ["Jordan", "Maya", "Elena", "Tomas", "Priya", "Noah"];
+const LAST_NAMES = [
+  "Peterson",
+  "Okafor",
+  "Lindqvist",
+  "Ramos",
+  "Shah",
+  "Becker",
+];
+const JOB_TITLES = [
+  "Staff Backend Engineer",
+  "Principal Systems Architect",
+  "Frontend Platform Lead",
+  "QA Automation Engineer",
+];
+
+const pick = <T,>(list: readonly T[]): T =>
+  list[Math.floor(Math.random() * list.length)];
+
+const randomHex = (length: number): string =>
+  Array.from({ length }, () =>
+    Math.floor(Math.random() * 16).toString(16),
+  ).join("");
+
+const randomSample = (fieldId: string): string => {
+  switch (fieldId) {
+    case "f1":
+      return `usr_${randomHex(6)}`;
+    case "f2":
+      return `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`;
+    case "f3":
+      return `${pick(FIRST_NAMES)}.${pick(LAST_NAMES)}@fackapi.dev`.toLowerCase();
+    case "f4":
+      return pick(JOB_TITLES);
+    case "f5":
+      return `https://avatars.fackapi.dev/${randomHex(6)}.png`;
+    case "f6":
+      return Math.random() > 0.5 ? "active" : "offline";
+    case "f7":
+      return new Date(
+        Date.now() - Math.floor(Math.random() * 60) * 86_400_000,
+      ).toISOString();
+    default:
+      return randomHex(6);
+  }
+};
+
+const METHOD_TONE: Record<HttpMethod, string> = {
+  GET: "border-method-get/40 bg-method-get/15 text-method-get",
+  POST: "border-method-post/40 bg-method-post/15 text-method-post",
+  PUT: "border-method-put/40 bg-method-put/15 text-method-put",
+  PATCH: "border-method-patch/40 bg-method-patch/15 text-method-patch",
+  DELETE: "border-method-delete/40 bg-method-delete/15 text-method-delete",
+};
+
+const STATUS_TEXT: Record<number, string> = {
+  200: "OK",
+  201: "Created",
+  500: "Internal Server Error",
+};
+
+const RESPONSE_TABS: ReadonlyArray<{ id: ResponseTab; label: string }> = [
+  { id: "json", label: "Live JSON" },
+  { id: "curl", label: "cURL" },
+  { id: "typescript", label: "TypeScript DTO" },
+];
+
 /**
- * Interactive Live Dashboard Endpoint Creator & Simulator.
- * Demonstrates how a developer creates, customizes, and tests an endpoint in Fack API's dashboard.
+ * Interactive endpoint builder and response console.
+ *
+ * Every control changes the output on the right: method and path change the
+ * request, field toggles change the payload, latency and chaos change the
+ * status line. Refresh genuinely regenerates the Faker-style sample values.
  */
 export const InteractiveCanvasDemo = (): React.JSX.Element => {
   const [method, setMethod] = useState<HttpMethod>("GET");
@@ -88,10 +162,46 @@ export const InteractiveCanvasDemo = (): React.JSX.Element => {
   const [fields, setFields] = useState<FieldItem[]>(DEFAULT_FIELDS);
   const [latencyPreset, setLatencyPreset] = useState<LatencyPreset>("normal");
   const [activeTab, setActiveTab] = useState<ResponseTab>("json");
-  const [copied, setCopied] = useState<boolean>(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
+    "idle",
+  );
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [generatedAt, setGeneratedAt] = useState<string>(
+    "2026-08-01T12:00:00.000Z",
+  );
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  // Toggle field visibility
+  const handleTabKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+  ): void => {
+    const currentIndex = RESPONSE_TABS.findIndex(
+      (tab): boolean => tab.id === activeTab,
+    );
+    let nextIndex: number;
+
+    switch (event.key) {
+      case "ArrowRight":
+        nextIndex = (currentIndex + 1) % RESPONSE_TABS.length;
+        break;
+      case "ArrowLeft":
+        nextIndex =
+          (currentIndex - 1 + RESPONSE_TABS.length) % RESPONSE_TABS.length;
+        break;
+      case "Home":
+        nextIndex = 0;
+        break;
+      case "End":
+        nextIndex = RESPONSE_TABS.length - 1;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    setActiveTab(RESPONSE_TABS[nextIndex].id);
+    tabRefs.current[nextIndex]?.focus();
+  };
+
   const toggleField = (id: string): void => {
     setFields((prev: FieldItem[]): FieldItem[] =>
       prev.map((f: FieldItem): FieldItem =>
@@ -100,7 +210,6 @@ export const InteractiveCanvasDemo = (): React.JSX.Element => {
     );
   };
 
-  // Calculate latency duration
   const latencyMs = useMemo((): number => {
     switch (latencyPreset) {
       case "instant":
@@ -124,7 +233,6 @@ export const InteractiveCanvasDemo = (): React.JSX.Element => {
     return 200;
   }, [latencyPreset, method]);
 
-  // Simulated payload generator
   const generatedJson = useMemo((): string => {
     if (statusCode === 500) {
       return JSON.stringify(
@@ -132,8 +240,7 @@ export const InteractiveCanvasDemo = (): React.JSX.Element => {
           error: "Internal Server Error",
           status: 500,
           message: "Chaos injection active: simulated backend failure.",
-          // eslint-disable-next-line react/purity
-          timestamp: new Date().toISOString(),
+          timestamp: generatedAt,
         },
         undefined,
         2,
@@ -141,7 +248,7 @@ export const InteractiveCanvasDemo = (): React.JSX.Element => {
     }
 
     const activeProps = fields.filter((f: FieldItem): boolean => f.enabled);
-    const item: Record<string, string | number | boolean> = {};
+    const item: Record<string, string> = {};
     activeProps.forEach((f: FieldItem): void => {
       item[f.key] = f.sampleValue;
     });
@@ -168,25 +275,17 @@ export const InteractiveCanvasDemo = (): React.JSX.Element => {
       undefined,
       2,
     );
-  }, [fields, statusCode, method]);
+  }, [fields, statusCode, method, generatedAt]);
 
-  // Generated cURL Command
   const generatedCurl = useMemo((): string => {
     return `curl -X ${method} "https://fackapi.studio${routePath}" \\
   -H "Accept: application/json"`;
   }, [method, routePath]);
 
-  // Generated TypeScript Interface
   const generatedTs = useMemo((): string => {
     const activeProps = fields.filter((f: FieldItem): boolean => f.enabled);
     const lines = activeProps.map((f: FieldItem): string => {
-      const type =
-        typeof f.sampleValue === "number"
-          ? "number"
-          : typeof f.sampleValue === "boolean"
-            ? "boolean"
-            : "string";
-      return `  ${f.key}: ${type};`;
+      return `  ${f.key}: string;`;
     });
 
     return `// Generated TypeScript DTO for ${routePath}
@@ -211,107 +310,103 @@ export type ApiResponse = {
     }
   }, [activeTab, generatedJson, generatedCurl, generatedTs]);
 
-  const handleCopy = (): void => {
-    void navigator.clipboard.writeText(currentCode);
-    setCopied(true);
-    setTimeout((): void => setCopied(false), 2000);
+  const handleCopy = async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(currentCode);
+      setCopyState("copied");
+    } catch {
+      setCopyState("failed");
+    }
+    window.setTimeout((): void => setCopyState("idle"), 2400);
   };
 
   const handleSimulateRequest = (): void => {
     setRefreshing(true);
-    setTimeout((): void => setRefreshing(false), 300);
+    setFields((prev: FieldItem[]): FieldItem[] =>
+      prev.map((f: FieldItem): FieldItem => ({
+        ...f,
+        sampleValue: randomSample(f.id),
+      })),
+    );
+    setGeneratedAt(new Date().toISOString());
+    window.setTimeout((): void => setRefreshing(false), 600);
   };
+
+  const statusText = STATUS_TEXT[statusCode] ?? "Error";
 
   return (
     <section
       id="showcase"
-      className="border-border/40 bg-background relative w-full overflow-hidden border-b"
+      aria-labelledby="showcase-title"
+      className="border-border/40 bg-background relative w-full scroll-mt-20 overflow-hidden border-b"
     >
-      {/* Background Ambient Radial Glow */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="size-125 rounded-full bg-linear-to-tr from-blue-600/10 via-indigo-500/10 to-purple-500/10 blur-3xl" />
-      </div>
-
-      <div className="border-border/40 relative z-10 mx-auto max-w-7xl border-x">
-        {/* Section Header */}
+      <div className="border-border/40 relative mx-auto max-w-7xl border-x">
         <div className="mx-auto max-w-360 space-y-4 px-4 pt-12 pb-10 text-center md:pt-16 md:pb-12 lg:pt-20 lg:pb-14">
-          <h2 className="text-foreground mx-auto w-full text-3xl leading-[1.1] font-extrabold tracking-tight text-balance sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl">
+          <h2
+            id="showcase-title"
+            className="text-foreground mx-auto w-full text-3xl leading-[1.1] font-extrabold tracking-tight text-balance sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl"
+          >
             Create Mock Endpoints in Seconds.{" "}
             <br className="hidden sm:inline" />
             Deploy Without Writing a Server.
           </h2>
           <p className="text-muted-foreground mx-auto max-w-4xl text-sm leading-relaxed sm:text-base md:text-lg">
-            Experience how easy it is to create mock routes in the Fack API
-            dashboard. Configure methods, assign Faker.js generators, inject
-            simulated chaos, and see instant live outputs below.
+            Create mock routes in the Fack API dashboard. Configure methods,
+            assign Faker.js generators, inject simulated chaos, and see live
+            output below.
           </p>
         </div>
 
-        {/* 2-Column Framed Grid Showcase */}
         <div className="divide-border/40 border-border/40 grid grid-cols-1 divide-y border-t lg:grid-cols-12 lg:divide-x lg:divide-y-0">
-          {/* Left Column: Interactive Dashboard Route Creator */}
           <div className="bg-card/30 flex flex-col justify-between space-y-5 p-5 sm:p-6 lg:col-span-6 lg:p-7">
-            {/* Top Window Bar */}
-            <div className="border-border/40 flex items-center justify-between border-b pb-4">
-              <div className="flex items-center gap-2">
-                <div className="bg-danger/80 size-3 rounded-full" />
-                <div className="bg-warning/80 size-3 rounded-full" />
-                <div className="bg-success/80 size-3 rounded-full" />
-                <span className="text-foreground ml-2 flex items-center gap-1.5 font-mono text-xs font-bold">
-                  <Layers className="text-info size-3.5" />
-                  <span>Dashboard: Endpoint Builder</span>
-                </span>
-              </div>
-              <span className="text-muted-foreground bg-muted/60 border-border/60 rounded-full border px-2.5 py-0.5 font-mono text-[11px] font-bold">
-                Step 1: Configure
+            <div className="border-border/40 flex items-center justify-between gap-3 border-b pb-4">
+              <span className="text-foreground flex min-w-0 items-center gap-1.5 text-xs font-bold">
+                <Layers className="text-info size-3.5" aria-hidden="true" />
+                <span className="truncate">Dashboard: Endpoint Builder</span>
+              </span>
+              <span className="text-muted-foreground bg-muted/60 border-border/60 text-caption shrink-0 rounded-full border px-2.5 py-0.5 font-semibold">
+                Configure
               </span>
             </div>
 
-            {/* Control 1: HTTP Method & Path */}
             <div className="space-y-2">
-              <span className="text-foreground flex items-center justify-between text-xs font-bold">
-                <span>1. Select Method &amp; Route Path</span>
-                <span className="text-muted-foreground font-mono text-[10px]">
-                  HTTP Route
+              <span className="text-foreground flex items-center justify-between gap-3 text-xs font-bold">
+                <span>Select method and route path</span>
+                <span className="text-muted-foreground text-caption shrink-0">
+                  HTTP route
                 </span>
               </span>
 
               <div className="flex flex-col gap-2 sm:flex-row">
-                {/* HTTP Method Pills */}
-                <div className="bg-muted/50 border-border/40 flex shrink-0 items-center gap-1 rounded-xl border p-1">
+                <fieldset className="bg-muted/50 border-border/40 m-0 flex min-w-0 shrink-0 items-center gap-1 rounded-xl border p-1">
+                  <legend className="sr-only">HTTP method</legend>
                   {(["GET", "POST", "PUT", "DELETE"] as const).map(
                     (m: HttpMethod) => (
                       <button
                         key={m}
                         type="button"
+                        aria-pressed={method === m}
                         onClick={(): void => setMethod(m)}
                         className={cn(
-                          "cursor-pointer rounded-lg px-2.5 py-1 font-mono text-xs font-bold transition-all",
+                          "cursor-pointer rounded-lg border px-2.5 py-1 font-mono text-xs font-bold transition-colors focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none",
                           method === m
-                            ? m === "GET"
-                              ? "bg-emerald-700 text-white shadow-xs"
-                              : m === "POST"
-                                ? "bg-blue-700 text-white shadow-xs"
-                                : m === "PUT"
-                                  ? "bg-amber-700 text-white shadow-xs"
-                                  : "bg-rose-700 text-white shadow-xs"
-                            : "text-muted-foreground hover:text-foreground",
+                            ? METHOD_TONE[m]
+                            : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted",
                         )}
                       >
                         {m}
                       </button>
                     ),
                   )}
-                </div>
+                </fieldset>
 
-                {/* Route Path Selector */}
                 <select
                   value={routePath}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
                     setRoutePath(e.target.value)
                   }
-                  className="border-border/60 bg-background text-foreground focus:ring-ring/40 flex-1 cursor-pointer rounded-xl border px-3 py-1.5 font-mono text-xs font-semibold shadow-xs focus:ring-2 focus:outline-hidden"
-                  aria-label="Select Route Path"
+                  className="border-border/60 bg-background text-foreground focus-visible:ring-ring/50 flex-1 cursor-pointer rounded-xl border px-3 py-1.5 font-mono text-xs font-semibold shadow-xs focus-visible:ring-3 focus-visible:outline-none"
+                  aria-label="Select route path"
                 >
                   <option value="/api/v1/users">/api/v1/users</option>
                   <option value="/api/v1/products">/api/v1/products</option>
@@ -320,12 +415,11 @@ export type ApiResponse = {
               </div>
             </div>
 
-            {/* Control 2: Faker Fields Customizer */}
             <div className="space-y-2">
-              <span className="text-foreground flex items-center justify-between text-xs font-bold">
-                <span>2. Assign Faker.js Schema Generators</span>
-                <span className="text-success font-mono text-[10px]">
-                  Click to Toggle
+              <span className="text-foreground flex items-center justify-between gap-3 text-xs font-bold">
+                <span>Assign Faker.js schema generators</span>
+                <span className="text-muted-foreground text-caption shrink-0">
+                  Click to toggle
                 </span>
               </span>
 
@@ -334,23 +428,29 @@ export type ApiResponse = {
                   <button
                     key={f.id}
                     type="button"
+                    aria-pressed={f.enabled}
                     onClick={(): void => toggleField(f.id)}
                     className={cn(
-                      "flex cursor-pointer items-center justify-between rounded-xl border p-2 text-left font-mono text-xs transition-all select-none",
+                      "flex cursor-pointer items-center justify-between gap-2 rounded-xl border p-2 text-left font-mono text-xs transition-colors select-none focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none",
                       f.enabled
                         ? "bg-background border-border text-foreground shadow-xs"
-                        : "bg-muted/20 border-border/40 text-muted-foreground line-through",
+                        : "bg-muted/20 border-border/40 text-muted-foreground",
                     )}
                   >
-                    <div className="flex items-center gap-1.5 truncate">
+                    <span className="flex min-w-0 items-center gap-1.5">
                       <span
+                        aria-hidden="true"
                         className={cn(
-                          "size-2 rounded-full",
-                          f.enabled ? "bg-success" : "bg-neutral-500",
+                          "flex size-3.5 shrink-0 items-center justify-center rounded border",
+                          f.enabled
+                            ? "border-success bg-success/15 text-success"
+                            : "border-border/60 text-transparent",
                         )}
-                      />
+                      >
+                        <Check className="size-3" />
+                      </span>
                       <span className="truncate font-bold">{f.key}</span>
-                    </div>
+                    </span>
                     <span className="text-info max-w-30 truncate text-[9.5px] font-normal">
                       {f.fakerProvider.replace("faker.", "")}
                     </span>
@@ -359,154 +459,171 @@ export type ApiResponse = {
               </div>
             </div>
 
-            {/* Control 3: Latency & Chaos Simulator */}
             <div className="space-y-2">
-              <label className="text-foreground flex items-center justify-between text-xs font-bold">
+              <span className="text-foreground flex items-center justify-between gap-3 text-xs font-bold">
                 <span className="flex items-center gap-1">
-                  <Activity className="text-warning size-3.5" />
-                  <span>3. Network Latency &amp; Chaos Simulation</span>
+                  <Activity
+                    className="text-warning size-3.5"
+                    aria-hidden="true"
+                  />
+                  <span>Network latency and chaos simulation</span>
                 </span>
-                <span className="text-warning font-mono text-[10px]">
+                <span className="text-warning text-caption shrink-0 font-mono">
                   {latencyMs}ms delay
                 </span>
-              </label>
+              </span>
 
-              <div className="grid grid-cols-4 gap-1.5 font-mono text-xs">
+              <fieldset className="m-0 grid min-w-0 grid-cols-2 gap-1.5 border-0 p-0 text-xs sm:grid-cols-4">
+                <legend className="sr-only">Latency preset</legend>
                 <button
                   type="button"
+                  aria-pressed={latencyPreset === "instant"}
                   onClick={(): void => setLatencyPreset("instant")}
                   className={cn(
-                    "cursor-pointer rounded-lg border p-2 text-center transition-all",
+                    "flex cursor-pointer items-center justify-center gap-1 rounded-lg border p-2 text-center transition-colors focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none",
                     latencyPreset === "instant"
                       ? "border-success/50 bg-success/10 font-bold text-success"
                       : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted",
                   )}
                 >
-                  ⚡ 6ms
+                  <Zap className="size-3" aria-hidden="true" /> 6ms
                 </button>
                 <button
                   type="button"
+                  aria-pressed={latencyPreset === "normal"}
                   onClick={(): void => setLatencyPreset("normal")}
                   className={cn(
-                    "cursor-pointer rounded-lg border p-2 text-center transition-all",
+                    "flex cursor-pointer items-center justify-center gap-1 rounded-lg border p-2 text-center transition-colors focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none",
                     latencyPreset === "normal"
                       ? "border-info/50 bg-info/10 font-bold text-info"
                       : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted",
                   )}
                 >
-                  🌐 24ms
+                  <Globe className="size-3" aria-hidden="true" /> 24ms
                 </button>
                 <button
                   type="button"
+                  aria-pressed={latencyPreset === "slow"}
                   onClick={(): void => setLatencyPreset("slow")}
                   className={cn(
-                    "cursor-pointer rounded-lg border p-2 text-center transition-all",
+                    "flex cursor-pointer items-center justify-center gap-1 rounded-lg border p-2 text-center transition-colors focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none",
                     latencyPreset === "slow"
                       ? "border-warning/50 bg-warning/10 font-bold text-warning"
                       : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted",
                   )}
                 >
-                  🐢 280ms
+                  <Timer className="size-3" aria-hidden="true" /> 280ms
                 </button>
                 <button
                   type="button"
+                  aria-pressed={latencyPreset === "error"}
                   onClick={(): void => setLatencyPreset("error")}
                   className={cn(
-                    "cursor-pointer rounded-lg border p-2 text-center transition-all",
+                    "flex cursor-pointer items-center justify-center gap-1 rounded-lg border p-2 text-center transition-colors focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none",
                     latencyPreset === "error"
                       ? "border-danger/50 bg-danger/10 font-bold text-danger"
                       : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted",
                   )}
                 >
-                  💥 500 Error
+                  <TriangleAlert className="size-3" aria-hidden="true" /> 500
+                  error
                 </button>
-              </div>
+              </fieldset>
             </div>
 
-            {/* Bottom CTA to Dashboard */}
             <div className="pt-2">
               <Link
                 href="/dashboard"
-                className="bg-foreground text-background inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-6 py-3 text-xs font-bold shadow-md transition-all hover:opacity-90 sm:text-sm"
+                className="bg-foreground text-background focus-visible:ring-ring/50 hover:bg-foreground/90 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-6 py-3 text-xs font-bold whitespace-nowrap shadow-md transition-colors focus-visible:ring-3 focus-visible:outline-none sm:text-sm"
               >
-                <span>Launch Dashboard to Create Yours</span>
-                <ArrowRight className="size-3.5" />
+                <span>Launch dashboard to create yours</span>
+                <ArrowRight className="size-3.5" aria-hidden="true" />
               </Link>
             </div>
           </div>
 
-          {/* Right Column: Live Mock Server & Response Console */}
           <div className="bg-background flex flex-col justify-between space-y-4 p-6 sm:p-8 lg:col-span-6">
-            {/* Response Action Bar */}
-            <div className="border-border/40 flex items-center justify-between border-b pb-4">
-              <div className="bg-muted/50 border-border/40 flex items-center gap-1.5 rounded-xl border p-1">
-                <button
-                  type="button"
-                  onClick={(): void => setActiveTab("json")}
-                  className={cn(
-                    "cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold transition-all",
-                    activeTab === "json"
-                      ? "bg-background text-foreground border-border/60 border shadow-xs"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  Live Mock JSON
-                </button>
-                <button
-                  type="button"
-                  onClick={(): void => setActiveTab("curl")}
-                  className={cn(
-                    "cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold transition-all",
-                    activeTab === "curl"
-                      ? "bg-background text-foreground border-border/60 border shadow-xs"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  cURL Command
-                </button>
-                <button
-                  type="button"
-                  onClick={(): void => setActiveTab("typescript")}
-                  className={cn(
-                    "cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold transition-all",
-                    activeTab === "typescript"
-                      ? "bg-background text-foreground border-border/60 border shadow-xs"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  TypeScript DTO
-                </button>
+            <div className="border-border/40 flex flex-wrap items-center justify-between gap-3 border-b pb-4">
+              <div
+                role="tablist"
+                aria-label="Response format"
+                tabIndex={-1}
+                onKeyDown={handleTabKeyDown}
+                className="bg-muted/50 border-border/40 flex items-center gap-1 rounded-xl border p-1"
+              >
+                {RESPONSE_TABS.map((tab, index: number) => (
+                  <button
+                    key={tab.id}
+                    ref={(node): void => {
+                      tabRefs.current[index] = node;
+                    }}
+                    type="button"
+                    role="tab"
+                    id={`demo-tab-${tab.id}`}
+                    aria-selected={activeTab === tab.id}
+                    aria-controls="demo-panel"
+                    tabIndex={activeTab === tab.id ? 0 : -1}
+                    onClick={(): void => setActiveTab(tab.id)}
+                    className={cn(
+                      "cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold transition-colors focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none",
+                      activeTab === tab.id
+                        ? "bg-background text-foreground border-border/60 border shadow-xs"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleSimulateRequest}
-                  title="Send request & generate new sample"
-                  aria-label="Send request"
-                  className="border-border/60 bg-muted/40 hover:bg-muted text-foreground cursor-pointer rounded-lg border p-1.5 transition-all"
+                  aria-label="Regenerate sample values"
+                  className="border-border/60 bg-muted/40 hover:bg-muted text-foreground focus-visible:ring-ring/50 cursor-pointer rounded-lg border p-1.5 transition-colors focus-visible:ring-3 focus-visible:outline-none"
                 >
                   <RefreshCw
                     className={cn(
                       "size-3.5",
-                      refreshing && "animate-spin text-info",
+                      refreshing && "text-info animate-spin",
                     )}
+                    aria-hidden="true"
                   />
                 </button>
                 <button
                   type="button"
-                  onClick={handleCopy}
-                  aria-label="Copy output"
-                  className="border-border/60 bg-muted/40 hover:bg-muted text-foreground inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all"
+                  onClick={(): void => {
+                    void handleCopy();
+                  }}
+                  aria-label={
+                    copyState === "copied"
+                      ? "Output copied to the clipboard"
+                      : copyState === "failed"
+                        ? "Copy failed. Select the output and copy it manually"
+                        : "Copy output to the clipboard"
+                  }
+                  className="border-border/60 bg-muted/40 hover:bg-muted text-foreground focus-visible:ring-ring/50 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors focus-visible:ring-3 focus-visible:outline-none"
                 >
-                  {copied ? (
+                  {copyState === "copied" ? (
                     <>
-                      <Check className="text-success size-3.5" />
-                      <span className="text-success font-bold">Copied!</span>
+                      <Check
+                        className="text-success size-3.5"
+                        aria-hidden="true"
+                      />
+                      <span className="text-success font-bold">Copied</span>
+                    </>
+                  ) : copyState === "failed" ? (
+                    <>
+                      <TriangleAlert
+                        className="text-danger size-3.5"
+                        aria-hidden="true"
+                      />
+                      <span className="text-danger font-bold">Copy failed</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="size-3.5" />
+                      <Copy className="size-3.5" aria-hidden="true" />
                       <span>Copy</span>
                     </>
                   )}
@@ -514,19 +631,12 @@ export type ApiResponse = {
               </div>
             </div>
 
-            {/* Live Endpoint Status Bar */}
-            <div className="bg-muted/40 border-border/60 flex items-center justify-between rounded-xl border p-2.5 font-mono text-xs">
-              <div className="flex items-center gap-2 truncate">
+            <div className="bg-muted/40 border-border/60 flex flex-wrap items-center justify-between gap-2 rounded-xl border p-2.5 font-mono text-xs">
+              <div className="flex min-w-0 items-center gap-2">
                 <span
                   className={cn(
-                    "rounded px-1.5 py-0.5 text-[9px] font-bold",
-                    method === "GET"
-                      ? "bg-success/20 text-success"
-                      : method === "POST"
-                        ? "bg-info/20 text-info"
-                        : method === "PUT"
-                          ? "bg-warning/20 text-warning"
-                          : "bg-danger/20 text-danger",
+                    "shrink-0 rounded border px-1.5 py-0.5 text-[9px] font-bold",
+                    METHOD_TONE[method],
                   )}
                 >
                   {method}
@@ -538,48 +648,52 @@ export type ApiResponse = {
 
               <span
                 className={cn(
-                  "inline-flex shrink-0 items-center justify-center rounded border px-2 py-0.5 font-mono text-[9px]",
+                  "inline-flex shrink-0 items-center justify-center rounded border px-2 py-0.5 text-[9px]",
                   statusCode === 200 || statusCode === 201
                     ? "border-success/30 bg-success/10 text-success"
                     : "border-danger/30 bg-danger/10 text-danger",
                 )}
               >
-                {statusCode}{" "}
-                {statusCode === 200
-                  ? "OK"
-                  : statusCode === 201
-                    ? "Created"
-                    : "Error"}{" "}
-                • {latencyMs}ms
+                {statusCode} {statusText}, {latencyMs}ms
               </span>
             </div>
 
-            {/* Code Display Console */}
-            <div className="relative min-h-77.5 flex-1 overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-950 p-5 font-mono text-xs text-neutral-100 shadow-2xl">
-              <pre className="font-mono text-xs leading-relaxed text-neutral-300">
+            <div
+              id="demo-panel"
+              role="tabpanel"
+              aria-labelledby={`demo-tab-${activeTab}`}
+              tabIndex={0}
+              className="border-border/60 bg-muted/30 focus-visible:ring-ring/50 relative min-h-77.5 flex-1 overflow-x-auto rounded-2xl border p-5 font-mono text-xs shadow-sm focus-visible:ring-3 focus-visible:outline-none"
+            >
+              <pre className="text-foreground font-mono text-xs leading-relaxed whitespace-pre">
                 {currentCode}
               </pre>
             </div>
 
-            {/* Footer Badges */}
-            <div className="text-muted-foreground flex items-center justify-between pt-1 text-xs">
-              <div className="flex items-center gap-3">
-                <span className="text-success flex items-center gap-1 font-mono text-[11px]">
-                  <Sparkles className="size-3" />
-                  <span>Instant Dynamic Synthesis</span>
+            <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-success flex items-center gap-1">
+                  <Sparkles className="size-3" aria-hidden="true" />
+                  <span>Instant dynamic synthesis</span>
                 </span>
-                <span className="text-info flex items-center gap-1 font-mono text-[11px]">
-                  <Terminal className="size-3" />
-                  <span>Ready for curl &amp; frontend fetch</span>
+                <span className="text-info flex items-center gap-1">
+                  <Terminal className="size-3" aria-hidden="true" />
+                  <span>Ready for curl and fetch</span>
                 </span>
               </div>
-              <span className="text-muted-foreground font-mono text-[11px]">
-                Step 3: Ready to use
-              </span>
+              <span className="text-muted-foreground">Result</span>
             </div>
           </div>
         </div>
       </div>
+
+      <p aria-live="polite" className="sr-only">
+        {copyState === "copied"
+          ? "Output copied to the clipboard"
+          : copyState === "failed"
+            ? "Copy failed. Select the output and copy it manually."
+            : ""}
+      </p>
     </section>
   );
 };

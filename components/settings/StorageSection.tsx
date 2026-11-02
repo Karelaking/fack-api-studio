@@ -53,6 +53,12 @@ export function StorageSection({
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const isLocal = status.mode === "local";
+  const isSelfHosted = status.mode === "selfhosted";
+  const badgeLabel = isLocal
+    ? "Local · File-Based"
+    : isSelfHosted
+      ? "Self-Hosted · Connected"
+      : "Cloud · Managed";
 
   async function onImportFile(
     event: React.ChangeEvent<HTMLInputElement>,
@@ -127,14 +133,16 @@ export function StorageSection({
             )}
             <CardTitle>Storage &amp; Data</CardTitle>
             <Badge variant={isLocal ? "secondary" : "default"}>
-              {isLocal ? "Local · Private" : "Cloud · Synced"}
+              {badgeLabel}
             </Badge>
           </div>
         </div>
         <CardDescription>
           {isLocal
-            ? "No database API keys are configured, so everything — projects, notes, and settings — is stored on this device only. Nothing leaves your machine unless you download a backup or add database API keys."
-            : "Database API keys are configured, so project data is stored in the remote database and is reachable from any device you sign in on."}
+            ? "Operating in local file-based mode. Project designs can be saved and opened as .fack files. No database credentials are configured, so everything stays private on your local disk."
+            : isSelfHosted
+              ? "Operating in self-hosted mode with your custom database connection. Data is stored in your configured database."
+              : "Operating in cloud-managed SaaS mode with synchronization and team features."}
         </CardDescription>
       </CardHeader>
 

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { useClerk, useUser } from "@clerk/nextjs";
+import { useSafeUser } from "@/hooks/use-safe-user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -41,8 +41,7 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export function ProfileDialog({ children }: { children: React.ReactNode }) {
-  const { user } = useUser();
-  const { signOut } = useClerk();
+  const { user, signOut } = useSafeUser();
   const [isSaving, setIsSaving] = React.useState(false);
 
   const form = useForm<ProfileFormValues>({

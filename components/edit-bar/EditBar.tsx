@@ -10,6 +10,7 @@ import {
   RiDeleteBin6Line,
   RiFileCopyLine,
   RiCheckLine,
+  RiArrowDownSLine,
 } from "@remixicon/react";
 import { toast } from "sonner";
 import { updateRoute, deleteRoute } from "@/lib/actions/routes";
@@ -36,6 +37,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 const HTTP_METHODS: Route["method"][] = [
@@ -46,31 +54,34 @@ const HTTP_METHODS: Route["method"][] = [
   "PATCH",
 ];
 
-const METHOD_THEMES: Record<
+const METHOD_STYLES: Record<
   Route["method"],
-  { active: string; inactive: string }
+  { text: string; dot: string; highlight: string }
 > = {
   GET: {
-    active: "bg-method-get/15 text-method-get border-method-get/40 shadow-xs",
-    inactive: "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+    text: "text-method-get",
+    dot: "bg-method-get",
+    highlight: "data-highlighted:bg-method-get/10",
   },
   POST: {
-    active:
-      "bg-method-post/15 text-method-post border-method-post/40 shadow-xs",
-    inactive: "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+    text: "text-method-post",
+    dot: "bg-method-post",
+    highlight: "data-highlighted:bg-method-post/10",
   },
   PUT: {
-    active: "bg-method-put/15 text-method-put border-method-put/40 shadow-xs",
-    inactive: "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+    text: "text-method-put",
+    dot: "bg-method-put",
+    highlight: "data-highlighted:bg-method-put/10",
   },
   DELETE: {
-    active:
-      "bg-method-delete/15 text-method-delete border-method-delete/40 shadow-xs",
-    inactive: "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+    text: "text-method-delete",
+    dot: "bg-method-delete",
+    highlight: "data-highlighted:bg-method-delete/10",
   },
   PATCH: {
-    active: "bg-primary/15 text-primary border-primary/40 shadow-xs",
-    inactive: "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+    text: "text-method-patch",
+    dot: "bg-method-patch",
+    highlight: "data-highlighted:bg-method-patch/10",
   },
 };
 
@@ -250,37 +261,73 @@ function EditBarInner({
         </SheetDescription>
       </SheetHeader>
 
-      {/* Sleek SaaS Route Header (Method Chips, Path Input, Status Code & Enable Toggle) */}
+      {/* Route Header (Method, Path, Status Code & Enabled Toggle) */}
       <div className="border-border/60 bg-muted/10 mx-6 mt-1 mb-2 shrink-0 space-y-3 rounded-lg border p-4 shadow-sm">
-        {/* Row 1: Method Selector Chips + Route Enabled Toggle */}
+        {/* Row 1: Method Selector + Route Enabled Toggle */}
         <div className="flex flex-wrap items-center justify-between gap-2">
-          {/* Method Chips */}
-          <fieldset
-            aria-label="HTTP method"
-            className="border-border/50 bg-background/50 m-0 flex min-w-0 flex-wrap items-center gap-0.5 rounded-md border p-1 shadow-xs"
-          >
-            {HTTP_METHODS.map((m) => {
-              const isActive = method === m;
-              const theme = METHOD_THEMES[m];
-              return (
-                <button
-                  key={m}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              disabled={loading}
+              render={
+                <Button
                   type="button"
-                  aria-pressed={isActive}
-                  onClick={() => setMethod(m)}
-                  disabled={loading}
+                  variant="outline"
+                  size="sm"
+                  className="w-32 justify-between gap-2"
+                  aria-label={`HTTP method: ${method}`}
+                />
+              }
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <span
                   className={cn(
-                    "text-mini duration-fast cursor-pointer rounded-sm border px-2.5 py-1 font-bold tracking-wider uppercase transition-all select-none",
-                    isActive
-                      ? theme.active
-                      : cn("border-transparent", theme.inactive),
+                    "size-1.5 shrink-0 rounded-full",
+                    METHOD_STYLES[method].dot,
+                  )}
+                  aria-hidden="true"
+                />
+                <span
+                  className={cn(
+                    "font-mono font-bold tracking-wider",
+                    METHOD_STYLES[method].text,
                   )}
                 >
-                  {m}
-                </button>
-              );
-            })}
-          </fieldset>
+                  {method}
+                </span>
+              </span>
+              <RiArrowDownSLine
+                className="text-muted-foreground"
+                aria-hidden="true"
+              />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-35">
+              <DropdownMenuRadioGroup
+                value={method}
+                onValueChange={(value) => setMethod(value as Route["method"])}
+              >
+                {HTTP_METHODS.map((m) => (
+                  <DropdownMenuRadioItem
+                    key={m}
+                    value={m}
+                    className={cn(
+                      "gap-2 font-mono font-bold tracking-wider",
+                      METHOD_STYLES[m].text,
+                      METHOD_STYLES[m].highlight,
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "size-1.5 shrink-0 rounded-full",
+                        METHOD_STYLES[m].dot,
+                      )}
+                      aria-hidden="true"
+                    />
+                    {m}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Route Enabled Toggle */}
           <div className="flex items-center gap-2">

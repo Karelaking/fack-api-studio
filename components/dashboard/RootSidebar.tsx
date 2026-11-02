@@ -9,7 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ProfileDialog } from "@/components/dashboard/ProfileDialog";
-import { useUser } from "@clerk/nextjs";
+import { useSafeUser } from "@/hooks/use-safe-user";
 import {
   RiLayoutGridLine,
   RiFileList3Line,
@@ -28,6 +28,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -71,9 +72,15 @@ const configNavItems = [
   },
 ];
 
-export function RootSidebar(): React.JSX.Element {
+export function RootSidebar({
+  workspaceName,
+}: {
+  /** Configured workspace name (Settings → Workspace Name). */
+  workspaceName: string;
+}): React.JSX.Element {
   const pathname = usePathname();
-  const { user } = useUser();
+  const { user } = useSafeUser();
+  const workspaceInitial = workspaceName.trim().slice(0, 1).toUpperCase();
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
@@ -83,14 +90,16 @@ export function RootSidebar(): React.JSX.Element {
             <SidebarMenuItem>
               <SidebarMenuButton size="lg">
                 <div className="bg-primary/20 text-primary flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <span className="text-sm font-bold">W</span>
+                  <span className="text-sm font-bold">
+                    {workspaceInitial || "W"}
+                  </span>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                   <span className="truncate text-sm font-semibold sm:text-base">
-                    Mradul Kumar&apos;s Workspace
+                    {workspaceName}
                   </span>
                   <span className="text-muted-foreground truncate text-xs">
-                    Hobby
+                    Self-hosted
                   </span>
                 </div>
                 <RiArrowUpDownLine className="ml-auto h-4 w-4 shrink-0 group-data-[collapsible=icon]:hidden" />
@@ -124,9 +133,9 @@ export function RootSidebar(): React.JSX.Element {
               aria-hidden="true"
               readOnly
               placeholder="Find"
-              className="border-border/50 bg-background text-foreground placeholder:text-muted-foreground group-hover:border-border pointer-events-none h-9 w-full cursor-pointer rounded-md border py-1 pr-10 pl-9 text-sm transition-colors"
+              className="border-border/50 bg-background text-foreground placeholder:text-muted-foreground group-hover:border-border pointer-events-none h-11 w-full cursor-pointer rounded-md border py-1 pr-10 pl-9 text-sm transition-colors md:h-9"
             />
-            <div className="border-border bg-muted/50 text-muted-foreground pointer-events-none absolute top-1/2 right-3 flex h-5 items-center justify-center rounded-sm border px-1.5 font-mono text-[10px] font-medium">
+            <div className="border-border/50 bg-muted/50 text-muted-foreground pointer-events-none absolute top-1/2 right-3 flex h-5 items-center justify-center rounded-sm border px-1.5 font-mono text-[10px] font-medium">
               ⌘K
             </div>
           </div>
@@ -134,9 +143,10 @@ export function RootSidebar(): React.JSX.Element {
       </SidebarHeader>
 
       <SidebarContent>
-        <div className="flex flex-col gap-2 pt-4">
+        <div className="flex flex-col gap-2 pt-3">
           <SidebarGroup>
-            <SidebarGroupContent>
+            <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+            <SidebarGroupContent className="mt-1">
               <SidebarMenu>
                 {mainNavItems.map((item) => {
                   const isActive =
@@ -149,7 +159,7 @@ export function RootSidebar(): React.JSX.Element {
                         render={
                           <Link href={item.href} aria-label={item.title} />
                         }
-                        className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary hover:bg-muted/50 transition-colors duration-200 data-[active=true]:font-medium"
+                        className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary hover:bg-muted/50 transition-colors duration-200 data-[active=true]:font-medium max-md:h-11"
                       >
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
@@ -166,7 +176,8 @@ export function RootSidebar(): React.JSX.Element {
           </div>
 
           <SidebarGroup>
-            <SidebarGroupContent>
+            <SidebarGroupLabel>Configure</SidebarGroupLabel>
+            <SidebarGroupContent className="mt-1">
               <SidebarMenu>
                 {configNavItems.map((item) => {
                   const isActive =
@@ -178,7 +189,7 @@ export function RootSidebar(): React.JSX.Element {
                         render={
                           <Link href={item.href} aria-label={item.title} />
                         }
-                        className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary hover:bg-muted/50 transition-colors duration-200 data-[active=true]:font-medium"
+                        className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary hover:bg-muted/50 transition-colors duration-200 data-[active=true]:font-medium max-md:h-11"
                       >
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
@@ -193,19 +204,19 @@ export function RootSidebar(): React.JSX.Element {
       </SidebarContent>
 
       <SidebarFooter>
-        <div className="border-border/40 flex w-full min-w-0 items-center justify-between border-t p-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2">
+        <div className="border-border/50 flex w-full min-w-0 items-center justify-between border-t p-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2">
           <ProfileDialog>
             <button className="hover:bg-muted focus-visible:ring-ring focus-visible:ring-offset-background -ml-1 flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md p-1 text-left transition-colors group-data-[collapsible=icon]:ml-0 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
               {user?.imageUrl ? (
                 <Image
                   src={user.imageUrl}
                   alt="Profile"
-                  width={28}
-                  height={28}
-                  className="h-7 w-7 shrink-0 rounded-full object-cover"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 shrink-0 rounded-full object-cover sm:h-7 sm:w-7"
                 />
               ) : (
-                <div className="bg-primary/10 text-primary flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+                <div className="bg-primary/10 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold sm:h-7 sm:w-7">
                   {user?.firstName?.charAt(0) || "U"}
                 </div>
               )}
@@ -218,14 +229,14 @@ export function RootSidebar(): React.JSX.Element {
             <button
               type="button"
               aria-label="More profile actions"
-              className="hover:bg-muted hover:text-foreground focus-visible:ring-ring focus-visible:ring-offset-background flex h-8 w-8 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              className="hover:bg-muted hover:text-foreground focus-visible:ring-ring focus-visible:ring-offset-background flex h-11 w-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none md:h-8 md:w-8"
             >
               <RiMoreFill aria-hidden="true" className="h-4 w-4" />
             </button>
             <button
               type="button"
               aria-label="Notifications"
-              className="hover:bg-muted hover:text-foreground focus-visible:ring-ring focus-visible:ring-offset-background relative flex h-8 w-8 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              className="hover:bg-muted hover:text-foreground focus-visible:ring-ring focus-visible:ring-offset-background relative flex h-11 w-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none md:h-8 md:w-8"
             >
               <RiNotification3Line aria-hidden="true" className="h-4 w-4" />
               <span

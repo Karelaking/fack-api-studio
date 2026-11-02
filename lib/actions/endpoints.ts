@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { generateId } from "@/lib/utils";
 import { clearProjectCache } from "@/lib/cache";
 import { requireEndpointAccess, requireProjectAccess } from "@/lib/auth";
+import { markProjectDirty } from "@/lib/file-manager/dirty-tracker";
 import {
   createEndpointSchema,
   updateEndpointSchema,
@@ -108,6 +109,7 @@ export async function createEndpoint(
       .returning();
 
     clearProjectCache(endpoint.projectId);
+    markProjectDirty(endpoint.projectId);
     revalidatePath("/");
     endpointsTrace.traceSuccess("createEndpoint", endpoint.name);
     return endpoint;
@@ -133,6 +135,7 @@ export async function updateEndpoint(
       .returning();
 
     clearProjectCache(endpoint.projectId);
+    markProjectDirty(endpoint.projectId);
     revalidatePath("/");
     endpointsTrace.traceSuccess("updateEndpoint", endpoint.name);
     return endpoint;
@@ -152,6 +155,7 @@ export async function deleteEndpoint(id: string): Promise<void> {
     await db.delete(endpoints).where(eq(endpoints.id, id));
     if (existing) {
       clearProjectCache(existing.projectId);
+      markProjectDirty(existing.projectId);
     }
     revalidatePath("/");
     endpointsTrace.traceSuccess("deleteEndpoint", "void");

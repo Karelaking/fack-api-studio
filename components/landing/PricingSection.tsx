@@ -12,15 +12,10 @@ export const PricingSection = (): React.JSX.Element => {
   return (
     <section
       id="pricing"
-      aria-label="Storage Options and Licensing"
-      className="bg-background relative w-full overflow-hidden"
+      aria-label="Storage options and licensing"
+      className="bg-background relative w-full scroll-mt-20 overflow-hidden"
     >
-      {/* Background Ambient Radial Glow */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="size-125 rounded-full bg-linear-to-tr from-blue-600/10 via-indigo-500/10 to-cyan-400/10 blur-3xl" />
-      </div>
-
-      <div className="border-border/40 relative z-10 mx-auto max-w-7xl border-x">
+      <div className="border-border/40 relative mx-auto max-w-7xl border-x">
         {/* Section Header */}
         <header className="mx-auto max-w-full space-y-4 px-4 pt-16 pb-14 text-center md:pt-24">
           <h2 className="text-foreground mx-auto w-full px-2 text-3xl leading-[1.02] font-extrabold tracking-tight text-balance sm:text-5xl lg:text-6xl xl:text-7xl 2xl:text-[8rem]">
@@ -43,8 +38,8 @@ export const PricingSection = (): React.JSX.Element => {
                   <HardDrive className="text-info size-5" aria-hidden="true" />
                   Local-First Self-Hosted
                 </h3>
-                <span className="text-muted-foreground bg-muted/60 border-border/60 rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-bold tracking-wider uppercase">
-                  100% Private
+                <span className="text-muted-foreground bg-muted/60 border-border/60 text-caption rounded-full border px-2.5 py-0.5 font-semibold">
+                  100% private
                 </span>
               </div>
               <p className="text-muted-foreground text-xs leading-relaxed">
@@ -96,8 +91,8 @@ export const PricingSection = (): React.JSX.Element => {
 
             <Link
               href="/dashboard"
-              aria-label="Launch Local Workspace"
-              className="border-border/80 bg-background text-foreground hover:bg-muted inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border px-6 py-3 text-center text-xs font-bold shadow-xs transition-all sm:text-sm"
+              aria-label="Launch local workspace"
+              className="border-border/80 bg-background text-foreground hover:bg-muted focus-visible:ring-ring/50 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border px-6 py-3 text-center text-xs font-bold shadow-xs transition-colors focus-visible:ring-3 focus-visible:outline-none sm:text-sm"
             >
               <span>Launch Local Workspace</span>
               <ArrowRight className="size-3.5" aria-hidden="true" />
@@ -109,14 +104,11 @@ export const PricingSection = (): React.JSX.Element => {
             <div>
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-foreground flex items-center gap-2 text-xl font-extrabold">
-                  <Server
-                    className="size-5 text-indigo-400"
-                    aria-hidden="true"
-                  />
+                  <Server className="text-info size-5" aria-hidden="true" />
                   Self-Hosted & Docker
                 </h3>
-                <span className="text-muted-foreground bg-muted/60 border-border/60 rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-bold tracking-wider uppercase">
-                  Self-Hosted
+                <span className="text-muted-foreground bg-muted/60 border-border/60 text-caption rounded-full border px-2.5 py-0.5 font-semibold">
+                  Self-hosted
                 </span>
               </div>
               <p className="text-muted-foreground text-xs leading-relaxed">
@@ -170,8 +162,8 @@ export const PricingSection = (): React.JSX.Element => {
               href="https://github.com/Karelaking/fack-api"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="View on GitHub"
-              className="bg-foreground text-background inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-6 py-3 text-xs font-bold shadow-md transition-all hover:opacity-90 sm:text-sm"
+              aria-label="View Fack API source on GitHub"
+              className="bg-foreground text-background focus-visible:ring-ring/50 hover:bg-foreground/90 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-6 py-3 text-xs font-bold shadow-md transition-colors focus-visible:ring-3 focus-visible:outline-none sm:text-sm"
             >
               <RiGithubFill className="size-4" aria-hidden="true" />
               <span>View on GitHub</span>

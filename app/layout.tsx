@@ -4,7 +4,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
-import type { Viewport } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -41,13 +41,16 @@ const bricolage = Bricolage_Grotesque({
  */
 const themeInitScript = `(function(){try{var stored=localStorage.getItem("theme");var prefersDark=window.matchMedia("(prefers-color-scheme: dark)").matches;var isDark=stored==="dark"||((stored===null||stored==="system")&&prefersDark);var root=document.documentElement;root.classList.toggle("dark",isDark);root.style.colorScheme=isDark?"dark":"light";}catch(e){}})();`;
 
-export const metadata = {
+export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   ),
   title: "Fack API's — Mock API Platform",
   description:
     "High-performance, open-source mock API platform with visual React Flow editor and dynamic payload synthesis.",
+  verification: {
+    google: "nrArqHdbOXWOZAbBTFZHODCRWz3jmmrv8HvTBs8x1FE",
+  },
   alternates: {
     canonical: "/",
   },

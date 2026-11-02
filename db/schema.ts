@@ -395,6 +395,28 @@ export const notesRelations = relations(notes, ({ one }) => ({
   }),
 }));
 
+// ─── Workspace Metadata (SaaS Quotas & Billing) ──────────────────────────────
+export const workspaceMeta = sqliteTable("workspace_meta", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().unique(),
+  tier: text("tier", { enum: ["free", "pro", "team"] })
+    .notNull()
+    .default("free"),
+  projectLimit: integer("project_limit").notNull().default(3),
+  routeLimit: integer("route_limit").notNull().default(50),
+  requestLogRetentionDays: integer("request_log_retention_days")
+    .notNull()
+    .default(7),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
 // ─── Type Exports ────────────────────────────────────────────────────────────
 export type Project = typeof projects.$inferSelect;
 export type NewProject = typeof projects.$inferInsert;
@@ -418,6 +440,8 @@ export type Webhook = typeof webhooks.$inferSelect;
 export type NewWebhook = typeof webhooks.$inferInsert;
 export type Note = typeof notes.$inferSelect;
 export type NewNote = typeof notes.$inferInsert;
+export type WorkspaceMeta = typeof workspaceMeta.$inferSelect;
+export type NewWorkspaceMeta = typeof workspaceMeta.$inferInsert;
 
 export interface RequestLog {
   id: string;

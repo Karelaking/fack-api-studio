@@ -15,14 +15,23 @@ export const AuthProvider = ({
   children,
 }: {
   children: React.ReactNode;
-}): React.JSX.Element => (
-  <ClerkProvider
-    appearance={{ theme: shadcn }}
-    signInUrl="/sign-in"
-    signUpUrl="/sign-up"
-    signInFallbackRedirectUrl="/dashboard"
-    signUpFallbackRedirectUrl="/dashboard"
-  >
-    {children}
-  </ClerkProvider>
-);
+}): React.JSX.Element => {
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+  if (!publishableKey) {
+    return <>{children}</>;
+  }
+
+  return (
+    <ClerkProvider
+      publishableKey={publishableKey}
+      appearance={{ theme: shadcn }}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
+    >
+      {children}
+    </ClerkProvider>
+  );
+};

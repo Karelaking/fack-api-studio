@@ -48,7 +48,7 @@ export const CollaborateButton = ({
   const scale = SIZE_CLASSES[size];
 
   const classes = cn(
-    "group bg-foreground text-background hover:bg-foreground/90 relative inline-flex w-fit cursor-pointer items-center justify-center overflow-hidden rounded-full border border-transparent p-1 font-semibold shadow-xs transition-all duration-500 select-none",
+    "group bg-foreground text-background hover:bg-foreground/90 focus-visible:ring-ring/50 relative inline-flex w-fit cursor-pointer items-center justify-center overflow-hidden rounded-full border border-transparent p-1 font-semibold shadow-xs transition-all duration-500 select-none focus-visible:ring-3 focus-visible:outline-none",
     scale.button,
     className,
   );
@@ -64,7 +64,7 @@ export const CollaborateButton = ({
           scale.badge,
         )}
       >
-        <ArrowUpRight size={scale.glyph} />
+        <ArrowUpRight size={scale.glyph} aria-hidden="true" />
       </div>
     </>
   );

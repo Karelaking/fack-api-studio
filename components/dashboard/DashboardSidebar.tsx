@@ -12,6 +12,7 @@ import {
   RiSettings2Line,
   RiFileCopyLine,
   RiStickyNoteLine,
+  RiSave3Line,
 } from "@remixicon/react";
 import { toast } from "sonner";
 import { createProject } from "@/lib/actions/projects";
@@ -44,10 +45,13 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 
 interface DashboardSidebarProps {
   initialProjects: Project[];
+  /** Shown in the footer so the running build is identifiable. */
+  appVersion: string;
 }
 
 export const DashboardSidebar = ({
   initialProjects,
+  appVersion,
 }: DashboardSidebarProps): React.JSX.Element => {
   const router = useRouter();
   const pathname = usePathname();
@@ -157,90 +161,130 @@ export const DashboardSidebar = ({
 
         <SidebarContent>
           <SidebarGroup className="mt-1">
-            <SidebarGroupLabel className="flex items-center justify-between">
-              <span>Project Menu</span>
-            </SidebarGroupLabel>
-            <SidebarGroupContent className="mt-1">
-              {(() => {
-                const activeProject = projects.find((proj) =>
-                  pathname.startsWith(`/projects/${proj.slug}`),
-                );
+            {(() => {
+              const activeProject = projects.find((proj) =>
+                pathname.startsWith(`/projects/${proj.slug}`),
+              );
 
-                if (!activeProject) {
-                  return (
-                    <div className="text-muted-foreground px-3 py-2 text-xs italic">
-                      No active project.
-                    </div>
-                  );
-                }
-
-                return (
-                  <SidebarMenu>
-                    {[
-                      {
-                        name: "Canvas",
-                        path: "canvas",
-                        icon: RiGitBranchLine,
-                      },
-                      {
-                        name: "Endpoints",
-                        path: "endpoints",
-                        icon: RiPulseLine,
-                      },
-                      {
-                        name: "Logs",
-                        path: "logs",
-                        icon: RiFileHistoryLine,
-                      },
-                      {
-                        name: "Notes",
-                        path: "notes",
-                        icon: RiStickyNoteLine,
-                      },
-                      {
-                        name: "Settings",
-                        path: "settings",
-                        icon: RiSettings2Line,
-                      },
-                    ].map((subItem) => {
-                      const Icon = subItem.icon;
-                      const isSubActive = pathname.endsWith(`/${subItem.path}`);
-                      return (
-                        <SidebarMenuItem key={subItem.path}>
-                          <SidebarMenuButton
-                            isActive={isSubActive}
-                            render={
-                              <Link
-                                href={`/projects/${activeProject.slug}/${subItem.path}`}
-                                aria-label={subItem.name}
-                              />
+              return (
+                <>
+                  <SidebarGroupLabel className="flex items-center justify-between">
+                    <span>Project Menu</span>
+                    {activeProject && (
+                      <button
+                        type="button"
+                        title="Save project to .fack file"
+                        aria-label="Save project to .fack file"
+                        onClick={async () => {
+                          try {
+                            const res = await fetch("/api/file-manager", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                action: "save",
+                                projectId: activeProject.id,
+                              }),
+                            });
+                            const data = await res.json();
+                            if (res.ok) {
+                              toast.success("Saved to .fack file", {
+                                description: data.filePath,
+                              });
+                            } else {
+                              throw new Error(data.error);
                             }
-                          >
-                            <Icon className="h-4 w-4 shrink-0" />
-                            <span>{subItem.name}</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
-                );
-              })()}
-            </SidebarGroupContent>
+                          } catch (err) {
+                            toast.error(
+                              err instanceof Error
+                                ? err.message
+                                : "Failed to save project",
+                            );
+                          }
+                        }}
+                        className="hover:text-foreground text-muted-foreground flex cursor-pointer items-center gap-1 text-[11px] font-normal transition-colors"
+                      >
+                        <RiSave3Line className="h-3 w-3" />
+                        <span>Save .fack</span>
+                      </button>
+                    )}
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent className="mt-1">
+                    {!activeProject ? (
+                      <div className="text-muted-foreground px-3 py-2 text-xs italic">
+                        No active project.
+                      </div>
+                    ) : (
+                      <SidebarMenu>
+                        {[
+                          {
+                            name: "Canvas",
+                            path: "canvas",
+                            icon: RiGitBranchLine,
+                          },
+                          {
+                            name: "Endpoints",
+                            path: "endpoints",
+                            icon: RiPulseLine,
+                          },
+                          {
+                            name: "Logs",
+                            path: "logs",
+                            icon: RiFileHistoryLine,
+                          },
+                          {
+                            name: "Notes",
+                            path: "notes",
+                            icon: RiStickyNoteLine,
+                          },
+                          {
+                            name: "Settings",
+                            path: "settings",
+                            icon: RiSettings2Line,
+                          },
+                        ].map((subItem) => {
+                          const Icon = subItem.icon;
+                          const isSubActive = pathname.endsWith(
+                            `/${subItem.path}`,
+                          );
+                          return (
+                            <SidebarMenuItem key={subItem.path}>
+                              <SidebarMenuButton
+                                isActive={isSubActive}
+                                render={
+                                  <Link
+                                    href={`/projects/${activeProject.slug}/${subItem.path}`}
+                                    aria-label={subItem.name}
+                                  />
+                                }
+                                className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary transition-colors duration-200 data-[active=true]:font-medium max-md:h-11"
+                              >
+                                <Icon className="h-4 w-4 shrink-0" />
+                                <span>{subItem.name}</span>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </SidebarMenu>
+                    )}
+                  </SidebarGroupContent>
+                </>
+              );
+            })()}
           </SidebarGroup>
 
           {/* Dynamic Selected Route Links Section */}
           {selectedRoute && (
             <SidebarGroup className="mt-3">
-              <div className="border-border/60 border-t pt-3">
+              <div className="border-border/50 border-t pt-3">
                 <SidebarGroupLabel className="flex items-center justify-between">
                   <span>Selected Route Link</span>
                 </SidebarGroupLabel>
                 <div className="space-y-3.5 px-2 py-2">
                   {/* Method & Path Display */}
-                  <div className="bg-muted/40 border-border/40 flex items-center gap-2 border p-2">
+                  <div className="bg-muted/30 border-border/50 flex items-center gap-2 rounded-md border p-2">
                     <span
                       className={cn(
-                        "shrink-0 rounded-sm border px-2 py-0.5 text-micro font-extrabold tracking-wider uppercase",
+                        "shrink-0 rounded-sm border px-2 py-0.5 text-mini font-extrabold tracking-wider uppercase",
                         selectedRoute.method.toUpperCase() === "GET" &&
                           "border-method-get/25 bg-method-get/10 text-method-get",
                         selectedRoute.method.toUpperCase() === "POST" &&
@@ -254,30 +298,30 @@ export const DashboardSidebar = ({
                         !["GET", "POST", "PUT", "DELETE", "PATCH"].includes(
                           selectedRoute.method.toUpperCase(),
                         ) &&
-                          "border-border/40 bg-muted/20 text-muted-foreground",
+                          "border-border/50 bg-muted/20 text-muted-foreground",
                       )}
                     >
                       {selectedRoute.method}
                     </span>
-                    <span className="text-foreground text-caption flex-1 truncate font-mono font-bold">
+                    <span className="text-foreground flex-1 truncate font-mono text-xs font-bold">
                       {selectedRoute.path}
                     </span>
                   </div>
 
                   {/* Base Link (Copyable Input-like box) */}
                   <div className="flex flex-col gap-1">
-                    <span className="text-muted-foreground text-micro block px-0.5 font-bold tracking-wider uppercase">
+                    <span className="text-muted-foreground text-caption block px-0.5 font-bold tracking-wider uppercase">
                       Mock URL
                     </span>
-                    <div className="bg-background border-border/80 flex items-center gap-1.5 border p-1.5 shadow-xs">
-                      <span className="text-foreground text-caption flex-1 truncate pl-1 font-mono leading-normal font-bold select-all">
+                    <div className="bg-card border-border/50 flex items-center gap-1.5 rounded-md border p-1.5 shadow-xs">
+                      <span className="text-foreground flex-1 truncate pl-1 font-mono text-xs leading-normal font-bold select-all">
                         {selectedRoute.mockUrl}
                       </span>
                       <Button
                         type="button"
                         size="icon-sm"
                         variant="ghost"
-                        className="shrink-0"
+                        className="h-9 w-9 shrink-0 md:h-7 md:w-7"
                         title="Copy Mock Endpoint URL"
                         aria-label="Copy Mock Endpoint URL"
                         onClick={async () => {
@@ -301,10 +345,10 @@ export const DashboardSidebar = ({
 
                   {/* Query Parameters Helper List */}
                   <div className="space-y-1.5">
-                    <span className="text-muted-foreground text-micro block px-0.5 font-bold tracking-wider uppercase">
+                    <span className="text-muted-foreground text-caption block px-0.5 font-bold tracking-wider uppercase">
                       Query Parameters
                     </span>
-                    <div className="bg-muted/20 border-border/50 scrollbar-subtle max-h-48 space-y-1 overflow-y-auto border p-2 pr-0.5">
+                    <div className="bg-muted/20 border-border/50 scrollbar-subtle max-h-48 space-y-1 overflow-y-auto rounded-md border p-2 pr-0.5">
                       {[
                         { param: "?limit=5", desc: "Limit output array items" },
                         { param: "?q=search", desc: "Global text search" },
@@ -319,13 +363,13 @@ export const DashboardSidebar = ({
                         return (
                           <div
                             key={oIdx}
-                            className="hover:bg-background hover:border-border/30 flex items-center justify-between gap-2 border border-transparent px-1.5 py-1 transition-colors"
+                            className="hover:bg-background flex items-center justify-between gap-2 rounded-sm border border-transparent px-1.5 py-1 transition-colors"
                           >
                             <div className="flex min-w-0 flex-1 flex-col">
-                              <span className="text-primary text-micro truncate font-mono leading-normal font-bold">
+                              <span className="text-primary text-caption truncate font-mono leading-normal font-bold">
                                 {opt.param}
                               </span>
-                              <span className="text-muted-foreground text-micro truncate leading-normal">
+                              <span className="text-muted-foreground text-mini truncate leading-normal">
                                 {opt.desc}
                               </span>
                             </div>
@@ -333,7 +377,7 @@ export const DashboardSidebar = ({
                               type="button"
                               size="icon-xs"
                               variant="ghost"
-                              className="shrink-0"
+                              className="h-9 w-9 shrink-0 md:h-6 md:w-6"
                               title="Copy parameter URL"
                               aria-label="Copy parameter URL"
                               onClick={async () => {
@@ -363,7 +407,7 @@ export const DashboardSidebar = ({
 
         <SidebarFooter className="flex flex-row items-center justify-between">
           <div className="text-muted-foreground truncate font-mono text-xs">
-            v0.1.0 (SQLite)
+            v{appVersion}
           </div>
           <ThemeToggle />
         </SidebarFooter>

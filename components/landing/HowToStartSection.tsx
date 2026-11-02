@@ -48,7 +48,7 @@ type CopyState = "idle" | "copied" | "failed";
  */
 const ROUTE_PARTS: Array<{ role: string; value: string }> = [
   { role: "project", value: "acme-store" },
-  { role: "endpoint", value: "User Service · /v1" },
+  { role: "endpoint", value: "User Service, /v1" },
   { role: "route", value: "GET /users" },
 ];
 
@@ -212,7 +212,7 @@ export const HowToStartSection = (): React.JSX.Element => {
     <section
       id="how-to-start"
       aria-labelledby="how-to-start-title"
-      className="border-border/40 bg-background relative w-full overflow-hidden border-b"
+      className="border-border/40 bg-background relative w-full scroll-mt-20 overflow-hidden border-b"
     >
       <div className="border-border/40 mx-auto max-w-7xl border-x">
         <header className="px-4 pt-16 pb-12 sm:px-6 sm:pt-20 sm:pb-14 lg:px-8">
@@ -267,7 +267,7 @@ export const HowToStartSection = (): React.JSX.Element => {
                           aria-controls="how-to-start-command"
                           onClick={(): void => handleSelect(id)}
                           className={cn(
-                            "inline-flex h-8 cursor-pointer items-center rounded-full px-3.5 text-xs font-bold transition-colors",
+                            "inline-flex h-8 cursor-pointer items-center rounded-full px-3.5 text-xs font-bold transition-colors focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none",
                             isActive
                               ? "bg-foreground text-background"
                               : "text-muted-foreground hover:text-foreground",
@@ -309,8 +309,14 @@ export const HowToStartSection = (): React.JSX.Element => {
                     onClick={(): void => {
                       void handleCopy();
                     }}
-                    aria-label="Copy the start command to the clipboard"
-                    className="border-border/60 bg-background text-foreground hover:bg-muted inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-xs font-bold transition-colors"
+                    aria-label={
+                      copyState === "copied"
+                        ? "Start command copied to the clipboard"
+                        : copyState === "failed"
+                          ? "Copy failed. Select the command and copy it manually"
+                          : "Copy the start command to the clipboard"
+                    }
+                    className="border-border/60 bg-background text-foreground hover:bg-muted focus-visible:ring-ring/50 inline-flex h-9 min-w-24 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-full border px-3.5 text-xs font-bold whitespace-nowrap transition-colors focus-visible:ring-3 focus-visible:outline-none"
                   >
                     {copyState === "copied" ? (
                       <>
@@ -326,7 +332,9 @@ export const HowToStartSection = (): React.JSX.Element => {
                           className="text-destructive size-3.5"
                           aria-hidden="true"
                         />
-                        <span>Copy manually</span>
+                        <span className="text-destructive font-bold">
+                          Failed
+                        </span>
                       </>
                     ) : (
                       <>
@@ -341,11 +349,8 @@ export const HowToStartSection = (): React.JSX.Element => {
                   <span className="text-foreground font-mono text-xs font-semibold">
                     http://localhost:3000
                   </span>
-                  <span aria-hidden="true" className="text-muted-foreground">
-                    ·
-                  </span>
                   <span className="text-muted-foreground text-xs">
-                    the dashboard opens here
+                    serves the dashboard
                   </span>
                 </div>
               </div>
@@ -427,10 +432,10 @@ export const HowToStartSection = (): React.JSX.Element => {
 
               <div className="border-border/60 bg-muted/20 overflow-hidden rounded-xl border">
                 <div className="border-border/40 bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
-                  <span className="text-muted-foreground font-mono text-xs">
-                    response schema
+                  <span className="text-muted-foreground text-caption font-semibold">
+                    Response schema
                   </span>
-                  <span className="text-muted-foreground font-mono text-xs">
+                  <span className="text-muted-foreground text-caption font-semibold">
                     JSON Schema
                   </span>
                 </div>
@@ -464,15 +469,15 @@ export const HowToStartSection = (): React.JSX.Element => {
                 </div>
                 <p className="text-muted-foreground mt-3 max-w-[46ch] text-sm leading-relaxed">
                   The route answers as soon as you save it. Point your app at
-                  the URL, or check it from the terminal — the payload is
+                  the URL, or check it from the terminal: the payload is
                   generated per request, not stored.
                 </p>
               </div>
 
               <div className="border-border/60 bg-muted/20 overflow-hidden rounded-xl border">
                 <div className="border-border/40 bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-2.5">
-                  <span className="text-muted-foreground font-mono text-xs">
-                    terminal
+                  <span className="text-muted-foreground text-caption font-semibold">
+                    Terminal
                   </span>
                   <span className="border-success/30 bg-success/10 text-success shrink-0 rounded border px-1.5 py-0.5 font-mono text-xs font-bold">
                     200 OK
@@ -529,7 +534,7 @@ export const HowToStartSection = (): React.JSX.Element => {
               href="https://github.com/Karelaking/fack-api/blob/main/docs/content/docs/getting-started/quickstart.mdx"
               target="_blank"
               rel="noopener noreferrer"
-              className="group border-border/60 text-foreground hover:bg-muted inline-flex h-11 shrink-0 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition-colors"
+              className="group border-border/60 text-foreground hover:bg-muted focus-visible:ring-ring/50 inline-flex h-11 shrink-0 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition-colors focus-visible:ring-3 focus-visible:outline-none"
             >
               Read the walkthrough
               <ArrowUpRight
@@ -539,10 +544,10 @@ export const HowToStartSection = (): React.JSX.Element => {
             </a>
           </div>
 
-          <p className="text-foreground font-mono text-xs tracking-[0.14em] uppercase lg:text-right">
+          <p className="text-foreground text-xs leading-relaxed lg:text-right">
             Nothing leaves your machine
             <span className="text-muted-foreground mt-1 block">
-              Local SQLite storage · MIT licensed
+              Local SQLite storage, MIT licensed
             </span>
           </p>
         </div>

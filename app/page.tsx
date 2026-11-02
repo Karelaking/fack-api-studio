@@ -114,8 +114,8 @@ export default function HomePage(): React.JSX.Element {
         <LogoCloudSection />
         <FeaturesSection />
         <PricingSection />
-        <Footer />
       </main>
+      <Footer />
     </div>
   );
 }

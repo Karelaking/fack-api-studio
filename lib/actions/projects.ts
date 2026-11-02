@@ -1,12 +1,19 @@
 "use server";
 
 import { cache } from "react";
-import { db } from "@/db";
+import path from "node:path";
+import { db, storageConnection } from "@/db";
 import { projects } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { generateId, slugify } from "@/lib/utils";
-import { auth } from "@clerk/nextjs/server";
+import { requireUserId } from "@/lib/auth";
+import { assertProjectQuota } from "@/lib/services/quota.service";
+import {
+  associateProjectFile,
+  markProjectDirty,
+} from "@/lib/file-manager/dirty-tracker";
+import { getDefaultProjectsDirectory } from "@/lib/file-manager/file-manager.service";
 import {
   getCachedProjectBySlug,
   setCachedProjectBySlug,
@@ -27,12 +34,16 @@ export const getProjects = cache(async function getProjects(): Promise<
 > {
   projectsTrace.traceCall("getProjects");
 
-  const { userId } = await auth();
-  if (!userId) return [];
+  let userId: string;
+  try {
+    userId = await requireUserId();
+  } catch {
+    return [];
+  }
 
   try {
     const list = await db.query.projects.findMany({
-      where: eq(projects.userId, userId),
+      where: userId === "system" ? undefined : eq(projects.userId, userId),
       orderBy: (projects, { desc }) => [desc(projects.updatedAt)],
       with: {
         endpoints: {
@@ -66,8 +77,12 @@ export const getProjectBySlug = cache(async function getProjectBySlug(
   slug: string,
 ): Promise<typeof projects.$inferSelect | undefined> {
   projectsTrace.traceCall("getProjectBySlug", slug);
-  const { userId } = await auth();
-  if (!userId) return undefined;
+  let userId: string;
+  try {
+    userId = await requireUserId();
+  } catch {
+    return undefined;
+  }
 
   let project = getCachedProjectBySlug(slug);
   let cacheHit = true;
@@ -95,7 +110,12 @@ export const getProjectBySlug = cache(async function getProjectBySlug(
     }
   }
 
-  if (project && project.userId !== userId && project.userId !== "system") {
+  if (
+    project &&
+    project.userId !== userId &&
+    project.userId !== "system" &&
+    userId !== "system"
+  ) {
     projectsTrace.traceError(
       "getProjectBySlug",
       "Unauthorized access to project",
@@ -114,15 +134,24 @@ export const getProjectById = cache(async function getProjectById(
   id: string,
 ): Promise<typeof projects.$inferSelect | undefined> {
   projectsTrace.traceCall("getProjectById", id);
-  const { userId } = await auth();
-  if (!userId) return undefined;
+  let userId: string;
+  try {
+    userId = await requireUserId();
+  } catch {
+    return undefined;
+  }
 
   try {
     const project = await db.query.projects.findFirst({
       where: eq(projects.id, id),
     });
 
-    if (project && project.userId !== userId && project.userId !== "system") {
+    if (
+      project &&
+      project.userId !== userId &&
+      project.userId !== "system" &&
+      userId !== "system"
+    ) {
       projectsTrace.traceError("getProjectById", "Unauthorized");
       return undefined;
     }
@@ -142,8 +171,8 @@ export async function createProject(
   input: CreateProjectInput,
 ): Promise<typeof projects.$inferSelect> {
   projectsTrace.traceCall("createProject", input.name, input.slug);
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await requireUserId();
+  await assertProjectQuota(userId);
 
   try {
     const parsed = createProjectSchema.parse(input);
@@ -176,6 +205,15 @@ export async function createProject(
       })
       .returning();
 
+    if (storageConnection.features.fileManager) {
+      const defaultPath = path.join(
+        getDefaultProjectsDirectory(),
+        `${project.slug}.fack`,
+      );
+      associateProjectFile(project.id, defaultPath);
+      markProjectDirty(project.id);
+    }
+
     clearProjectCache(project.id, project.slug);
     revalidatePath("/");
     projectsTrace.traceSuccess("createProject", project.name);
@@ -190,8 +228,7 @@ export async function updateProject(
   input: UpdateProjectInput,
 ): Promise<typeof projects.$inferSelect> {
   projectsTrace.traceCall("updateProject", input.id, input.name);
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await requireUserId();
 
   try {
     const parsed = updateProjectSchema.parse(input);
@@ -202,7 +239,9 @@ export async function updateProject(
     });
     if (
       !existing ||
-      (existing.userId !== userId && existing.userId !== "system")
+      (existing.userId !== userId &&
+        existing.userId !== "system" &&
+        userId !== "system")
     ) {
       throw new Error("Unauthorized");
     }
@@ -239,6 +278,10 @@ export async function updateProject(
       .where(eq(projects.id, id))
       .returning();
 
+    if (storageConnection.features.fileManager) {
+      markProjectDirty(project.id);
+    }
+
     // projectBySlugCache is keyed by slug, so evict both the previous and the
     // new slug; otherwise the project keeps resolving under its old slug.
     clearProjectCache(project.id, project.slug);
@@ -256,8 +299,7 @@ export async function updateProject(
 
 export async function deleteProject(id: string): Promise<void> {
   projectsTrace.traceCall("deleteProject", id);
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await requireUserId();
 
   try {
     const existing = await db.query.projects.findFirst({
@@ -266,7 +308,9 @@ export async function deleteProject(id: string): Promise<void> {
 
     if (
       !existing ||
-      (existing.userId !== userId && existing.userId !== "system")
+      (existing.userId !== userId &&
+        existing.userId !== "system" &&
+        userId !== "system")
     ) {
       throw new Error("Unauthorized");
     }

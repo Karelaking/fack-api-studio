@@ -1,24 +1,37 @@
 import { resolveLocalDatabasePath } from "./data-dir";
+import {
+  type StorageMode,
+  type TierFeatures,
+  getTierFeatures,
+} from "./tier-features";
 
 /**
- * Storage mode resolution — the single source of truth for whether project
- * data lives on the local disk (private, zero configuration) or in a remote
- * libSQL/Turso database (accessible from any device).
+ * Storage mode resolution — the single source of truth for where project data
+ * lives.
  *
- * Rules:
+ * Three tiers:
+ * - **local**      — private SQLite file on this machine, file manager UI,
+ *                    no auth required. Auto-detected when DATABASE_URL and
+ *                    CLERK_SECRET_KEY are absent.
+ * - **selfhosted** — user's own libSQL/Turso (or Postgres in the future).
+ *                    Optional Clerk auth if the deployer provides keys.
+ * - **saas**       — your managed deployment. Clerk + billing mandatory.
+ *                    Activated only by the secret FACK_TIER=saas env var.
+ *
+ * Legacy rules still apply within each tier:
  * - No DATABASE_URL                       → LOCAL file in the OS data dir.
  * - file: / bare path                     → LOCAL (path normalized to file:).
- * - libsql:// or https://                 → CLOUD, requires DATABASE_AUTH_TOKEN.
+ * - libsql:// or https://                 → SELFHOSTED, requires DATABASE_AUTH_TOKEN.
  *                                           Without it we fall back to LOCAL
  *                                           instead of half-connecting.
- * - http:// or ws://                      → CLOUD without a token is allowed
+ * - http:// or ws://                      → SELFHOSTED without a token is allowed
  *                                           (unauthenticated local dev servers,
  *                                           e.g. `turso dev`).
  * - STORAGE_MODE=local                    → forces LOCAL even if a remote URL
  *                                           is configured.
  */
 
-export type StorageMode = "local" | "cloud";
+export type { StorageMode, TierFeatures };
 
 export interface StorageConnection {
   /** Where project data is persisted. */
@@ -31,6 +44,10 @@ export interface StorageConnection {
   display: string;
   /** Configuration problem worth surfacing to the user/startup log. */
   warning?: string;
+  /** Whether Clerk authentication is required for dashboard access. */
+  authRequired: boolean;
+  /** Tier-specific feature flags for this deployment. */
+  features: TierFeatures;
 }
 
 const REMOTE_SCHEME_RE = /^(libsql|https|http|wss|ws):\/\//i;
@@ -80,12 +97,19 @@ function toLocalConnection(warning?: string): StorageConnection {
     url: `file:${databasePath}`,
     display: databasePath,
     warning: combinedWarning,
+    authRequired: false,
+    features: getTierFeatures("local"),
   };
 }
 
 /**
  * Resolves the active storage connection from the environment.
  * Pure with respect to its input so it can be unit-tested.
+ *
+ * Tier resolution order:
+ * 1. FACK_TIER=saas → SaaS mode (your managed deployment).
+ * 2. DATABASE_URL with valid creds → self-hosted mode.
+ * 3. Anything else → local mode (zero config, file-based).
  */
 export function resolveStorageConnection(
   env: Partial<NodeJS.ProcessEnv> = process.env,
@@ -93,8 +117,22 @@ export function resolveStorageConnection(
   const rawUrl = (env.DATABASE_URL ?? "").trim();
   const authToken = (env.DATABASE_AUTH_TOKEN ?? "").trim() || undefined;
   const forcedMode = (env.STORAGE_MODE ?? "").trim().toLowerCase();
+  const fackTier = (env.FACK_TIER ?? "").trim().toLowerCase();
 
   const isRemote = REMOTE_SCHEME_RE.test(rawUrl);
+
+  // ── SaaS tier: secret env var only your deployment knows ────────────
+  if (fackTier === "saas" && isRemote) {
+    const mode: StorageMode = "saas";
+    return {
+      mode,
+      url: rawUrl,
+      authToken,
+      display: maskRemoteUrl(rawUrl),
+      authRequired: true,
+      features: getTierFeatures(mode),
+    };
+  }
 
   if (forcedMode === "local") {
     const warning = isRemote
@@ -116,6 +154,8 @@ export function resolveStorageConnection(
       mode: "local",
       url,
       display: url.replace(/^file:/, ""),
+      authRequired: false,
+      features: getTierFeatures("local"),
     };
   }
 
@@ -137,10 +177,15 @@ export function resolveStorageConnection(
     );
   }
 
+  // ── Self-hosted tier: user's own remote database ────────────────────
+  const mode: StorageMode = "selfhosted";
+  const hasClerk = !!env.CLERK_SECRET_KEY;
   return {
-    mode: "cloud",
+    mode,
     url: rawUrl,
     authToken,
     display: maskRemoteUrl(rawUrl),
+    authRequired: hasClerk,
+    features: getTierFeatures(mode),
   };
 }

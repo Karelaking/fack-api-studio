@@ -1,6 +1,15 @@
-import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vite-plus/test";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
+import { storageConnection } from "@/db";
 
 import { POST as generateHandler } from "../app/api/ai/generate/route";
 import { POST as importHandler } from "../app/api/import/openapi/route";
@@ -21,6 +30,24 @@ function signOut() {
 }
 
 describe("Authorization guards", () => {
+  const origAuthRequired = storageConnection.authRequired;
+  const origClerkKey = process.env.CLERK_SECRET_KEY;
+
+  beforeAll(() => {
+    (storageConnection as { authRequired: boolean }).authRequired = true;
+    process.env.CLERK_SECRET_KEY = "sk_test_mock_key";
+  });
+
+  afterAll(() => {
+    (storageConnection as { authRequired: boolean }).authRequired =
+      origAuthRequired;
+    if (origClerkKey) {
+      process.env.CLERK_SECRET_KEY = origClerkKey;
+    } else {
+      delete process.env.CLERK_SECRET_KEY;
+    }
+  });
+
   afterEach(() => {
     mockedAuth.mockReset();
     mockedAuth.mockResolvedValue({ userId: "user_test_owner" } as never);

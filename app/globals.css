@@ -273,6 +273,17 @@
   body {
     overflow-x: clip;
   }
+
+  /* Browser surfaces belong to the palette too: the default blue selection
+     and black caret read as "unstyled" next to the OKLCH theme. */
+  ::selection {
+    background-color: color-mix(in oklch, var(--primary) 26%, transparent);
+    color: var(--foreground);
+  }
+
+  :where(input, textarea, [contenteditable="true"]) {
+    caret-color: var(--primary);
+  }
 }
 
 /* Hide scrollbars globally across all scrollable containers and browsers */
@@ -537,6 +548,31 @@
 
 @media (prefers-reduced-motion: reduce) {
   .agent-draft-enter {
+    animation: none;
+  }
+}
+
+/* Dashboard cards settle in as they mount — the one authored moment on the
+   workspaces page. The delay is capped in the component so a long list never
+   takes more than a beat; reduced-motion users get the resting state. */
+@keyframes dashboard-card-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.dashboard-card-enter {
+  animation: dashboard-card-enter 320ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: var(--enter-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-card-enter {
     animation: none;
   }
 }

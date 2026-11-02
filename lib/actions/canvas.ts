@@ -5,6 +5,7 @@ import { canvasStates } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateId } from "@/lib/utils";
 import { requireProjectAccess } from "@/lib/auth";
+import { markProjectDirty } from "@/lib/file-manager/dirty-tracker";
 import {
   saveCanvasStateSchema,
   type SaveCanvasStateInput,
@@ -70,6 +71,7 @@ export async function saveCanvasState(input: SaveCanvasStateInput): Promise<{
       })
       .returning();
 
+    markProjectDirty(parsed.projectId);
     canvasTrace.traceSuccess("saveCanvasState (saved)", saved.id);
     return saved;
   } catch (error) {

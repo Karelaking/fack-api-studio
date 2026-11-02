@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { deleteProject, updateProject } from "@/lib/actions/projects";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import type { Project, Endpoint, Route } from "@/db/schema";
+import { PageShell } from "@/components/dashboard/PageShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -289,7 +290,7 @@ export function ProjectGrid({
   const hasProjects = projects.length > 0;
 
   return (
-    <div className="mx-auto w-full max-w-[1760px] space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-12 2xl:px-16 2xl:py-10">
+    <PageShell>
       <header className="space-y-1">
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
           Workspaces
@@ -301,7 +302,7 @@ export function ProjectGrid({
       </header>
 
       {/* Search and view controls */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-sm">
           <RiSearchLine
             aria-hidden="true"
@@ -315,7 +316,7 @@ export function ProjectGrid({
             placeholder="Search workspaces..."
             aria-label="Search workspaces"
             aria-keyshortcuts="/"
-            className="bg-card/30 border-border/60 h-10 pr-11 pl-9 text-base sm:text-sm"
+            className="bg-card/30 border-border/50 h-11 pr-12 pl-9 text-base sm:h-10 sm:text-sm"
           />
           <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center">
             {search ? (
@@ -326,14 +327,14 @@ export function ProjectGrid({
                   void setSearch(null);
                   searchRef.current?.focus();
                 }}
-                className="text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring focus-visible:ring-offset-background inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring focus-visible:ring-offset-background inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:h-7 sm:w-7"
               >
                 <RiCloseLine aria-hidden="true" className="h-4 w-4" />
               </button>
             ) : (
               <kbd
                 aria-hidden="true"
-                className="bg-muted text-muted-foreground border-border/60 text-mini hidden h-5 min-w-5 items-center justify-center rounded-sm border px-1.5 font-mono font-medium sm:flex"
+                className="bg-muted text-muted-foreground border-border/50 text-mini hidden h-5 min-w-5 items-center justify-center rounded-sm border px-1.5 font-mono font-medium sm:flex"
               >
                 /
               </kbd>
@@ -352,6 +353,7 @@ export function ProjectGrid({
                   aria-label={`Sort workspaces by ${
                     sortBy === "name" ? "name" : "last updated"
                   }`}
+                  className="h-11 min-w-11 justify-center px-0 sm:h-10 sm:min-w-0 sm:px-3"
                 />
               }
             >
@@ -377,7 +379,7 @@ export function ProjectGrid({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <fieldset className="border-border/60 bg-card/30 flex h-10 min-w-0 items-center rounded-lg border p-1">
+          <fieldset className="border-border/50 bg-card/30 flex h-11 min-w-0 items-center rounded-lg border p-0 sm:h-10 sm:p-1">
             <legend className="sr-only">Workspace layout</legend>
             <button
               type="button"
@@ -385,7 +387,7 @@ export function ProjectGrid({
               aria-pressed={viewMode === "grid"}
               onClick={() => setViewMode("grid")}
               className={cn(
-                "focus-visible:ring-ring focus-visible:ring-offset-background flex h-8 w-8 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none",
+                "focus-visible:ring-ring focus-visible:ring-offset-background flex h-full w-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none sm:h-8 sm:w-8",
                 viewMode === "grid"
                   ? "bg-muted text-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
@@ -399,7 +401,7 @@ export function ProjectGrid({
               aria-pressed={viewMode === "list"}
               onClick={() => setViewMode("list")}
               className={cn(
-                "focus-visible:ring-ring focus-visible:ring-offset-background flex h-8 w-8 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none",
+                "focus-visible:ring-ring focus-visible:ring-offset-background flex h-full w-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none sm:h-8 sm:w-8",
                 viewMode === "list"
                   ? "bg-muted text-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
@@ -416,7 +418,7 @@ export function ProjectGrid({
           {/* Overview rail — real counts only */}
           <aside
             aria-label="Workspace overview"
-            className="order-2 flex w-full shrink-0 flex-col gap-5 md:order-1 md:w-[280px] lg:w-[320px] xl:w-[340px] 2xl:w-[360px]"
+            className="order-2 flex w-full shrink-0 flex-col gap-5 md:order-1 md:w-70 lg:w-[320px] xl:w-85 2xl:w-90"
           >
             <section aria-labelledby="overview-heading" className="space-y-3">
               <h2
@@ -574,15 +576,24 @@ export function ProjectGrid({
           </aside>
 
           {/* Project list */}
-          <div className="order-1 min-w-0 flex-1 space-y-4 md:order-2 md:space-y-5">
+          <div
+            aria-busy={isPending}
+            className="order-1 min-w-0 flex-1 space-y-4 md:order-2 md:space-y-5"
+          >
             <div className="flex items-baseline justify-between gap-3">
               <h2 className="text-foreground text-base font-semibold tracking-tight">
                 {search ? "Results" : "Projects"}
               </h2>
               <p
                 aria-live="polite"
-                className="text-muted-foreground text-xs tabular-nums"
+                className="text-muted-foreground flex items-center gap-1.5 text-xs tabular-nums"
               >
+                {isPending ? (
+                  <RiLoader2Line
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
+                  />
+                ) : null}
                 {filteredProjects.length}{" "}
                 {filteredProjects.length === 1 ? "workspace" : "workspaces"}
               </p>
@@ -615,12 +626,14 @@ export function ProjectGrid({
             ) : (
               <div
                 className={cn(
+                  "transition-opacity duration-200 ease-out motion-reduce:transition-none",
+                  isPending && "opacity-60",
                   viewMode === "grid"
-                    ? "grid grid-cols-1 gap-4 sm:grid-cols-2"
+                    ? "grid grid-cols-1 gap-4 xl:gap-5 sm:grid-cols-2"
                     : "flex flex-col gap-3",
                 )}
               >
-                {filteredProjects.map((project) => {
+                {filteredProjects.map((project, index) => {
                   const endpoints = project.endpoints ?? [];
                   const routeCount = endpoints.reduce(
                     (total, endpoint) => total + (endpoint.routes?.length ?? 0),
@@ -630,8 +643,13 @@ export function ProjectGrid({
                   return (
                     <article
                       key={project.id}
+                      style={
+                        {
+                          "--enter-delay": `${Math.min(index, 8) * 40}ms`,
+                        } as React.CSSProperties
+                      }
                       className={cn(
-                        "group bg-card/30 border-border/50 hover:border-border hover:shadow-md relative flex flex-col gap-4 overflow-hidden rounded-xl border p-5 transition-all duration-200 ease-out",
+                        "dashboard-card-enter group bg-card/30 border-border/50 hover:border-border hover:shadow-md relative flex flex-col gap-4 overflow-hidden rounded-xl border p-5 transition-all duration-200 ease-out",
                         "has-[a:focus-visible]:ring-ring has-[a:focus-visible]:ring-offset-background has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-offset-2",
                         viewMode === "list" && "sm:p-4",
                       )}
@@ -937,6 +955,6 @@ export function ProjectGrid({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageShell>
   );
 }

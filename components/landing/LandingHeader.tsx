@@ -35,7 +35,7 @@ const navigationData: NavigationSection[] = [
     href: "#features",
   },
   {
-    title: "Storage & Pricing",
+    title: "Storage & license",
     href: "#pricing",
   },
 ];
@@ -80,17 +80,15 @@ export const LandingHeader = (): React.JSX.Element => {
   return (
     <header
       className={cn(
-        "border-border/40 sticky top-0 z-50 w-full border-b transition-all duration-300",
-        isSticky
-          ? "bg-background/95 shadow-xs backdrop-blur-md"
-          : "bg-background/60 backdrop-blur-xs",
+        "border-border/40 bg-background sticky top-0 z-50 w-full border-b transition-shadow duration-300",
+        isSticky && "shadow-xs",
       )}
     >
       <div className="border-border/40 mx-auto flex h-20 max-w-7xl items-center justify-between border-x px-4 sm:px-6 lg:px-8">
         {/* Brand Logo */}
         <Link
           href="/"
-          className="group flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-90"
+          className="group focus-visible:ring-ring/50 flex shrink-0 items-center gap-2.5 rounded-lg transition-opacity hover:opacity-90 focus-visible:ring-3 focus-visible:outline-none"
         >
           <span className="flex size-8 shrink-0 items-center justify-center transition-transform group-hover:scale-105">
             <BrandLogo size={32} />
@@ -116,7 +114,7 @@ export const LandingHeader = (): React.JSX.Element => {
               <a
                 key={navItem.title}
                 href={navItem.href}
-                className="text-muted-foreground hover:text-foreground hover:bg-background rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all"
+                className="text-muted-foreground hover:text-foreground hover:bg-background focus-visible:ring-ring/50 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors focus-visible:ring-3 focus-visible:outline-none"
               >
                 {navItem.title}
               </a>
@@ -129,7 +127,7 @@ export const LandingHeader = (): React.JSX.Element => {
           <ThemeToggle />
           <Link
             href="/dashboard"
-            className="border-border/40 text-foreground hover:bg-muted inline-flex h-10 cursor-pointer items-center justify-center rounded-full border bg-transparent px-4 text-xs font-semibold transition-all"
+            className="border-border/40 text-foreground hover:bg-muted focus-visible:ring-ring/50 inline-flex h-10 cursor-pointer items-center justify-center rounded-full border bg-transparent px-4 text-xs font-semibold transition-colors focus-visible:ring-3 focus-visible:outline-none"
           >
             Workspace
           </Link>
@@ -171,7 +169,7 @@ export const LandingHeader = (): React.JSX.Element => {
                     key={navItem.title}
                     href={navItem.href}
                     onClick={(): void => setIsOpen(false)}
-                    className="hover:bg-muted text-foreground block w-full cursor-pointer rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
+                    className="hover:bg-muted text-foreground focus-visible:ring-ring/50 block w-full cursor-pointer rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:outline-none"
                   >
                     {navItem.title}
                   </a>
@@ -181,7 +179,7 @@ export const LandingHeader = (): React.JSX.Element => {
                 <Link
                   href="/dashboard"
                   onClick={(): void => setIsOpen(false)}
-                  className="border-border/40 text-foreground hover:bg-muted inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-full border bg-transparent px-4 text-sm font-semibold transition-all"
+                  className="border-border/40 text-foreground hover:bg-muted focus-visible:ring-ring/50 inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-full border bg-transparent px-4 text-sm font-semibold transition-colors focus-visible:ring-3 focus-visible:outline-none"
                 >
                   Workspace
                 </Link>

@@ -66,16 +66,29 @@ describe("resolveStorageConnection", () => {
     expect(connection.url).toBe("file:./data/fack.db");
   });
 
-  it("uses cloud mode for a remote URL with an auth token", () => {
+  it("uses selfhosted mode for a remote URL with an auth token", () => {
     const connection = resolveStorageConnection({
       DATABASE_URL: "libsql://my-db.turso.io",
       DATABASE_AUTH_TOKEN: "secret-token",
     });
 
-    expect(connection.mode).toBe("cloud");
+    expect(connection.mode).toBe("selfhosted");
     expect(connection.url).toBe("libsql://my-db.turso.io");
     expect(connection.authToken).toBe("secret-token");
     expect(connection.display).toBe("libsql://my-db.turso.io");
+  });
+
+  it("uses saas mode when FACK_TIER=saas is configured", () => {
+    const connection = resolveStorageConnection({
+      FACK_TIER: "saas",
+      DATABASE_URL: "libsql://saas-db.turso.io",
+      DATABASE_AUTH_TOKEN: "secret-token",
+    });
+
+    expect(connection.mode).toBe("saas");
+    expect(connection.url).toBe("libsql://saas-db.turso.io");
+    expect(connection.authRequired).toBe(true);
+    expect(connection.features.billing).toBe(true);
   });
 
   it("falls back to local when a libsql URL has no auth token", () => {
@@ -102,7 +115,7 @@ describe("resolveStorageConnection", () => {
       DATABASE_URL: "http://127.0.0.1:8080",
     });
 
-    expect(connection.mode).toBe("cloud");
+    expect(connection.mode).toBe("selfhosted");
     expect(connection.url).toBe("http://127.0.0.1:8080");
   });
 

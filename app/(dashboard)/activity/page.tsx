@@ -1,5 +1,10 @@
 import React from "react";
+import Link from "next/link";
 import { RiFileList3Line } from "@remixicon/react";
+
+import { EmptyState } from "@/components/dashboard/EmptyState";
+import { PageHeading, PageShell } from "@/components/dashboard/PageShell";
+import { Button } from "@/components/ui/button";
 
 export const metadata = {
   title: "Activity Logs | Fack API",
@@ -8,23 +13,26 @@ export const metadata = {
 
 export default function ActivityLogsPage(): React.JSX.Element {
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Activity Logs</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Monitor all incoming requests and outgoing responses across your mock
-          APIs in real-time.
-        </p>
-      </div>
+    <PageShell>
+      <PageHeading
+        title="Activity Logs"
+        description="Every request your mock APIs serve, captured per workspace with its method, path, status, and latency."
+      />
 
-      <div className="border-border/50 bg-card flex min-h-100 flex-col items-center justify-center rounded-xl border p-8 text-center shadow-sm">
-        <RiFileList3Line className="text-muted-foreground/30 mb-4 h-12 w-12" />
-        <h3 className="text-lg font-medium">No activity recorded yet</h3>
-        <p className="text-muted-foreground mt-1 max-w-sm text-sm">
-          Once your mock APIs start receiving traffic, detailed request and
-          response logs will appear here.
-        </p>
-      </div>
-    </div>
+      <EmptyState
+        icon={<RiFileList3Line />}
+        title="No requests recorded yet"
+        description="Request logs live inside each workspace. Open one and switch to Logs to watch traffic arrive as it happens."
+        action={
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<Link href="/dashboard" />}
+          >
+            Browse workspaces
+          </Button>
+        }
+      />
+    </PageShell>
   );
 }
