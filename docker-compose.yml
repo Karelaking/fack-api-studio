@@ -29,7 +29,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - DATABASE_URL=/data/fack.db
+      - DATABASE_URL=file:/data/fack.db
       - FACK_DATA_DIR=/data
       - LOGS_POSTGRES_URL=postgresql://fack_user:fack_password@postgres:5432/fack_logs
     depends_on:
