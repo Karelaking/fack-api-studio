@@ -1,3 +1,9 @@
+## [1.18.1](https://github.com/Karelaking/fack-api-studio/compare/v1.18.0...v1.18.1) (2026-11-02)
+
+### Bug Fixes
+
+- **ui:** resolve whatsapp social media preview rendering ([0006958](https://github.com/Karelaking/fack-api-studio/commit/00069586e9a5d24ab5e6fbc33ee422b39b354442))
+
 # [1.18.0](https://github.com/Karelaking/fack-api/compare/v1.17.0...v1.18.0) (2026-11-02)
 
 ### Features
