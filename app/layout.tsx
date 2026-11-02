@@ -41,13 +41,38 @@ const bricolage = Bricolage_Grotesque({
  */
 const themeInitScript = `(function(){try{var stored=localStorage.getItem("theme");var prefersDark=window.matchMedia("(prefers-color-scheme: dark)").matches;var isDark=stored==="dark"||((stored===null||stored==="system")&&prefersDark);var root=document.documentElement;root.classList.toggle("dark",isDark);root.style.colorScheme=isDark?"dark":"light";}catch(e){}})();`;
 
+const defaultSiteUrl =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "https://fackapi.studio");
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-  ),
-  title: "Fack API's — Mock API Platform",
+  metadataBase: new URL(defaultSiteUrl),
+  title: {
+    default: "Fack API Studio | Visual Mock API Platform and Schema Designer",
+    template: "%s | Fack API",
+  },
   description:
-    "High-performance, open-source mock API platform with visual React Flow editor and dynamic payload synthesis.",
+    "Self-hostable mock API platform with a visual node canvas, nested JSON schema builder, Faker.js generators, chaos testing, and TypeScript export.",
+  keywords: [
+    "mock api",
+    "mock backend",
+    "mock server",
+    "visual schema builder",
+    "faker js",
+    "chaos testing",
+    "json schema",
+    "react flow",
+    "typescript dto",
+    "rest api simulator",
+    "self-hosted",
+    "sqlite",
+  ],
+  authors: [
+    { name: "Fack API", url: "https://github.com/Karelaking/fack-api" },
+  ],
+  creator: "Fack API",
   verification: {
     google: "nrArqHdbOXWOZAbBTFZHODCRWz3jmmrv8HvTBs8x1FE",
   },
@@ -55,16 +80,27 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Fack API's — Mock API Platform",
+    type: "website",
+    locale: "en_US",
+    url: "https://fackapi.studio",
+    siteName: "Fack API",
+    title: "Fack API | Visual Mock API Platform and Schema Designer",
     description:
-      "High-performance, open-source mock API platform with visual React Flow editor and dynamic payload synthesis.",
-    images: ["/opengraph-image"],
+      "Self-hostable mock API platform with a visual node canvas, nested JSON schema builder, Faker.js generators, chaos testing, and TypeScript export.",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Fack API Studio Banner",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Fack API's — Mock API Platform",
+    title: "Fack API | Visual Mock API Platform and Schema Designer",
     description:
-      "High-performance, open-source mock API platform with visual React Flow editor and dynamic payload synthesis.",
+      "Self-hostable mock API platform with a visual node canvas, nested JSON schema builder, Faker.js generators, chaos testing, and TypeScript export.",
     images: ["/opengraph-image"],
   },
 };

@@ -210,6 +210,7 @@ const handleRequest = async (request: NextRequest): Promise<NextResponse> => {
 const PUBLIC_PATHS = new Set([
   "/",
   "/llms.txt",
+  "/llms-full.txt",
   "/robots.txt",
   "/sitemap.xml",
   "/opengraph-image",

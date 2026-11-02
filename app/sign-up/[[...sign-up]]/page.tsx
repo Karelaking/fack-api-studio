@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   title: "Create account · Fack API's",
   description:
     "Create a Fack API Studio account and start building against a realistic mock backend in minutes.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 /**

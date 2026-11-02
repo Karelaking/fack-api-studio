@@ -38,25 +38,25 @@ const InteractiveCanvasDemo = dynamic(
 );
 
 export const metadata: Metadata = {
-  title: "Fack API Studio - Visual Mock API Platform & Schema Builder",
+  title: "Fack API Studio | Visual Mock API Platform & Schema Builder",
   description:
-    "Visually design mock backend architectures, auto-generate type-safe Faker.js models & OpenAPI routes, simulate network chaos, and export instant TypeScript DTOs.",
+    "Design mock REST APIs on a visual node canvas, generate Faker.js payloads, simulate chaos latency, and export TypeScript contracts with zero setup.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "Fack API Studio - Visual Mock API Platform & Schema Builder",
+    title: "Fack API Studio | Visual Mock API Platform & Schema Builder",
     description:
-      "Visually design mock backend architectures, auto-generate type-safe Faker.js models & OpenAPI routes, simulate network chaos, and export instant TypeScript DTOs.",
+      "Design mock REST APIs on a visual node canvas, generate Faker.js payloads, simulate chaos latency, and export TypeScript contracts with zero setup.",
     url: "https://fackapi.studio",
-    siteName: "Fack API Studio",
+    siteName: "Fack API",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Fack API Studio - Visual Mock API Platform & Schema Builder",
+    title: "Fack API Studio | Visual Mock API Platform & Schema Builder",
     description:
-      "Visually design mock backend architectures, auto-generate type-safe Faker.js models, and export instant TypeScript DTOs.",
+      "Design mock REST APIs on a visual node canvas, generate Faker.js payloads, simulate chaos latency, and export TypeScript contracts with zero setup.",
   },
 };
 
@@ -65,7 +65,7 @@ const jsonLd = [
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "Fack API Studio",
-    operatingSystem: "Web",
+    operatingSystem: "Web, macOS, Windows, Linux, Docker",
     applicationCategory: "DeveloperApplication",
     offers: {
       "@type": "Offer",
@@ -73,16 +73,18 @@ const jsonLd = [
       priceCurrency: "USD",
     },
     description:
-      "Visually design mock backend architectures, auto-generate type-safe Faker.js models, and export instant TypeScript DTOs.",
+      "Self-hostable mock API platform with a visual node canvas, nested JSON schema builder, Faker.js generators, chaos testing, and TypeScript export.",
     url: "https://fackapi.studio",
+    codeRepository: "https://github.com/Karelaking/fack-api",
+    license: "https://opensource.org/licenses/MIT",
     featureList: [
-      "Visual Flow Mock API Canvas",
+      "Visual Node Mock API Canvas",
+      "Nested JSON Schema Builder",
       "Faker.js Payload Synthesis Engine",
-      "Chaos & Latency Injector",
-      "Client-Side SQLite Engine",
-      "1-Click DTO & OpenAPI Export",
-      "Real-Time AST Schema Validator",
-      "Instant In-Memory Route Handlers",
+      "Network Chaos and Latency Simulator",
+      "Local-First SQLite Engine with Zero Configuration",
+      "TypeScript Contract and OpenAPI Export",
+      "Bounded In-Memory LRU Cache Layer",
     ],
   },
   {
@@ -91,6 +93,52 @@ const jsonLd = [
     name: "Fack API Studio",
     url: "https://fackapi.studio",
     description: "Visual Mock API Platform & Schema Builder",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "What is Fack API?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Fack API is an open-source, self-hostable mock backend platform that allows frontend and mobile developers to build and test applications independently before real backend services are ready.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Does Fack API require an external database or cloud account?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "No. By default, Fack API runs in local-first mode using a private SQLite file on disk. No API keys, cloud accounts, or database servers are required. Optional cloud synchronization is supported via Turso.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How does Fack API generate realistic mock data?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Fack API combines standard JSON Schema definitions with Faker.js data generators to automatically synthesize realistic names, addresses, dates, internet handles, commerce items, and UUIDs.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Can I simulate network latency and API failure rates?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes. Every route includes chaos simulation controls to set minimum and maximum latency delays and configurable error rates to test application resilience.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How do client applications call mock routes?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Mock routes can be called directly over HTTP using path-based namespaces (http://localhost:3000/:projectSlug/...) or subdomain routing (http://:projectSlug.localhost:3000/...).",
+        },
+      },
+    ],
   },
 ];
 

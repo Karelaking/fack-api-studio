@@ -1,0 +1,209 @@
+# Fack API: Complete System & Architecture Documentation
+
+Fack API is an open-source, self-hostable mock API platform and visual schema designer. It allows frontend, mobile, and QA engineers to create realistic, controllable HTTP mock endpoints before backend services exist.
+
+## Table of Contents
+
+1. System Architecture
+2. Hierarchy and Data Model
+3. Storage Tiers and Persistence
+4. Routing and Path Matching
+5. Mock Data Generation Engine
+6. Chaos and Latency Simulation
+7. Client Contract Export
+8. API Request Examples
+9. Docker Deployment
+
+---
+
+## 1. System Architecture
+
+Fack API runs as a unified Next.js 16 application with React 19, TypeScript, and Tailwind CSS v4.
+
+### Request Flow
+
+1. An incoming client request arrives at the edge proxy handler (proxy.ts).
+2. The proxy checks if the request targets a mock namespace (/:projectSlug/* or subdomain).
+3. If the route matches a mock project, the in-memory LRU cache is inspected.
+4. On a cache miss, the route matcher (path-to-regexp) resolves the route definition from SQLite.
+5. The mock engine (json-schema-faker and @faker-js/faker) synthesizes dynamic values for fields marked with x-faker keywords.
+6. Chaos simulation injects configured latency (min and max milliseconds) or triggers configured error rates.
+7. The simulated response payload, HTTP status code, and custom headers are returned to the client.
+
+---
+
+## 2. Hierarchy and Data Model
+
+The platform organizes mock services into a three-level hierarchy:
+
+### Project (Workspace)
+A project represents an isolated API namespace. Each project contains:
+- Unique identifier and slug (used in routing)
+- Display name and description
+- Cache and request logging configuration
+- Associated endpoints and scenarios
+
+### Endpoint
+An endpoint represents a logical group of routes sharing a base path (for example, /users or /v1/checkout).
+
+### Route
+A route defines an individual HTTP method and path pattern:
+- Method: GET, POST, PUT, PATCH, DELETE
+- Path: Express-style pattern (for example, /:id or /orders/:orderId/items)
+- Status code: Default 200, or custom (201, 204, 400, 404, 500)
+- Response schema: Standard JSON Schema with x-faker extensions
+- Latency bounds: Minimum and maximum delay in milliseconds
+- Error rate: Probability of simulated failure (0 to 100 percent)
+- Custom headers: Key-value header pairs returned with responses
+- Auth requirement: Optional HMAC-signed bearer token simulation
+
+---
+
+## 3. Storage Tiers and Persistence
+
+Fack API provides three storage tiers to support air-gapped development, team sharing, and cloud hosting:
+
+### Tier 1: Local File-Based Mode (Default)
+When no remote database keys are present, all project data is stored in a private SQLite database on disk:
+- Windows: %APPDATA%\fack-api\fack.db
+- macOS: ~/Library/Application Support/fack-api/fack.db
+- Linux: ~/.local/share/fack-api/fack.db
+
+Override the directory by setting the FACK_DATA_DIR environment variable. Local mode requires zero configuration and zero API keys.
+
+### Tier 2: Self-Hosted Remote Database
+Set DATABASE_URL and DATABASE_AUTH_TOKEN in .env to connect to any libSQL or Turso compatible database.
+Data can be migrated between local disk and remote database using the built-in copy tool:
+- Push local data to cloud: pnpm db:copy --from local --to libsql://your-db.turso.io
+- Pull cloud data to local disk: pnpm db:copy --from libsql://your-db.turso.io --to local
+
+### Tier 3: Managed Cloud Mode
+Activated by setting FACK_TIER=saas. Enforces Clerk authentication and workspace ownership.
+
+---
+
+## 4. Routing and Path Matching
+
+Fack API supports two routing patterns without requiring special prefix segments:
+
+### Path-Based Routing
+Target routes using the project slug as the primary path segment:
+```
+http://localhost:3000/:projectSlug/:routePath
+```
+Example:
+```
+GET http://localhost:3000/payment-service/v1/customers/cust_101
+```
+
+### Subdomain Routing
+Target routes using the project slug as a local or production subdomain:
+```
+http://:projectSlug.localhost:3000/:routePath
+```
+Example:
+```
+GET http://payment-service.localhost:3000/v1/customers/cust_101
+```
+
+Path parameters (such as :customerId) are extracted and injected into the response context dynamically.
+
+---
+
+## 5. Mock Data Generation Engine
+
+Response schemas follow standard JSON Schema specifications. Dynamic mock values are assigned using the x-faker property on schema fields:
+
+Supported Faker.js generator categories:
+- Person: fullName, firstName, lastName, gender, jobTitle
+- Internet: email, username, url, ip, avatar
+- Location: streetAddress, city, state, country, zipCode
+- Commerce: productName, price, department, isbn
+- Date: past, recent, future, birthdate
+- System & Identifiers: uuid, nanoid, semver, fileExt
+
+When an endpoint is called, the mock engine generates fresh, realistic payloads adhering to the schema structure, nested objects, and array length bounds.
+
+---
+
+## 6. Chaos and Latency Simulation
+
+To test client application resilience under degraded network conditions:
+- Randomized Latency: Define minimum and maximum millisecond delays (for example, min 200ms, max 1200ms).
+- Failure Injection: Set an error rate percentage (for example, 10%). The engine randomly returns a 500 Internal Server Error for that proportion of requests.
+- Custom Status Overrides: Simulate specific error conditions (400 Bad Request, 401 Unauthorized, 404 Not Found, 429 Too Many Requests).
+
+---
+
+## 7. Client Contract Export
+
+Schemas built visually can be exported directly into client applications:
+- TypeScript Definitions: Compiles JSON Schema trees into clean .d.ts interfaces using json-schema-to-typescript.
+- OpenAPI 3.0: Generates valid OpenAPI YAML or JSON specifications for importing into Postman, Insomnia, or Swagger UI.
+- Project Backups: Exports workspace topologies into plain JSON files for version control and migration.
+
+---
+
+## 8. API Request Examples
+
+### Fetch Single Resource
+Request:
+```bash
+curl -X GET http://localhost:3000/ecommerce-mock/products/prod_4821
+```
+
+Response:
+```json
+{
+  "id": "prod_4821",
+  "name": "Ergonomic Steel Keyboard",
+  "price": "89.99",
+  "department": "Electronics",
+  "inStock": true,
+  "createdAt": "2026-03-12T14:22:00.000Z"
+}
+```
+
+### Query Filtering & Pagination
+Request:
+```bash
+curl -X GET "http://localhost:3000/ecommerce-mock/products?count=3&page=1"
+```
+
+Response:
+```json
+{
+  "page": 1,
+  "limit": 3,
+  "total": 45,
+  "items": [
+    { "id": "1", "name": "Item A" },
+    { "id": "2", "name": "Item B" },
+    { "id": "3", "name": "Item C" }
+  ]
+}
+```
+
+---
+
+## 9. Docker Deployment
+
+### Docker Compose
+Run with docker compose:
+```bash
+docker compose up -d
+```
+Access the studio dashboard at http://localhost:3000. Data persists in the fack-data volume.
+
+### Pre-Built Docker Hub Image
+```bash
+docker run -d -p 3000:3000 -v fack-data:/app/data mkkatiyar277/fake-api:latest
+```
+
+---
+
+## License
+
+Fack API is open source under the MIT License.
+Repository: https://github.com/Karelaking/fack-api
+Website: https://fackapi.studio
