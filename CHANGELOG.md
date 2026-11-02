@@ -1,3 +1,9 @@
+# [1.18.0](https://github.com/Karelaking/fack-api/compare/v1.17.0...v1.18.0) (2026-11-02)
+
+### Features
+
+- **ui:** update social preview and optimize seo metadata ([ed80c55](https://github.com/Karelaking/fack-api/commit/ed80c55085475b59a953fd53fbdf3fbf2419448b))
+
 # [1.17.0](https://github.com/Karelaking/fack-api/compare/v1.16.2...v1.17.0) (2026-11-02)
 
 ### Features
