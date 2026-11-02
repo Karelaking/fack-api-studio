@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="./public/logo-v2.png" alt="Fack API's Logo" width="128" height="128" style="border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 10px 30px rgba(0,0,0,0.35);" />
+  <img src="./public/logo-v2.png" alt="Fack API Logo" width="128" height="128"" />
 </p>
 
-<h1 align="center">🛠️ FACK API'S</h1>
+<h1 align="center">Fack API</h1>
 
 <p align="center">
-  <strong>A premium, self-hostable, node-based mock API platform for modern frontend & backend decoupled workflows.</strong>
+  A node-based mock API platform and visual schema designer for decoupled frontend and backend development.
 </p>
 
 <p align="center">
@@ -21,60 +21,89 @@
 
 ---
 
-Fack API's is a zero-configuration, self-hostable mock API platform designed to streamline decoupled software development. It functions as a flexible, high-fidelity mock backend that allows frontend and mobile teams to build and test code independently. With a graphical node canvas, a visual schema builder, custom chaos testing, and automatic TypeScript compilation, Fack API's accelerates your dev cycle from days to hours.
+Fack API is a self-hostable mock backend platform. It gives frontend and mobile teams realistic HTTP endpoints before the actual backend exists. You can design endpoints on a visual node canvas, configure nested JSON schemas, map fields to Faker.js data generators, simulate latency and network errors, and export TypeScript contracts. Everything runs locally on SQLite by default, with optional cloud synchronization through Turso.
 
 ---
 
-## 📸 Screenshots & Showcase
+## Interface Across Devices
+
+### Desktop
 
 <table>
   <tr>
     <td width="50%" align="center">
-      <strong>🗂️ Workspaces Dashboard</strong><br />
-      <img src="./public/screenshots/dashboard.png" alt="Workspaces Dashboard" style="border-radius: 8px; border: 1px solid var(--border);" />
+      <strong>Node-based canvas designer</strong><br />
+      <img src="./public/screenshots/canvas.png" alt="Node-based Canvas Designer" style="border-radius: 8px; border: 1px solid var(--border);" />
     </td>
     <td width="50%" align="center">
-      <strong>🎨 Node-Based Canvas Designer</strong><br />
-      <img src="./public/screenshots/canvas.png" alt="Node-Based Canvas Designer" style="border-radius: 8px; border: 1px solid var(--border);" />
+      <strong>Workspaces dashboard</strong><br />
+      <img src="./public/screenshots/dashboard.png" alt="Workspaces Dashboard" style="border-radius: 8px; border: 1px solid var(--border);" />
     </td>
   </tr>
   <tr>
-    <td colspan="2" align="center">
-      <strong>⚙️ Workspace Settings & Safe Deletion</strong><br />
-      <img src="./public/screenshots/settings.png" alt="Workspace Settings" style="max-width: 70%; border-radius: 8px; border: 1px solid var(--border);" />
+    <td width="50%" align="center">
+      <strong>Route configuration & schema builder</strong><br />
+      <img src="./public/screenshots/route-editor.png" alt="Route Configuration and Schema Builder" style="border-radius: 8px; border: 1px solid var(--border);" />
+    </td>
+    <td width="50%" align="center">
+      <strong>Workspace settings & storage tiers</strong><br />
+      <img src="./public/screenshots/settings.png" alt="Workspace Settings and Storage Management" style="border-radius: 8px; border: 1px solid var(--border);" />
+    </td>
+  </tr>
+</table>
+
+### Tablet and Mobile
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <strong>Tablet: Workspaces dashboard (768px)</strong><br />
+      <img src="./public/screenshots/tablet-dashboard.png" alt="Tablet Dashboard View" style="border-radius: 8px; border: 1px solid var(--border);" />
+    </td>
+    <td width="50%" align="center">
+      <strong>Tablet: Canvas topology (1024px)</strong><br />
+      <img src="./public/screenshots/tablet-canvas.png" alt="Tablet Canvas View" style="border-radius: 8px; border: 1px solid var(--border);" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <strong>Mobile: Workspace browser (390px)</strong><br />
+      <img src="./public/screenshots/mobile-dashboard.png" alt="Mobile Workspace Browser View" style="max-width: 80%; border-radius: 8px; border: 1px solid var(--border);" />
+    </td>
+    <td width="50%" align="center">
+      <strong>Mobile: Canvas and bottom navigation (390px)</strong><br />
+      <img src="./public/screenshots/mobile-canvas.png" alt="Mobile Canvas and Bottom Navigation" style="max-width: 80%; border-radius: 8px; border: 1px solid var(--border);" />
     </td>
   </tr>
 </table>
 
 ---
 
-## ✨ Features
+## Core Capabilities
 
-- 🌐 **Clean Namespaces & Subdomain Routing**: Direct endpoint access without unnecessary prefixes (e.g., `http://localhost:3000/:projectSlug/...` or subdomain `http://:projectSlug.localhost:3000/...`).
-- 🎨 **Visual Node Canvas**: Design your endpoints graphically, customize HTTP methods, and simulate response pipelines with **React Flow** (@xyflow/react).
-- 🌳 **Nested JSON Schema Builder**: Build complex response bodies with deep nestings (objects, arrays, primitives) without writing manual JSON schemas.
-- 🎲 **Faker.js Data Synthesizer**: Connect any schema property to a rich library of data providers (names, images, finance, dates, addresses, internet).
-- ⚡ **Chaos Testing Simulator**: Inject randomized delays (min/max latency) and specify failure rates (e.g., 5% of queries fail with a 500 error) to test UI resilience.
-- ⚡ **Bounded LRU Cache Layer**: In-memory caching with configurable TTL and granular per-project and per-route cache invalidation.
-- 📁 **Type Contract Exporter**: Automatically compile client-side TypeScript interfaces (`.d.ts` files) directly from your visual schemas.
-- 📐 **Agent-First Design System Linting**: Validated with `@shadcn/lint` and ESLint 9 to ensure strict design system compliance.
-- 🚀 **Zero-Config Database**: Backed by high-performance local SQLite wrapped in type-safe Drizzle ORM queries.
-- 🐳 **Native Containerization**: Multi-stage Alpine Docker build with Docker Compose support for persistent storage and logging.
+- Node canvas built with React Flow (@xyflow/react) to lay out endpoints, methods, and status codes graphically.
+- Nested schema editor supporting objects, arrays, primitives, and nullables without hand-writing JSON Schema.
+- Mock data synthesis via Faker.js, covering names, addresses, dates, internet identifiers, and UUIDs.
+- Chaos testing controls to inject randomized delays, min/max latency, and error rates per route.
+- Direct path routing (`http://localhost:3000/:projectSlug/...`) and subdomain routing (`http://:projectSlug.localhost:3000/...`).
+- In-memory LRU cache layer with configurable TTL and manual cache invalidation.
+- Client contract export to download TypeScript definitions (`.d.ts`) directly from visual schemas.
+- Dual storage support: private SQLite file on disk with zero configuration, or remote cloud storage with Turso.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
 graph TD
-    A["💻 Client / Frontend App"] -->|"1. API Request (/:projectSlug/* or Subdomain)"| D["🔀 Edge Proxy Layer (proxy.ts)"]
-    B["🖥️ Dashboard UI"] -->|"Define Schema & Topology"| C[("💾 SQLite Database (Drizzle ORM)")]
-    C -->|"Sync & Invalidate"| CACHE["⚡ LRU Cache Layer"]
-    D -->|"Check Cache"| CACHE
+    A["Client App (Web / Mobile)"] -->|"1. HTTP Request (/:projectSlug/* or Subdomain)"| D["Edge Proxy Layer (proxy.ts)"]
+    B["Studio Dashboard"] -->|"Define Schema and Topology"| C[("SQLite Database (Drizzle ORM)")]
+    C -->|"Sync and Invalidate"| CACHE["LRU Cache Layer"]
+    D -->|"Cache Lookup"| CACHE
     CACHE -.->|"Cache Miss"| D
-    D -->|"2. Match Route (path-to-regexp)"| E["🎲 Mock Engine (JSF + Faker.js)"]
-    E -->|"3. Add Latency & Chaos Sim"| F["⚡ Delay / Error Injector"]
-    F -->|"4. Return Payload / Code"| A
+    D -->|"2. Match Route (path-to-regexp)"| E["Mock Engine (JSF + Faker.js)"]
+    E -->|"3. Add Latency & Errors"| F["Chaos Simulation"]
+    F -->|"4. Return JSON Payload"| A
 
     style A fill:#4F46E5,stroke:#fff,stroke-width:2px,color:#fff
     style B fill:#10B981,stroke:#fff,stroke-width:2px,color:#fff
@@ -87,210 +116,144 @@ graph TD
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
-| Component         | Technology                           | Role                                           |
-| :---------------- | :----------------------------------- | :--------------------------------------------- |
-| **Framework**     | Next.js 16 (App Router + Turbopack)  | Runtime container, SSR, and edge proxy handler |
-| **UI Library**    | React 19                             | Modern reactive component foundation           |
-| **Flow Canvas**   | React Flow (@xyflow/react v12)       | Visual node topology canvas                    |
-| **UI Primitives** | Base UI (@base-ui/react) + shadcn/ui | Accessible headless and styled UI components   |
-| **Styling**       | Tailwind CSS v4                      | High-performance utility styling               |
-| **State Manager** | Zustand v5 + Immer                   | Reactive schema editing and state persistence  |
-| **ORM**           | Drizzle ORM (v0.45)                  | Database schema mapping and DDL generation     |
-| **Database**      | SQLite (@libsql/client)              | Fast, portable file-based database             |
-| **Cache Layer**   | LRUCache (`lru-cache`)               | Bounded in-memory route and data cache         |
-| **Mock Engine**   | json-schema-faker + @faker-js/faker  | Synthetic mock payload generation              |
-| **Route Matcher** | path-to-regexp                       | Express-style pattern matching                 |
-| **Type Compiler** | json-schema-to-typescript            | Compiles schema trees into TypeScript types    |
-| **Code Quality**  | ESLint 9 + @shadcn/lint + Prettier   | Linting and design system enforcement          |
-| **Test Runner**   | Vitest v4                            | Fast unit and integration testing              |
+| Layer                | Technology                      | Details                                                    |
+| :------------------- | :------------------------------ | :--------------------------------------------------------- |
+| Framework            | Next.js 16 (Turbopack)          | App Router, server actions, and edge proxy handler         |
+| Frontend             | React 19                        | UI component layer                                         |
+| Visual Canvas        | React Flow (@xyflow/react v12)  | Interactive node graph and routing canvas                  |
+| Component Primitives | Base UI and Radix UI            | Accessible headless primitives styled with Tailwind CSS v4 |
+| State Management     | Zustand v5 and Immer            | Canvas state and route store                               |
+| Database and ORM     | Drizzle ORM (v0.45) with SQLite | Local file via @libsql/client or remote Turso database     |
+| Data Generator       | json-schema-faker and Faker.js  | Generates typed synthetic response bodies                  |
+| Path Matching        | path-to-regexp                  | Express-compatible parameter extraction                    |
+| Type Compiler        | json-schema-to-typescript       | Generates TypeScript interfaces from visual schemas        |
+| Test Runner          | Vitest v4                       | Unit and integration test suite                            |
 
 ---
 
-## 🚀 Quick Start (Local Development)
+## Quick Start
 
 ### Prerequisites
 
-- **Node.js 20.19+** (Node.js 26 recommended)
-- **pnpm** (v10+ or v11+)
+- Node.js 20.19 or later (Node.js 26 recommended)
+- pnpm 10 or later
 
-### Step-by-Step Setup
+### Setup
 
-1. **Clone the repository**:
+1. Clone the repository:
 
    ```bash
    git clone https://github.com/Karelaking/fack-api.git
    cd fack-api
    ```
 
-2. **Install dependencies**:
+2. Install dependencies:
 
    ```bash
    pnpm install
    ```
 
-3. **Initialize the local database**:
+3. Initialize database tables:
 
    ```bash
    pnpm drizzle-kit push
    ```
 
-4. **Boot the Next.js development server**:
+4. Start the development server:
 
    ```bash
    pnpm dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) for the landing page or [http://localhost:3000/dashboard](http://localhost:3000/dashboard) to manage your projects.
-
-### Zero-Config Local Mode (no API keys required)
-
-You do **not** need any database API keys to run Fack. When `DATABASE_URL`
-and `DATABASE_AUTH_TOKEN` are left empty, the app runs in **local mode**:
-
-- All project data — projects, endpoints, canvas state, notes, and settings —
-  is stored in a private SQLite file on your disk:
-  - Windows: `%APPDATA%\fack-api\fack.db`
-  - macOS: `~/Library/Application Support/fack-api/fack.db`
-  - Linux: `~/.local/share/fack-api/fack.db`
-- Nothing leaves your machine. A legacy `.\data\fack.db` from older versions
-  is migrated to the new location automatically on first boot.
-- Override the location with `FACK_DATA_DIR="D:/some/path"` if you prefer.
-
-The startup log confirms the active mode:
-
-```
-Storage mode: LOCAL — all project data stays on this machine (C:\Users\…\fack-api\fack.db)
-```
-
-### Storage: Local ↔ Cloud
-
-Adding database API keys switches storage to the cloud — the same code, data,
-and UI work in both modes:
-
-1. Create a Turso database and copy your credentials into `.env`:
-
-   ```bash
-   DATABASE_URL="libsql://your-db.turso.io"
-   DATABASE_AUTH_TOKEN="eyJ..."
-   ```
-
-2. Restart the app. It now runs in **cloud mode** and your data is reachable
-   from any device you sign in on.
-
-3. Copy existing local data over: open **Settings → Storage & Data** and use
-   **Import backup** after downloading the backup from the local install, or
-   copy everything from the terminal:
-
-   ```bash
-   pnpm db:copy --from local --to libsql://your-db.turso.io
-   ```
-
-Removing the keys and restarting returns you to private local storage.
-Backups are plain JSON / SQLite files on your disk:
-
-```bash
-pnpm db:backup            # copy the local DB file to <data-dir>/backups/
-pnpm db:backup -- --remote # dump a remote database to JSON
-```
-
-### Additional Scripts
-
-- **Run tests**:
-  ```bash
-  pnpm test
-  ```
-- **Run linter**:
-  ```bash
-  pnpm lint
-  ```
-- **Build production bundle**:
-  ```bash
-  pnpm build
-  ```
-- **Copy data between databases** (local ⇄ cloud):
-  ```bash
-  pnpm db:copy --from local --to libsql://your-db.turso.io --dry-run
-  ```
-- **Create a disk backup**:
-  ```bash
-  pnpm db:backup
-  ```
+5. Visit [http://localhost:3000](http://localhost:3000) for the overview or [http://localhost:3000/dashboard](http://localhost:3000/dashboard) to view your workspaces.
 
 ---
 
-## 🧪 Running Tests
+## Storage Modes
 
-Every storage mode and the notes/backup features are covered by the Vitest
-suite:
+### Local Mode (Zero Configuration)
+
+When `DATABASE_URL` is omitted or when `STORAGE_MODE=local` is set, Fack runs entirely on your local machine without authentication or remote services.
+
+Project data, routes, and canvas layouts are saved to an SQLite file on disk:
+
+- Windows: `%APPDATA%\fack-api\fack.db`
+- macOS: `~/Library/Application Support/fack-api/fack.db`
+- Linux: `~/.local/share/fack-api/fack.db`
+
+You can customize the storage directory by setting `FACK_DATA_DIR` in your environment.
+
+### Cloud Mode (Turso)
+
+To share projects across machines or team members, connect a remote Turso database in `.env`:
 
 ```bash
-pnpm test
+DATABASE_URL="libsql://your-db.turso.io"
+DATABASE_AUTH_TOKEN="your-token"
 ```
 
-Notable coverage (`test/`):
-
-| File                   | What it locks down                                                     |
-| :--------------------- | :--------------------------------------------------------------------- |
-| `storage-mode.test.ts` | Local-by-default resolution, cloud detection, token masking, fallbacks |
-| `config-store.test.ts` | Atomic JSON config writes in the local data directory                  |
-| `notes.test.ts`        | Notes CRUD, pin ordering, validator limits                             |
-| `backup.test.ts`       | Export/restore round-trips, date revival, per-user ownership filtering |
-| `db-copy.test.ts`      | `db:copy` table ordering, upserts, dry runs                            |
-
-Test databases are written to `data/test-fack-<pid>.db`; clean them up with:
+You can migrate data between local disk and Turso at any time using the migration script:
 
 ```bash
-pnpm db:clean
+# Push local data to Turso
+pnpm db:copy --from local --to libsql://your-db.turso.io
+
+# Pull remote data down to a local file
+pnpm db:copy --from libsql://your-db.turso.io --to local
+```
+
+Create backups to JSON or SQLite:
+
+```bash
+pnpm db:backup            # Copies local SQLite file to backups/
+pnpm db:backup -- --remote # Exports remote Turso database to JSON
 ```
 
 ---
 
-## 🐳 Docker Deployment
+## Docker Deployment
 
-You can self-host Fack API's on your local machine, homelab, or cloud server:
+### Docker Compose
 
-### Option A: Build and Run with Docker Compose (Recommended)
-
-Docker Compose sets up Fack API's alongside an optional PostgreSQL instance for request logging and Nginx for reverse proxying:
+Run Fack API alongside an optional PostgreSQL database for request logging:
 
 ```bash
 docker compose up -d
 ```
 
-- Dashboard is accessible at `http://localhost:3000` (or `http://localhost:80` via Nginx).
-- Database and project topologies are persisted in the `fack-data` Docker volume.
+- Studio UI is accessible at `http://localhost:3000` (or port 80 when using Nginx reverse proxy).
+- SQLite data files persist inside the `fack-data` Docker volume.
 
-### Option B: Pull Pre-built Image from Docker Hub
+### Docker Image
+
+Pull and run the pre-built image directly:
 
 ```bash
-# Pull the Docker image
 docker pull mkkatiyar277/fake-api:latest
-
-# Run the container with persistent volume
 docker run -d -p 3000:3000 -v fack-data:/app/data mkkatiyar277/fake-api:latest
 ```
 
 ---
 
-## 📡 API Usage Example
+## API Usage Example
 
-Create a project with slug `payment-service` and add a route `GET /v1/customers/:customerId`:
+Create a workspace with slug `payment-service` and add a route `GET /v1/customers/:customerId`:
 
-### Direct Path Routing:
+### Direct Path Request
 
 ```bash
 curl -X GET http://localhost:3000/payment-service/v1/customers/cust_9923
 ```
 
-### Subdomain Routing (Local or Production):
+### Subdomain Request
 
 ```bash
 curl -X GET http://payment-service.localhost:3000/v1/customers/cust_9923
 ```
 
-### Response Payload:
+### Response
 
 ```json
 {
@@ -304,9 +267,7 @@ curl -X GET http://payment-service.localhost:3000/v1/customers/cust_9923
 }
 ```
 
-### Query Parameter Filtering & Pagination
-
-The mock engine supports dynamic pagination and query parameters out of the box:
+### Query Filtering and Pagination
 
 ```bash
 curl -X GET "http://localhost:3000/payment-service/v1/customers?count=5"
@@ -314,6 +275,30 @@ curl -X GET "http://localhost:3000/payment-service/v1/customers?count=5"
 
 ---
 
-## 📄 License
+## Tests
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+Run the test suite with Vitest:
+
+```bash
+pnpm test
+```
+
+Test coverage includes:
+
+- `storage-mode.test.ts`: Local and cloud mode detection, credential masking, fallbacks
+- `config-store.test.ts`: Atomic workspace configuration persistence on disk
+- `notes.test.ts`: Notes CRUD, validator bounds, and pinning
+- `backup.test.ts`: JSON/SQLite export and restore round trips
+- `db-copy.test.ts`: Table migration ordering and upsert safety
+
+Clean up leftover test databases:
+
+```bash
+pnpm db:clean
+```
+
+---
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
