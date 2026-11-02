@@ -1,3 +1,9 @@
+# [1.17.0](https://github.com/Karelaking/fack-api/compare/v1.16.2...v1.17.0) (2026-11-02)
+
+### Features
+
+- **db:** implement three-tier storage and local file management ([a58ff8f](https://github.com/Karelaking/fack-api/commit/a58ff8f0747cb9a9aa70d4626f903a9786d99da0))
+
 ## [1.16.2](https://github.com/Karelaking/fack-api/compare/v1.16.1...v1.16.2) (2026-10-29)
 
 ### Bug Fixes
