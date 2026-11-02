@@ -133,7 +133,7 @@ export const Footer = (): React.JSX.Element => {
               rel="noopener noreferrer"
               className="text-foreground focus-visible:ring-ring/50 rounded-sm font-semibold transition-colors focus-visible:ring-3 focus-visible:outline-none"
             >
-              Karelaking
+              M.K Katiyar
             </a>
             .
           </p>

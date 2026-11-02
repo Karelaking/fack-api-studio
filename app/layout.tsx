@@ -41,11 +41,22 @@ const bricolage = Bricolage_Grotesque({
  */
 const themeInitScript = `(function(){try{var stored=localStorage.getItem("theme");var prefersDark=window.matchMedia("(prefers-color-scheme: dark)").matches;var isDark=stored==="dark"||((stored===null||stored==="system")&&prefersDark);var root=document.documentElement;root.classList.toggle("dark",isDark);root.style.colorScheme=isDark?"dark":"light";}catch(e){}})();`;
 
-const defaultSiteUrl =
-  process.env.NEXT_PUBLIC_APP_URL ||
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "https://fackapi.studio");
+function resolveSiteUrl(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "https://fackapi.studio");
+
+  if (!raw.startsWith("http://") && !raw.startsWith("https://")) {
+    return `https://${raw}`;
+  }
+  return raw.replace(/\/+$/, "");
+}
+
+const defaultSiteUrl = resolveSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultSiteUrl),
@@ -82,26 +93,28 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://fackapi.studio",
+    url: "./",
     siteName: "Fack API",
-    title: "Fack API | Visual Mock API Platform and Schema Designer",
+    title: "Fack API Studio | Visual Mock API Platform and Schema Designer",
     description:
       "Self-hostable mock API platform with a visual node canvas, nested JSON schema builder, Faker.js generators, chaos testing, and TypeScript export.",
     images: [
       {
-        url: "/opengraph-image",
+        url: "/og-image.jpg",
+        secureUrl: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Fack API Studio Banner",
+        type: "image/jpeg",
+        alt: "Fack API Studio: Visual Mock API Platform and Schema Designer",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Fack API | Visual Mock API Platform and Schema Designer",
+    title: "Fack API Studio | Visual Mock API Platform and Schema Designer",
     description:
       "Self-hostable mock API platform with a visual node canvas, nested JSON schema builder, Faker.js generators, chaos testing, and TypeScript export.",
-    images: ["/opengraph-image"],
+    images: ["/og-image.jpg"],
   },
 };
 
@@ -117,6 +130,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        <link rel="image_src" href={`${defaultSiteUrl}/og-image.jpg`} />
         {/*
           Blocking inline script: sets the theme class before the browser
           paints, avoiding a flash of the default (light) theme.

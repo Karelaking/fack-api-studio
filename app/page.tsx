@@ -48,15 +48,26 @@ export const metadata: Metadata = {
     title: "Fack API Studio | Visual Mock API Platform & Schema Builder",
     description:
       "Design mock REST APIs on a visual node canvas, generate Faker.js payloads, simulate chaos latency, and export TypeScript contracts with zero setup.",
-    url: "https://fackapi.studio",
+    url: "./",
     siteName: "Fack API",
     type: "website",
+    images: [
+      {
+        url: "/og-image.jpg",
+        secureUrl: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        type: "image/jpeg",
+        alt: "Fack API Studio: Visual Mock API Platform and Schema Designer",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Fack API Studio | Visual Mock API Platform & Schema Builder",
     description:
       "Design mock REST APIs on a visual node canvas, generate Faker.js payloads, simulate chaos latency, and export TypeScript contracts with zero setup.",
+    images: ["/og-image.jpg"],
   },
 };
 

@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="./public/logo-v2.png" alt="Fack API Logo" width="128" height="128"" />
+  <img src="./public/logo-v2.png" alt="Fack API Logo" width="128" height="128" />
 </p>
 
-<h1 align="center">Fack API</h1>
+<h1 align="center">Fack API Studio</h1>
 
 <p align="center">
   A node-based mock API platform and visual schema designer for decoupled frontend and backend development.
