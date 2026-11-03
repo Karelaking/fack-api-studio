@@ -1,3 +1,9 @@
+## [1.20.1](https://github.com/Karelaking/fack-api-studio/compare/v1.20.0...v1.20.1) (2026-11-03)
+
+### Bug Fixes
+
+- **dashboard:** standardize project url routing and remove preview page ([d96c976](https://github.com/Karelaking/fack-api-studio/commit/d96c976c7c396614d5341c98b69d258b691a44c6))
+
 # [1.20.0](https://github.com/Karelaking/fack-api-studio/compare/v1.19.2...v1.20.0) (2026-11-03)
 
 ### Features
