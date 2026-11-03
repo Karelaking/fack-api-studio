@@ -25,6 +25,7 @@ export async function getCanvasState(projectId: string): Promise<
   | undefined
 > {
   canvasTrace.traceCall("getCanvasState", projectId);
+  await requireProjectAccess(projectId);
   try {
     const state = await db.query.canvasStates.findFirst({
       where: eq(canvasStates.projectId, projectId),

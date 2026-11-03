@@ -179,6 +179,7 @@ export class FackApiClient {
       headers.set("Authorization", `Bearer ${this.token}`);
     } else if (fallbackKey) {
       headers.set("Authorization", `Bearer ${fallbackKey}`);
+      headers.set("X-Fack-Project-Key", fallbackKey);
     }
 
     const response = await fetch(

@@ -4,6 +4,7 @@ import {
   decryptBundle,
   generateProjectSecretKey,
   validateProjectSecretKey,
+  getMasterEncryptionSalt,
 } from "@/lib/bundle/bundle-crypto.service";
 import {
   BUNDLE_MAGIC_HEADER,
@@ -102,5 +103,31 @@ describe("bundle-crypto.service", () => {
     expect(() => {
       decryptBundle(encryptedBuffer, secretKey);
     }).toThrow(/Failed to decrypt bundle/);
+  });
+
+  it("should throw in production if FACK_ENCRYPTION_SECRET is not configured", () => {
+    const originalEnv = process.env.NODE_ENV;
+    const originalSecret = process.env.FACK_ENCRYPTION_SECRET;
+
+    try {
+      Object.assign(process.env, { NODE_ENV: "production" });
+      delete process.env.FACK_ENCRYPTION_SECRET;
+      expect(() => getMasterEncryptionSalt()).toThrow(
+        /FACK_ENCRYPTION_SECRET must be configured/,
+      );
+    } finally {
+      Object.assign(process.env, { NODE_ENV: originalEnv });
+      process.env.FACK_ENCRYPTION_SECRET = originalSecret;
+    }
+  });
+
+  it("should use FACK_ENCRYPTION_SECRET when configured in environment", () => {
+    const originalSecret = process.env.FACK_ENCRYPTION_SECRET;
+    try {
+      process.env.FACK_ENCRYPTION_SECRET = "custom-test-secret-salt";
+      expect(getMasterEncryptionSalt()).toBe("custom-test-secret-salt");
+    } finally {
+      process.env.FACK_ENCRYPTION_SECRET = originalSecret;
+    }
   });
 });

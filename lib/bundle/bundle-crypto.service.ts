@@ -22,14 +22,31 @@ const KEY_LENGTH_BYTES = 32;
 const HEADER_MIN_LENGTH =
   4 + 1 + SALT_LENGTH_BYTES + IV_LENGTH_BYTES + TAG_LENGTH_BYTES;
 
-const MASTER_SALT =
-  process.env.FACK_ENCRYPTION_SECRET || "fack-api-local-bundle-master-salt-v1";
+/**
+ * Resolves the master encryption secret salt.
+ * Throws in production when FACK_ENCRYPTION_SECRET is missing to prevent predictable keys.
+ */
+export function getMasterEncryptionSalt(): string {
+  const secret = process.env.FACK_ENCRYPTION_SECRET;
+  if (secret && secret.length > 0) {
+    return secret;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "FACK_ENCRYPTION_SECRET must be configured to generate or validate project bundles in production.",
+    );
+  }
+
+  return "fack-api-local-bundle-master-salt-v1";
+}
 
 /**
  * Derives a deterministic project secret key for a given project ID.
  */
 export function generateProjectSecretKey(projectId: string): string {
-  const hmac = crypto.createHmac("sha256", MASTER_SALT);
+  const salt = getMasterEncryptionSalt();
+  const hmac = crypto.createHmac("sha256", salt);
   hmac.update(projectId);
   const hash = hmac.digest("hex").slice(0, 32);
   return `fack_sec_${hash}`;

@@ -7,6 +7,7 @@ import {
   findDeviceRequest,
   type DeviceRequestStatus,
 } from "@/lib/cli/device-flow.service";
+import { rateLimiter } from "@/lib/security/rate-limiter.service";
 
 export interface DeviceRequestSummary {
   userCode: string;
@@ -46,7 +47,15 @@ function toSummary(
 export async function inspectDeviceCode(
   code: string,
 ): Promise<AuthorizeResult> {
-  await requireUserId();
+  const userId = await requireUserId();
+
+  const rate = rateLimiter.check(`inspect_code:${userId}`, 20, 300);
+  if (!rate.allowed) {
+    return {
+      ok: false,
+      error: `Too many code verification attempts. Please wait ${rate.resetInSeconds} seconds before trying again.`,
+    };
+  }
 
   const request = await findDeviceRequest(code);
   if (!request) {

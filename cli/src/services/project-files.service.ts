@@ -73,6 +73,33 @@ export function writeFackRc(patch: Partial<FackRc>): string {
 }
 
 /**
+ * Ensures sensitive files (like .env and .env.local) are listed in .gitignore
+ * to prevent accidental repository secret leaks.
+ */
+export function ensureGitIgnoreEntry(entry: string): void {
+  const gitignorePath = path.resolve(process.cwd(), ".gitignore");
+  if (!fs.existsSync(gitignorePath)) {
+    try {
+      fs.writeFileSync(gitignorePath, `${entry}\n`, "utf-8");
+    } catch {
+      // Best-effort
+    }
+    return;
+  }
+
+  try {
+    const content = fs.readFileSync(gitignorePath, "utf-8");
+    const lines = content.split("\n").map((line) => line.trim());
+    if (!lines.includes(entry)) {
+      const separator = content.endsWith("\n") ? "" : "\n";
+      fs.appendFileSync(gitignorePath, `${separator}${entry}\n`, "utf-8");
+    }
+  } catch {
+    // Best-effort
+  }
+}
+
+/**
  * Creates or updates `FACK_PROJECT_KEY` in the repository `.env` without
  * disturbing any other variable. Returns the relative path written.
  */
@@ -83,6 +110,9 @@ export function writeProjectKeyEnv(secretKey: string): string {
   const targetEnv = localEnvExists ? ".env.local" : ".env";
   const envPath = path.resolve(process.cwd(), targetEnv);
   const line = `FACK_PROJECT_KEY=${secretKey}`;
+
+  // Automatically protect .env file from accidental git commits
+  ensureGitIgnoreEntry(targetEnv);
 
   if (!fs.existsSync(envPath)) {
     fs.writeFileSync(envPath, `# Fack API Local Runner\n${line}\n`, "utf-8");

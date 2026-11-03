@@ -1,9 +1,10 @@
 import type { NextRequest } from "next/server";
-import { db } from "@/db";
+import { db, storageConnection } from "@/db";
 import { sqlClient } from "@/db/postgres";
 import { scenarios, type Project } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { after } from "next/server";
+import { validateWebhookUrl } from "@/lib/security/ssrf.service";
 import {
   getCachedMockData,
   setCachedMockData,
@@ -175,6 +176,15 @@ function triggerWebhooks(route: CachedRoute, projectId: string) {
     for (const webhook of webhooks) {
       setTimeout(async () => {
         try {
+          const isLocal = storageConnection.mode === "local";
+          const validation = validateWebhookUrl(webhook.url, isLocal);
+          if (!validation.safe) {
+            mockLogger.warn(
+              `[SSRF Block] Skipping webhook ${webhook.url}: ${validation.reason}`,
+            );
+            return;
+          }
+
           const body =
             webhook.payloadTemplate && webhook.payloadTemplate !== "{}"
               ? webhook.payloadTemplate

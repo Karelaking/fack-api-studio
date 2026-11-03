@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@/db";
+import { db, storageConnection } from "@/db";
 import { webhooks, type Webhook } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -10,8 +10,10 @@ import {
   requireRouteAccess,
   requireWebhookAccess,
 } from "@/lib/auth";
+import { assertSafeWebhookUrl } from "@/lib/security/ssrf.service";
 
 export async function getWebhooksForRoute(routeId: string): Promise<Webhook[]> {
+  await requireRouteAccess(routeId);
   return db.query.webhooks.findMany({
     where: eq(webhooks.routeId, routeId),
     orderBy: (w, { desc }) => [desc(w.createdAt)],
@@ -28,6 +30,7 @@ export async function createWebhook(
 ) {
   await requireProjectAccess(projectId);
   await requireRouteAccess(routeId);
+  assertSafeWebhookUrl(url, storageConnection.mode === "local");
   const [newWebhook] = await db
     .insert(webhooks)
     .values({

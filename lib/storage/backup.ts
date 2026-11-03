@@ -54,8 +54,8 @@ export interface RestoreResult {
 
 type Row = Record<string, unknown>;
 
-/** Serializes every table into a JSON-safe backup object. */
-export async function createBackup(): Promise<BackupFile> {
+/** Serializes every table into a JSON-safe backup object, scoped to userId when specified. */
+export async function createBackup(userId?: string): Promise<BackupFile> {
   const tables: Record<string, Row[]> = {};
 
   for (const table of BACKUP_TABLES) {
@@ -63,10 +63,15 @@ export async function createBackup(): Promise<BackupFile> {
     tables[getTableName(table)] = rows as unknown as Row[];
   }
 
+  const filteredTables =
+    userId && userId !== "system"
+      ? filterRowsByOwnership(tables, userId)
+      : tables;
+
   return {
     version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
-    tables,
+    tables: filteredTables,
   };
 }
 

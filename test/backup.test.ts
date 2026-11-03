@@ -47,6 +47,30 @@ describe("backup export", () => {
 
     await deleteProject(project.id);
   });
+
+  it("filters exported backup rows by userId to prevent tenant leakage", async () => {
+    await db.insert(projects).values({
+      id: "tenant-a-project",
+      userId: "tenant-a",
+      name: "Tenant A Project",
+      slug: "tenant-a-project",
+    });
+    await db.insert(projects).values({
+      id: "tenant-b-project",
+      userId: "tenant-b",
+      name: "Tenant B Project",
+      slug: "tenant-b-project",
+    });
+
+    const tenantABackup = await createBackup("tenant-a");
+    const tenantAProjects = tenantABackup.tables.projects.map((p) => p.id);
+
+    expect(tenantAProjects).toContain("tenant-a-project");
+    expect(tenantAProjects).not.toContain("tenant-b-project");
+
+    await db.delete(projects).where(eq(projects.id, "tenant-a-project"));
+    await db.delete(projects).where(eq(projects.id, "tenant-b-project"));
+  });
 });
 
 describe("backup validation", () => {

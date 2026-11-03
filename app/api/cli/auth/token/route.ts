@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { exchangeDeviceCode } from "@/lib/cli/device-flow.service";
+import { rateLimiter } from "@/lib/security/rate-limiter.service";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (typeof body.deviceCode !== "string" || body.deviceCode.length === 0) {
     return NextResponse.json(
       { status: "invalid", error: "Missing device code" },
+      { status: 400 },
+    );
+  }
+
+  // RFC 8628 Section 3.5: Rate limit polling frequency
+  const pollRate = rateLimiter.check(`poll:${body.deviceCode}`, 1, 2);
+  if (!pollRate.allowed) {
+    return NextResponse.json(
+      {
+        status: "slow_down",
+        error: "slow_down",
+        details:
+          "Polling too frequently. Please respect the advertised interval.",
+      },
       { status: 400 },
     );
   }

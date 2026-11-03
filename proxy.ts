@@ -125,6 +125,7 @@ const handleRequest = async (request: NextRequest): Promise<NextResponse> => {
     "/api/projects",
     "/api/cli",
     "/api/settings",
+    "/api/file-manager",
     "/cli",
     "/_next",
     "/opengraph-image",

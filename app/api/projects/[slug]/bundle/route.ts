@@ -40,13 +40,15 @@ export async function GET(
 
     const projectSecretKey = generateProjectSecretKey(project.id);
 
-    // Check for CLI key authentication first
+    // Check for CLI key authentication first (Bearer header or X-Fack-Project-Key)
     const authHeader = request.headers.get("authorization");
     const bearerToken = authHeader?.startsWith("Bearer ")
       ? authHeader.slice(7).trim()
       : undefined;
+    const projectKeyHeader =
+      request.headers.get("x-fack-project-key")?.trim() || undefined;
     const queryKey = request.nextUrl.searchParams.get("key")?.trim();
-    const providedKey = bearerToken || queryKey;
+    const providedKey = bearerToken || projectKeyHeader || queryKey;
 
     let isAuthenticated = false;
     let viaCliToken = false;

@@ -23,6 +23,7 @@ export const getEndpoints = cache(async function getEndpoints(
   projectId: string,
 ) {
   endpointsTrace.traceCall("getEndpoints", projectId);
+  await requireProjectAccess(projectId);
   try {
     const endpointList = await db.query.endpoints.findMany({
       where: eq(endpoints.projectId, projectId),
@@ -70,6 +71,7 @@ export async function getEndpointById(id: string): Promise<
   | undefined
 > {
   endpointsTrace.traceCall("getEndpointById", id);
+  await requireEndpointAccess(id);
   try {
     const res = await db.query.endpoints.findFirst({
       where: eq(endpoints.id, id),

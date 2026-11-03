@@ -22,6 +22,9 @@ import {
 /** Ten minutes is enough to switch to a browser without leaving a stale code. */
 export const DEVICE_CODE_TTL_MS = 10 * 60 * 1000;
 
+/** CLI tokens automatically expire after 90 days. */
+export const CLI_TOKEN_TTL_MS = 90 * 24 * 60 * 60 * 1000;
+
 /** Polling cadence advertised to the CLI. */
 export const DEVICE_POLL_INTERVAL_SECONDS = 5;
 
@@ -295,6 +298,7 @@ export async function exchangeDeviceCode(
     if (!claimed) return { status: "expired" } as const;
 
     const token = generateCliToken();
+    const expiresAt = new Date(Date.now() + CLI_TOKEN_TTL_MS);
 
     await tx.insert(cliDevices).values({
       id: generateId(),
@@ -303,6 +307,7 @@ export async function exchangeDeviceCode(
       platform: request.platform,
       tokenHash: hashCliToken(token),
       tokenPrefix: tokenDisplayPrefix(token),
+      expiresAt,
     });
 
     return {

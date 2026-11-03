@@ -7,7 +7,11 @@ import { eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { generateId } from "@/lib/utils";
 import { clearProjectCache, clearRouteCache } from "@/lib/cache";
-import { requireEndpointAccess, requireRouteAccess } from "@/lib/auth";
+import {
+  requireEndpointAccess,
+  requireProjectAccess,
+  requireRouteAccess,
+} from "@/lib/auth";
 import { markProjectDirty } from "@/lib/file-manager/dirty-tracker";
 import {
   createRouteSchema,
@@ -26,6 +30,7 @@ export const getRoutes = cache(async function getRoutes(
   endpointId: string,
 ): Promise<Route[]> {
   routesTrace.traceCall("getRoutes", endpointId);
+  await requireEndpointAccess(endpointId);
   try {
     const list = await db.query.routes.findMany({
       where: eq(routes.endpointId, endpointId),
@@ -46,6 +51,7 @@ export const getRouteById = cache(async function getRouteById(
   id: string,
 ): Promise<Route | undefined> {
   routesTrace.traceCall("getRouteById", id);
+  await requireRouteAccess(id);
   try {
     const existingRoute = await db.query.routes.findFirst({
       where: eq(routes.id, id),
@@ -70,6 +76,7 @@ export const getRoutesByProjectId = cache(async function getRoutesByProjectId(
   projectId: string,
 ): Promise<(Route & { endpoint: Endpoint })[]> {
   routesTrace.traceCall("getRoutesByProjectId", projectId);
+  await requireProjectAccess(projectId);
   try {
     const projectEndpoints = await db.query.endpoints.findMany({
       where: eq(endpoints.projectId, projectId),

@@ -19,6 +19,11 @@ import {
   serializeProject,
 } from "@/lib/file-manager/fack-io";
 import { storageConnection } from "@/db";
+import {
+  authErrorResponse,
+  requireProjectAccess,
+  requireUserId,
+} from "@/lib/auth";
 
 /**
  * /api/file-manager — Endpoint for the local file management system.
@@ -27,8 +32,16 @@ import { storageConnection } from "@/db";
  * POST → Handles open, save, import, export, and recents management.
  */
 
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
+  if (!storageConnection.features.fileManager) {
+    return NextResponse.json(
+      { error: "File manager operations are disabled in this storage mode." },
+      { status: 403 },
+    );
+  }
+
   try {
+    await requireUserId();
     const [openProjects, recents] = await Promise.all([
       getOpenProjectsSummary(),
       Promise.resolve(readRecents()),
@@ -41,6 +54,9 @@ export async function GET() {
       isLocalMode: storageConnection.mode === "local",
     });
   } catch (error) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     const message =
       error instanceof Error
         ? error.message
@@ -49,8 +65,16 @@ export async function GET() {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  if (!storageConnection.features.fileManager) {
+    return NextResponse.json(
+      { error: "File manager operations are disabled in this storage mode." },
+      { status: 403 },
+    );
+  }
+
   try {
+    await requireUserId();
     const body = await request.json();
     const action = body?.action as string;
 
@@ -76,6 +100,7 @@ export async function POST(request: NextRequest) {
             { status: 400 },
           );
         }
+        await requireProjectAccess(projectId);
         const result = await saveProjectToFile(projectId, targetPath);
         return NextResponse.json({ success: true, ...result });
       }
@@ -100,6 +125,7 @@ export async function POST(request: NextRequest) {
             { status: 400 },
           );
         }
+        await requireProjectAccess(projectId);
         const fackFile = await serializeProject(projectId);
         return new NextResponse(JSON.stringify(fackFile, null, 2), {
           headers: {
@@ -112,6 +138,7 @@ export async function POST(request: NextRequest) {
       case "mark-dirty": {
         const projectId = body?.projectId as string;
         if (projectId) {
+          await requireProjectAccess(projectId);
           markProjectDirty(projectId);
         }
         return NextResponse.json({ success: true });
@@ -120,6 +147,7 @@ export async function POST(request: NextRequest) {
       case "close": {
         const projectId = body?.projectId as string;
         if (projectId) {
+          await requireProjectAccess(projectId);
           disassociateProjectFile(projectId);
         }
         return NextResponse.json({ success: true });
@@ -145,6 +173,9 @@ export async function POST(request: NextRequest) {
         );
     }
   } catch (error) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     const message =
       error instanceof Error ? error.message : "File operation failed";
     return NextResponse.json({ error: message }, { status: 500 });

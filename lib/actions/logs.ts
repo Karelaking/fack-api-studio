@@ -15,6 +15,7 @@ export const getRequestLogs = cache(async function getRequestLogs(
   projectId: string,
 ): Promise<RequestLog[]> {
   logsTrace.traceCall("getRequestLogs", projectId);
+  await requireProjectAccess(projectId);
   if (sqlClient) {
     try {
       const rows = await sqlClient`

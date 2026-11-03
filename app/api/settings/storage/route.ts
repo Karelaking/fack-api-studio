@@ -15,12 +15,12 @@ import { writeWorkspaceConfig } from "@/lib/storage/config-store";
  * The auth token of a remote database is never included in any response.
  */
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    await requireUserId();
+    const userId = await requireUserId();
 
     if (request.nextUrl.searchParams.get("download") === "1") {
-      const backup = await createBackup();
+      const backup = await createBackup(userId);
       writeWorkspaceConfig({ lastBackupAt: backup.exportedAt });
 
       return new NextResponse(JSON.stringify(backup, null, 2), {
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const userId = await requireUserId();
     const body = await request.json();
