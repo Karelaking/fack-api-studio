@@ -10,7 +10,7 @@ import crypto from "node:crypto";
 
 import { and, eq, lt } from "drizzle-orm";
 
-import { db } from "@/db";
+import { db, ensureCliTables } from "@/db";
 import { cliAuthRequests, cliDevices, type CliAuthRequest } from "@/db/schema";
 import { generateId } from "@/lib/utils";
 import {
@@ -136,6 +136,7 @@ export async function startDeviceAuthorization(input: {
   deviceName?: string;
   platform?: string;
 }): Promise<DeviceAuthorizationRequest> {
+  await ensureCliTables();
   await pruneStaleRequests();
 
   const deviceCode = crypto.randomBytes(32).toString("base64url");
@@ -185,6 +186,7 @@ export async function findDeviceRequest(
   const normalized = normalizeUserCode(userCode);
   if (!normalized) return null;
 
+  await ensureCliTables();
   const request = await db.query.cliAuthRequests.findFirst({
     where: eq(cliAuthRequests.userCode, normalized),
   });
@@ -198,6 +200,7 @@ export async function approveDeviceRequest(
   const normalized = normalizeUserCode(userCode);
   if (!normalized) return null;
 
+  await ensureCliTables();
   const [updated] = await db
     .update(cliAuthRequests)
     .set({ status: "approved", userId, approvedAt: new Date() })
@@ -225,6 +228,7 @@ export async function denyDeviceRequest(
   const normalized = normalizeUserCode(userCode);
   if (!normalized) return null;
 
+  await ensureCliTables();
   const [updated] = await db
     .update(cliAuthRequests)
     .set({ status: "denied", userId, approvedAt: new Date() })
@@ -252,6 +256,7 @@ export async function denyDeviceRequest(
 export async function exchangeDeviceCode(
   deviceCode: string,
 ): Promise<DeviceExchangeResult> {
+  await ensureCliTables();
   const deviceCodeHash = hashDeviceCode(deviceCode);
 
   return db.transaction(async (tx) => {

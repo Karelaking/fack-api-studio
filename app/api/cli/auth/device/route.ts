@@ -34,9 +34,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       verificationUriComplete: authorizePath,
     });
   } catch (error: unknown) {
+    const details = error instanceof Error ? error.message : String(error);
     console.error("[Fack CLI] Failed to start device authorization:", error);
     return NextResponse.json(
-      { error: "Failed to start device authorization" },
+      {
+        error: "Failed to start device authorization",
+        details,
+      },
       { status: 500 },
     );
   }

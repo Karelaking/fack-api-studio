@@ -72,8 +72,14 @@ async function readError(response: Response): Promise<string> {
     const body = (await response.json()) as {
       error?: unknown;
       message?: unknown;
+      details?: unknown;
     };
-    if (typeof body.error === "string") return body.error;
+    if (typeof body.error === "string") {
+      if (typeof body.details === "string" && body.details !== body.error) {
+        return `${body.error} (${body.details})`;
+      }
+      return body.error;
+    }
     if (typeof body.message === "string") return body.message;
   } catch {
     // Fall through to the status text.
@@ -126,9 +132,9 @@ export class FackApiClient {
       body: JSON.stringify({ deviceCode }),
     });
 
-    let body: DeviceTokenPoll | undefined;
+    let body: (DeviceTokenPoll & { details?: unknown }) | undefined;
     try {
-      body = (await response.json()) as DeviceTokenPoll;
+      body = (await response.json()) as DeviceTokenPoll & { details?: unknown };
     } catch {
       body = undefined;
     }
@@ -137,7 +143,17 @@ export class FackApiClient {
     if (response.status === 202 || body?.status === "pending") {
       return { status: "pending" };
     }
-    if (body?.status) return body;
+    if (body?.status) {
+      if (
+        typeof body.details === "string" &&
+        body.details &&
+        body.error &&
+        !body.error.includes(body.details)
+      ) {
+        return { ...body, error: `${body.error} (${body.details})` };
+      }
+      return body;
+    }
 
     throw new FackApiError(await readError(response), response.status);
   }

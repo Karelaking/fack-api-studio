@@ -70,9 +70,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         );
     }
   } catch (error: unknown) {
+    const details = error instanceof Error ? error.message : String(error);
     console.error("[Fack CLI] Failed to exchange device code:", error);
     return NextResponse.json(
-      { status: "error", error: "Failed to exchange device code" },
+      {
+        status: "error",
+        error: "Failed to exchange device code",
+        details,
+      },
       { status: 500 },
     );
   }

@@ -10,7 +10,7 @@ import crypto from "node:crypto";
 
 import { and, eq } from "drizzle-orm";
 
-import { db, storageConnection } from "@/db";
+import { db, ensureCliTables, storageConnection } from "@/db";
 import { cliDevices, type CliDevice } from "@/db/schema";
 import { UnauthorizedError } from "@/lib/auth";
 
@@ -70,6 +70,7 @@ export async function authenticateCliToken(
 ): Promise<{ device: CliDevice; userId: string } | null> {
   if (!isCliToken(token)) return null;
 
+  await ensureCliTables();
   const device = await db.query.cliDevices.findFirst({
     where: eq(cliDevices.tokenHash, hashCliToken(token)),
   });
@@ -138,6 +139,7 @@ export async function revokeCliDevice(
   deviceId: string,
   userId: string,
 ): Promise<boolean> {
+  await ensureCliTables();
   const revoked = await db
     .update(cliDevices)
     .set({ revokedAt: new Date() })
@@ -150,6 +152,7 @@ export async function revokeCliDevice(
 /** Revokes the device backing the current bearer token. */
 export async function revokeCurrentCliToken(token: string): Promise<boolean> {
   if (!isCliToken(token)) return false;
+  await ensureCliTables();
   const revoked = await db
     .update(cliDevices)
     .set({ revokedAt: new Date() })
