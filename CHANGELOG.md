@@ -1,3 +1,9 @@
+## [1.19.1](https://github.com/Karelaking/fack-api-studio/compare/v1.19.0...v1.19.1) (2026-11-03)
+
+### Bug Fixes
+
+- **auth:** auto-bootstrap cli tables and return descriptive errors ([14934bb](https://github.com/Karelaking/fack-api-studio/commit/14934bb564666ba98cc4b2fcbf55a272e61e437b))
+
 # [1.19.0](https://github.com/Karelaking/fack-api-studio/compare/v1.18.1...v1.19.0) (2026-11-03)
 
 ### Features
