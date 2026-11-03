@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/Karelaking/fack-api-studio/compare/v1.18.1...v1.19.0) (2026-11-03)
+
+### Features
+
+- **mock-engine:** adopt commander and clack prompts with production url ([5d75e12](https://github.com/Karelaking/fack-api-studio/commit/5d75e120225e9d08b267d88438320296216bff3f))
+- **mock-engine:** introduce standalone local cli runner and encrypted bundle ([01b2003](https://github.com/Karelaking/fack-api-studio/commit/01b2003024fc63366816f98c4c482eaef814da97))
+
 ## [1.18.1](https://github.com/Karelaking/fack-api-studio/compare/v1.18.0...v1.18.1) (2026-11-02)
 
 ### Bug Fixes
