@@ -12,6 +12,10 @@ import {
   setCachedProjectsList,
   getCachedProjectBySlug,
   setCachedProjectBySlug,
+  getCachedEndpoints,
+  setCachedEndpoints,
+  getCachedCanvasState,
+  setCachedCanvasState,
 } from "../lib/cache";
 import type { Project } from "@/db/schema";
 
@@ -48,6 +52,24 @@ describe("Mock Data Caching", () => {
     expect(getCachedProjectBySlug("sample-slug")).toBeUndefined();
     setCachedProjectBySlug("sample-slug", mockProject);
     expect(getCachedProjectBySlug("sample-slug")).toEqual(mockProject);
+  });
+
+  it("should cache and retrieve endpoints and canvas state by project ID", () => {
+    expect(getCachedEndpoints("proj-1")).toBeUndefined();
+    const mockEndpoints = [{ id: "ep-1", name: "Users", routes: [] }];
+    setCachedEndpoints("proj-1", mockEndpoints);
+    expect(getCachedEndpoints("proj-1")).toEqual(mockEndpoints);
+
+    expect(getCachedCanvasState("proj-1")).toBeUndefined();
+    const mockCanvasState = {
+      id: "cs-1",
+      projectId: "proj-1",
+      nodes: "[]",
+      edges: "[]",
+      viewport: "{}",
+    };
+    setCachedCanvasState("proj-1", mockCanvasState);
+    expect(getCachedCanvasState("proj-1")).toEqual(mockCanvasState);
   });
 
   it("should cache and retrieve mock arrays by route ID", () => {

@@ -6,7 +6,13 @@ import { routes, endpoints, type Route, type Endpoint } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { generateId } from "@/lib/utils";
-import { clearProjectCache, clearRouteCache } from "@/lib/cache";
+import {
+  clearProjectCache,
+  clearRouteCache,
+  getCachedRoutes,
+  setCachedRoutes,
+  type CachedRoute,
+} from "@/lib/cache";
 import {
   requireEndpointAccess,
   requireProjectAccess,
@@ -77,6 +83,16 @@ export const getRoutesByProjectId = cache(async function getRoutesByProjectId(
 ): Promise<(Route & { endpoint: Endpoint })[]> {
   routesTrace.traceCall("getRoutesByProjectId", projectId);
   await requireProjectAccess(projectId);
+
+  const cached = getCachedRoutes(projectId);
+  if (cached) {
+    routesTrace.traceSuccess(
+      "getRoutesByProjectId (LRU cache hit)",
+      `${cached.length} routes`,
+    );
+    return cached as (Route & { endpoint: Endpoint })[];
+  }
+
   try {
     const projectEndpoints = await db.query.endpoints.findMany({
       where: eq(endpoints.projectId, projectId),
@@ -100,7 +116,11 @@ export const getRoutesByProjectId = cache(async function getRoutesByProjectId(
       orderBy: (routes, { asc }) => [asc(routes.path)],
     });
 
-    routesTrace.traceSuccess("getRoutesByProjectId", `${list.length} routes`);
+    setCachedRoutes(projectId, list as CachedRoute[]);
+    routesTrace.traceSuccess(
+      "getRoutesByProjectId (DB fetched)",
+      `${list.length} routes`,
+    );
     return list as (Route & { endpoint: Endpoint })[];
   } catch (error) {
     routesTrace.traceError("getRoutesByProjectId", error);

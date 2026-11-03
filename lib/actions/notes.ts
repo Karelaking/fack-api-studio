@@ -1,5 +1,6 @@
 "use server";
 
+import { cache } from "react";
 import { db } from "@/db";
 import { notes, type Note } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -20,13 +21,15 @@ import {
  * they are — no extra storage configuration is needed.
  */
 
-export async function getNotes(projectId: string): Promise<Note[]> {
+export const getNotes = cache(async function getNotes(
+  projectId: string,
+): Promise<Note[]> {
   await requireProjectAccess(projectId);
   return db.query.notes.findMany({
     where: eq(notes.projectId, projectId),
     orderBy: (note, { desc }) => [desc(note.pinned), desc(note.updatedAt)],
   });
-}
+});
 
 export async function createNote(input: CreateNoteInput): Promise<Note> {
   const parsed = createNoteSchema.parse(input);

@@ -9,6 +9,7 @@
  * so protecting them would defeat the product's purpose.
  */
 
+import { cache } from "react";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
@@ -35,20 +36,23 @@ export class ForbiddenError extends Error {
 /**
  * Returns the authenticated Clerk user id.
  * In local mode or unauthenticated self-hosted mode, returns "system".
+ * Memoized with React.cache() to deduplicate auth checks within a single request.
  *
  * @throws {UnauthorizedError} when there is no signed-in user and auth is required.
  */
-export async function requireUserId(): Promise<string> {
-  if (!storageConnection.authRequired || !process.env.CLERK_SECRET_KEY) {
-    return "system";
-  }
+export const requireUserId = cache(
+  async function requireUserId(): Promise<string> {
+    if (!storageConnection.authRequired || !process.env.CLERK_SECRET_KEY) {
+      return "system";
+    }
 
-  const { userId } = await auth();
-  if (!userId) {
-    throw new UnauthorizedError();
-  }
-  return userId;
-}
+    const { userId } = await auth();
+    if (!userId) {
+      throw new UnauthorizedError();
+    }
+    return userId;
+  },
+);
 
 /**
  * Returns true when a project row is owned by the user.
@@ -82,23 +86,28 @@ export function assertProjectOwnedBy(
 
 /**
  * Loads a project and throws when the user may not access it.
- *
- * Assumes the caller already authenticated the user.
+ * Memoized with React.cache() to deduplicate access checks for the same project/user.
  */
+const assertProjectIdAccessCached = cache(
+  async (projectId: string, userId: string): Promise<void> => {
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, projectId),
+      columns: { userId: true },
+    });
+
+    if (!project) {
+      throw new ForbiddenError("Project not found");
+    }
+
+    assertProjectOwnedBy(project, userId);
+  },
+);
+
 async function assertProjectIdAccess(
   projectId: string,
   userId: string,
 ): Promise<void> {
-  const project = await db.query.projects.findFirst({
-    where: eq(projects.id, projectId),
-    columns: { userId: true },
-  });
-
-  if (!project) {
-    throw new ForbiddenError("Project not found");
-  }
-
-  assertProjectOwnedBy(project, userId);
+  return assertProjectIdAccessCached(projectId, userId);
 }
 
 /**

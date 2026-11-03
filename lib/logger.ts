@@ -98,7 +98,7 @@ export class ScopedLogger implements Logger {
 export function registerConsolaProvider(): void {
   const logLevel = process.env.LOG_LEVEL
     ? parseInt(process.env.LOG_LEVEL, 10)
-    : 4;
+    : 3;
   const transport = new ConsolaTransport(logLevel);
   LoggerRegistry.setProvider(
     (tag: string): Logger => new ScopedLogger(transport, tag),
@@ -108,7 +108,7 @@ export function registerConsolaProvider(): void {
 // Default transports and loggers
 const defaultLogLevel = process.env.LOG_LEVEL
   ? parseInt(process.env.LOG_LEVEL, 10)
-  : 4;
+  : 3;
 const defaultTransport = new ConsolaTransport(defaultLogLevel);
 
 export const dbLogger = new ScopedLogger(defaultTransport, "db");

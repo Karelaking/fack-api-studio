@@ -48,6 +48,8 @@ export class CacheManager {
   private projectListCache: LRUCache<string, Project[]>;
   private projectBySlugCache: LRUCache<string, Project>;
   private projectRoutesCache: LRUCache<string, Route[]>;
+  private projectEndpointsCache: LRUCache<string, unknown[]>;
+  private canvasStateCache: LRUCache<string, NonNullable<unknown>>;
   private routeMockDataCache: LRUCache<string, unknown[]>;
   private routeSingleMockDataCache: LRUCache<string, NonNullable<unknown>>;
   private routePageCache: LRUCache<string, PageCacheEntry[]>;
@@ -68,6 +70,18 @@ export class CacheManager {
     // Routes by project cache: 5 minute TTL, max 1,000 entries
     this.projectRoutesCache = new LRUCache<string, Route[]>({
       max: 1000,
+      ttl: 5 * 60 * 1000,
+    });
+
+    // Project endpoints cache: 5 minute TTL, max 500 entries
+    this.projectEndpointsCache = new LRUCache<string, unknown[]>({
+      max: 500,
+      ttl: 5 * 60 * 1000,
+    });
+
+    // Canvas state cache: 5 minute TTL, max 500 entries
+    this.canvasStateCache = new LRUCache<string, NonNullable<unknown>>({
+      max: 500,
       ttl: 5 * 60 * 1000,
     });
 
@@ -132,6 +146,28 @@ export class CacheManager {
 
   public setRoutes(projectId: string, routes: Route[]): void {
     this.projectRoutesCache.set(projectId, routes);
+  }
+
+  // ── Project Endpoints ─────────────────────────────────────────────────────
+
+  public getEndpoints(projectId: string): unknown[] | undefined {
+    return this.projectEndpointsCache.get(projectId);
+  }
+
+  public setEndpoints(projectId: string, endpoints: unknown[]): void {
+    this.projectEndpointsCache.set(projectId, endpoints);
+  }
+
+  // ── Canvas State ──────────────────────────────────────────────────────────
+
+  public getCanvasState(projectId: string): unknown {
+    return this.canvasStateCache.get(projectId);
+  }
+
+  public setCanvasState(projectId: string, state: unknown): void {
+    if (state !== undefined && state !== null) {
+      this.canvasStateCache.set(projectId, state as NonNullable<unknown>);
+    }
   }
 
   // ── Route Mock Data ──────────────────────────────────────────────────────
@@ -202,8 +238,12 @@ export class CacheManager {
   /**
    * Granularly invalidates cached data for a specific project.
    */
-  public invalidateProject(projectId: string, projectSlug?: string): void {
-    this.projectRoutesCache.delete(projectId);
+  public invalidateProject(projectId?: string, projectSlug?: string): void {
+    if (projectId) {
+      this.projectRoutesCache.delete(projectId);
+      this.projectEndpointsCache.delete(projectId);
+      this.canvasStateCache.delete(projectId);
+    }
     clearMatcherCache();
     this.projectListCache.delete("all_projects");
     if (projectSlug) {
@@ -228,6 +268,8 @@ export class CacheManager {
     this.projectListCache.clear();
     this.projectBySlugCache.clear();
     this.projectRoutesCache.clear();
+    this.projectEndpointsCache.clear();
+    this.canvasStateCache.clear();
     this.routeMockDataCache.clear();
     this.routeSingleMockDataCache.clear();
     this.routePageCache.clear();
@@ -293,6 +335,45 @@ export function setCachedRoutes(
   cacheTrace.traceCall("setCachedRoutes", projectId, `${routes.length} routes`);
   cacheManager.setRoutes(projectId, routes as Route[]);
   cacheTrace.traceSuccess("setCachedRoutes", "void");
+}
+
+export function getCachedEndpoints(projectId: string): unknown[] | undefined {
+  cacheTrace.traceCall("getCachedEndpoints", projectId);
+  const res = cacheManager.getEndpoints(projectId);
+  cacheTrace.traceSuccess(
+    "getCachedEndpoints",
+    res ? `${res.length} endpoints` : "undefined",
+  );
+  return res;
+}
+
+export function setCachedEndpoints(
+  projectId: string,
+  endpoints: unknown[],
+): void {
+  cacheTrace.traceCall(
+    "setCachedEndpoints",
+    projectId,
+    `${endpoints.length} endpoints`,
+  );
+  cacheManager.setEndpoints(projectId, endpoints);
+  cacheTrace.traceSuccess("setCachedEndpoints", "void");
+}
+
+export function getCachedCanvasState(projectId: string): unknown {
+  cacheTrace.traceCall("getCachedCanvasState", projectId);
+  const res = cacheManager.getCanvasState(projectId);
+  cacheTrace.traceSuccess(
+    "getCachedCanvasState",
+    res ? "cached state" : "undefined",
+  );
+  return res;
+}
+
+export function setCachedCanvasState(projectId: string, state: unknown): void {
+  cacheTrace.traceCall("setCachedCanvasState", projectId);
+  cacheManager.setCanvasState(projectId, state);
+  cacheTrace.traceSuccess("setCachedCanvasState", "void");
 }
 
 export function getCachedMockData(routeId: string): unknown[] | undefined {
@@ -385,10 +466,10 @@ export function clearCache(): void {
 }
 
 export function clearProjectCache(
-  projectId: string,
+  projectId?: string,
   projectSlug?: string,
 ): void {
-  cacheTrace.traceCall("clearProjectCache", projectId);
+  cacheTrace.traceCall("clearProjectCache", projectId ?? "all");
   cacheManager.invalidateProject(projectId, projectSlug);
   cacheTrace.traceSuccess("clearProjectCache", "void");
 }

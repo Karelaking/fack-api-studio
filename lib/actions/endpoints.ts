@@ -6,7 +6,11 @@ import { endpoints } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { generateId } from "@/lib/utils";
-import { clearProjectCache } from "@/lib/cache";
+import {
+  clearProjectCache,
+  getCachedEndpoints,
+  setCachedEndpoints,
+} from "@/lib/cache";
 import { requireEndpointAccess, requireProjectAccess } from "@/lib/auth";
 import { markProjectDirty } from "@/lib/file-manager/dirty-tracker";
 import {
@@ -24,6 +28,18 @@ export const getEndpoints = cache(async function getEndpoints(
 ) {
   endpointsTrace.traceCall("getEndpoints", projectId);
   await requireProjectAccess(projectId);
+
+  const cached = getCachedEndpoints(projectId);
+  if (cached) {
+    endpointsTrace.traceSuccess(
+      "getEndpoints (LRU cache hit)",
+      `${(cached as unknown[]).length} endpoints`,
+    );
+    return cached as (typeof endpoints.$inferSelect & {
+      routes: (typeof import("@/db/schema").routes.$inferSelect)[];
+    })[];
+  }
+
   try {
     const endpointList = await db.query.endpoints.findMany({
       where: eq(endpoints.projectId, projectId),
@@ -32,8 +48,10 @@ export const getEndpoints = cache(async function getEndpoints(
       },
       orderBy: (endpoints, { asc }) => [asc(endpoints.name)],
     });
+
+    setCachedEndpoints(projectId, endpointList);
     endpointsTrace.traceSuccess(
-      "getEndpoints",
+      "getEndpoints (DB fetched)",
       `${endpointList.length} endpoints`,
     );
     return endpointList;

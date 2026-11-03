@@ -1,11 +1,13 @@
 "use server";
 
+import { cache } from "react";
 import { db } from "@/db";
 import { canvasStates } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateId } from "@/lib/utils";
 import { requireProjectAccess } from "@/lib/auth";
 import { markProjectDirty } from "@/lib/file-manager/dirty-tracker";
+import { getCachedCanvasState, setCachedCanvasState } from "@/lib/cache";
 import {
   saveCanvasStateSchema,
   type SaveCanvasStateInput,
@@ -14,7 +16,9 @@ import { LoggerRegistry } from "@/lib/logger-registry";
 
 const canvasTrace = LoggerRegistry.getTrace("db-canvas");
 
-export async function getCanvasState(projectId: string): Promise<
+export const getCanvasState = cache(async function getCanvasState(
+  projectId: string,
+): Promise<
   | {
       id: string;
       projectId: string;
@@ -26,12 +30,31 @@ export async function getCanvasState(projectId: string): Promise<
 > {
   canvasTrace.traceCall("getCanvasState", projectId);
   await requireProjectAccess(projectId);
+
+  const cached = getCachedCanvasState(projectId);
+  if (cached) {
+    canvasTrace.traceSuccess(
+      "getCanvasState (LRU cache hit)",
+      `State ID: ${(cached as { id: string }).id}`,
+    );
+    return cached as {
+      id: string;
+      projectId: string;
+      nodes: string;
+      edges: string;
+      viewport: string;
+    };
+  }
+
   try {
     const state = await db.query.canvasStates.findFirst({
       where: eq(canvasStates.projectId, projectId),
     });
+    if (state) {
+      setCachedCanvasState(projectId, state);
+    }
     canvasTrace.traceSuccess(
-      "getCanvasState",
+      "getCanvasState (DB fetched)",
       state ? `State ID: ${state.id}` : "undefined",
     );
     return state;
@@ -39,7 +62,7 @@ export async function getCanvasState(projectId: string): Promise<
     canvasTrace.traceError("getCanvasState", error);
     throw error;
   }
-}
+});
 
 export async function saveCanvasState(input: SaveCanvasStateInput): Promise<{
   id: string;
@@ -73,6 +96,7 @@ export async function saveCanvasState(input: SaveCanvasStateInput): Promise<{
       .returning();
 
     markProjectDirty(parsed.projectId);
+    setCachedCanvasState(parsed.projectId, saved);
     canvasTrace.traceSuccess("saveCanvasState (saved)", saved.id);
     return saved;
   } catch (error) {

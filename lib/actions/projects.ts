@@ -17,6 +17,8 @@ import { getDefaultProjectsDirectory } from "@/lib/file-manager/file-manager.ser
 import {
   getCachedProjectBySlug,
   setCachedProjectBySlug,
+  getCachedProjectsList,
+  setCachedProjectsList,
   clearProjectCache,
 } from "@/lib/cache";
 import {
@@ -41,6 +43,15 @@ export const getProjects = cache(async function getProjects(): Promise<
     return [];
   }
 
+  const cached = getCachedProjectsList();
+  if (cached) {
+    projectsTrace.traceSuccess(
+      "getProjects (LRU cache hit)",
+      `${cached.length} projects`,
+    );
+    return cached;
+  }
+
   try {
     const list = await db.query.projects.findMany({
       where: userId === "system" ? undefined : eq(projects.userId, userId),
@@ -53,6 +64,8 @@ export const getProjects = cache(async function getProjects(): Promise<
         },
       },
     });
+
+    setCachedProjectsList(list);
     projectsTrace.traceSuccess(
       "getProjects (DB fetched)",
       `${list.length} projects`,
