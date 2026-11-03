@@ -1,3 +1,9 @@
+## [1.20.2](https://github.com/Karelaking/fack-api-studio/compare/v1.20.1...v1.20.2) (2026-11-03)
+
+### Performance Improvements
+
+- **dashboard:** deduplicate data access with react cache and lru caching ([457f6d6](https://github.com/Karelaking/fack-api-studio/commit/457f6d69274f262f412ed680c6eca4a6788e95d0))
+
 ## [1.20.1](https://github.com/Karelaking/fack-api-studio/compare/v1.20.0...v1.20.1) (2026-11-03)
 
 ### Bug Fixes
