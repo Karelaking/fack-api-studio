@@ -1,3 +1,9 @@
+# [1.20.0](https://github.com/Karelaking/fack-api-studio/compare/v1.19.2...v1.20.0) (2026-11-03)
+
+### Features
+
+- **auth:** integrate battle-tested packages for csrf, ssrf, and rate limiting ([d71b03d](https://github.com/Karelaking/fack-api-studio/commit/d71b03d1d90e1f6a676a43ce2cc9be325cc5593c))
+
 ## [1.19.2](https://github.com/Karelaking/fack-api-studio/compare/v1.19.1...v1.19.2) (2026-11-03)
 
 ### Bug Fixes
