@@ -1,9 +1,11 @@
 /**
  * Fack API — Sliding-Window Rate Limiter Service
  *
- * Lightweight in-memory rate limiter designed for edge/serverless runtimes.
- * Automatically evicts stale buckets to guarantee zero memory leakage.
+ * Employs `lru-cache` for bounded, high-performance in-memory rate limiting.
+ * Automatically evicts stale buckets and bounds total memory consumption.
  */
+
+import { LRUCache } from "lru-cache";
 
 interface RateLimitBucket {
   count: number;
@@ -17,8 +19,9 @@ export interface RateLimitResult {
 }
 
 class InMemoryRateLimiter {
-  private readonly buckets = new Map<string, RateLimitBucket>();
-  private lastCleanup = Date.now();
+  private readonly cache = new LRUCache<string, RateLimitBucket>({
+    max: 50_000,
+  });
 
   /**
    * Checks and consumes a token from the rate limit bucket.
@@ -33,14 +36,11 @@ class InMemoryRateLimiter {
     windowSeconds: number,
   ): RateLimitResult {
     const now = Date.now();
-    this.cleanupIfNeeded(now);
+    const bucket = this.cache.get(key);
 
-    const bucket = this.buckets.get(key);
     if (!bucket || now >= bucket.resetAt) {
-      this.buckets.set(key, {
-        count: 1,
-        resetAt: now + windowSeconds * 1000,
-      });
+      const resetAt = now + windowSeconds * 1000;
+      this.cache.set(key, { count: 1, resetAt }, { ttl: windowSeconds * 1000 });
       return {
         allowed: true,
         remaining: limit - 1,
@@ -58,6 +58,9 @@ class InMemoryRateLimiter {
     }
 
     bucket.count += 1;
+    this.cache.set(key, bucket, {
+      ttl: Math.max(bucket.resetAt - now, 1000),
+    });
     const resetInSeconds = Math.ceil((bucket.resetAt - now) / 1000);
     return {
       allowed: true,
@@ -66,24 +69,9 @@ class InMemoryRateLimiter {
     };
   }
 
-  /**
-   * Periodically sweeps expired buckets to keep memory usage bounded.
-   */
-  private cleanupIfNeeded(now: number): void {
-    if (now - this.lastCleanup < 60_000) return;
-    this.lastCleanup = now;
-
-    for (const [key, bucket] of this.buckets.entries()) {
-      if (now >= bucket.resetAt) {
-        this.buckets.delete(key);
-      }
-    }
-  }
-
   /** Clears all buckets (useful in test setup). */
   public reset(): void {
-    this.buckets.clear();
-    this.lastCleanup = Date.now();
+    this.cache.clear();
   }
 }
 

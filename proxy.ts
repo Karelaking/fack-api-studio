@@ -12,6 +12,7 @@ import {
   type NextRequest,
 } from "next/server";
 import { LoggerRegistry } from "@/lib/logger-registry";
+import { evaluateCsrf, getTrustedOrigins } from "@/lib/security/csrf.service";
 
 const proxyTrace = LoggerRegistry.getTrace("proxy");
 
@@ -144,19 +145,66 @@ const handleRequest = async (request: NextRequest): Promise<NextResponse> => {
 
   // ── CORS Preflight ───────────────────────────────────────────────────────
   // Handle OPTIONS requests for mock API paths or custom domain endpoints
-  if (request.method === "OPTIONS" && !isSystemPath) {
-    proxyTrace.traceSuccess("proxy (CORS Preflight OPTIONS)", "204");
-    return new NextResponse(null, {
-      status: 204,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods":
-          "GET, POST, PUT, DELETE, PATCH, OPTIONS",
-        "Access-Control-Allow-Headers":
-          "Content-Type, Authorization, X-Requested-With",
-        "Access-Control-Max-Age": "86400",
-      },
-    });
+  if (request.method === "OPTIONS") {
+    if (!isSystemPath) {
+      proxyTrace.traceSuccess("proxy (CORS Preflight OPTIONS Mock)", "204");
+      return new NextResponse(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods":
+            "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+          "Access-Control-Allow-Headers":
+            "Content-Type, Authorization, X-Requested-With",
+          "Access-Control-Max-Age": "86400",
+        },
+      });
+    }
+
+    // System paths: restrict CORS preflight to verified trusted origins
+    const origin = request.headers.get("origin") || "";
+    const trustedOrigins = getTrustedOrigins(host);
+    if (origin && trustedOrigins.includes(origin)) {
+      proxyTrace.traceSuccess(
+        "proxy (CORS Preflight OPTIONS System Trusted)",
+        "204",
+      );
+      return new NextResponse(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": origin,
+          "Access-Control-Allow-Methods":
+            "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+          "Access-Control-Allow-Headers":
+            "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, X-Fack-Project-Key",
+          "Access-Control-Allow-Credentials": "true",
+          "Access-Control-Max-Age": "86400",
+        },
+      });
+    }
+  }
+
+  // ── CSRF / Cross-Site Mutation Defense ─────────────────────────────────────
+  if (
+    isSystemPath &&
+    pathname.startsWith("/api/") &&
+    ["POST", "PUT", "PATCH", "DELETE"].includes(request.method)
+  ) {
+    const csrfResult = await evaluateCsrf(request);
+    if (!csrfResult.success) {
+      proxyTrace.traceError(
+        "proxy (CSRF Validation Failed)",
+        csrfResult.reason,
+      );
+      return NextResponse.json(
+        {
+          error:
+            csrfResult.reason ||
+            "Cross-site request forgery validation failed.",
+        },
+        { status: 403 },
+      );
+    }
   }
 
   // ── Subdomain Mock API Rewrite ───────────────────────────────────────────

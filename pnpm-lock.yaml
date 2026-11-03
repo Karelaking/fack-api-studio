@@ -42,6 +42,12 @@ importers:
       '@clerk/ui':
         specifier: ^1.40.1
         version: 1.40.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(supports-color@7.2.0)
+      '@csrf-armor/core':
+        specifier: ^1.3.1
+        version: 1.3.1
+      '@csrf-armor/nextjs':
+        specifier: ^1.4.8
+        version: 1.4.8(next@16.3.8(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@26.6.1)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
       '@faker-js/faker':
         specifier: ^10.5.0
         version: 10.6.0
@@ -93,6 +99,9 @@ importers:
       immer:
         specifier: ^11.1.15
         version: 11.1.18
+      ipaddr.js:
+        specifier: ^2.5.0
+        version: 2.5.0
       jose:
         specifier: ^6.2.12
         version: 6.2.12
@@ -643,6 +652,17 @@ packages:
   '@conventional-changelog/template@1.4.0':
     resolution: {integrity: sha512-aalGyl7dbB5PArRebDIX43ZvBlXrYm9uWzGJ26t+4SzJVPsOuvfILGGbw5X4yX7i50YEmJ8zvbiWnqH/AAnZqg==}
     engines: {node: '>=22'}
+
+  '@csrf-armor/core@1.3.1':
+    resolution: {integrity: sha512-fL78GlnYSJ+Qyu1UWS3VVY1KBuEB3e60J1lucNvWGnMBX1W9mhkUMq12FG1J1t18zhCh3iO95Xt44oOXy78vjQ==}
+    engines: {node: '>=18.0.0'}
+
+  '@csrf-armor/nextjs@1.4.8':
+    resolution: {integrity: sha512-9ijTH1XQJ8zrpllP8t3UNvoxcCcNndJgTsZ0QVQ5TO4zNCLwoWMsoygG2URfnJ7sJnFUNseZ65VSnPkGhj1AJg==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      next: ^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
+      react: ^18.2.0 || ^19.0.0
 
   '@dotenvx/dotenvx@1.75.1':
     resolution: {integrity: sha512-/BITOC9dmS/edY2zQwZNicQ059O6RKabtQfyEafV0nGtfYRNHYy1DIPiYVcov40+tob9hfmBnbR963dS+EQ1DQ==}
@@ -4856,6 +4876,10 @@ packages:
     resolution: {integrity: sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==}
     engines: {node: '>= 0.10'}
 
+  ipaddr.js@2.5.0:
+    resolution: {integrity: sha512-aq+t5NAc+cS6rZQQVWC2x98CPqGtKKTMDd4Gaodv0wShnItdKg/51djkGJ1hqH+Oy0ivDftCbSLCQob8zso01w==}
+    engines: {node: '>= 10'}
+
   iron-webcrypto@1.2.1:
     resolution: {integrity: sha512-feOM6FaSr6rEABp/eDfVseKyTMDt+KGpeB35SkVn9Tyn0CqvVsY3EwI0v5i8nMHyJnzCIQf7nsy3p41TPkJZhg==}
 
@@ -7673,6 +7697,14 @@ snapshots:
       conventional-commits-parser: 7.1.2
 
   '@conventional-changelog/template@1.4.0': {}
+
+  '@csrf-armor/core@1.3.1': {}
+
+  '@csrf-armor/nextjs@1.4.8(next@16.3.8(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@26.6.1)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)':
+    dependencies:
+      '@csrf-armor/core': 1.3.1
+      next: 16.3.8(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@26.6.1)(babel-plugin-macros@3.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react: 19.3.0
 
   '@dotenvx/dotenvx@1.75.1':
     dependencies:
@@ -11211,6 +11243,8 @@ snapshots:
   ip-address@10.7.2: {}
 
   ipaddr.js@1.9.1: {}
+
+  ipaddr.js@2.5.0: {}
 
   iron-webcrypto@1.2.1: {}
 
