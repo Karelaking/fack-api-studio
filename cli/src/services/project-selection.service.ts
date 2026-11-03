@@ -1,16 +1,13 @@
 /**
  * Fack CLI — project selection.
  *
- * One project auto-selects. Several become a short numbered prompt, which keeps
- * `fack pull` fully automatic in the common single-project workspace without
- * guessing when the choice is real.
+ * One project auto-selects. Multiple projects trigger an interactive
+ * terminal selector powered by @clack/prompts, falling back to non-TTY hints.
  */
 
 import { stdin, stdout } from "node:process";
-import readline from "node:readline/promises";
-
 import type { CliProject } from "./api-client.service";
-import { log, t } from "../ui/terminal";
+import { cancel, isCancel, log, select, t } from "../ui/terminal";
 
 export function findProject(
   projects: CliProject[],
@@ -60,40 +57,23 @@ export async function selectProject(
     );
   }
 
-  console.log("");
-  log.info("Select a project:");
-  projects.forEach((project, index) => {
-    console.log(
-      `  ${t.bold(String(index + 1))}. ${project.name} ${t.dim(
-        `(${project.slug})`,
-      )} ${t.dim(
-        `· ${project.endpointCount} endpoints · ${project.routeCount} routes`,
-      )}`,
-    );
-  });
-  console.log("");
-
-  const prompt = readline.createInterface({
-    input: stdin,
-    output: stdout,
+  const selection = await select({
+    message: "Select a project to pull:",
+    options: projects.map((project) => ({
+      value: project.slug,
+      label: `${project.name} (${project.slug})`,
+      hint: `${project.endpointCount} endpoints · ${project.routeCount} routes`,
+    })),
   });
 
-  try {
-    for (;;) {
-      const answer = (
-        await prompt.question(`Choose 1-${projects.length} [1]: `)
-      ).trim();
-
-      if (answer.length === 0) return projects[0];
-
-      const index = Number(answer);
-      if (Number.isInteger(index) && index >= 1 && index <= projects.length) {
-        return projects[index - 1];
-      }
-
-      log.warn(`Enter a number between 1 and ${projects.length}.`);
-    }
-  } finally {
-    prompt.close();
+  if (isCancel(selection)) {
+    cancel("Project selection canceled.");
+    process.exit(0);
   }
+
+  const chosen = findProject(projects, selection as string);
+  if (!chosen) {
+    throw new Error("Invalid project selected.");
+  }
+  return chosen;
 }

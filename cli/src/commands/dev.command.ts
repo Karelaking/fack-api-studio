@@ -9,52 +9,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { decryptBundle } from "../../../lib/bundle/bundle-crypto.service";
 import { MockServer } from "../server.service";
+import { loadFackRc, loadLocalEnv } from "../services/project-files.service";
 import type { DevCommandOptions } from "../cli.type";
-
-function loadLocalEnv(): void {
-  const envPath = path.resolve(process.cwd(), ".env");
-  if (!fs.existsSync(envPath)) return;
-
-  try {
-    const content = fs.readFileSync(envPath, "utf-8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eqIndex = trimmed.indexOf("=");
-      if (eqIndex > 0) {
-        const key = trimmed.slice(0, eqIndex).trim();
-        let value = trimmed.slice(eqIndex + 1).trim();
-        if (
-          (value.startsWith('"') && value.endsWith('"')) ||
-          (value.startsWith("'") && value.endsWith("'"))
-        ) {
-          value = value.slice(1, -1);
-        }
-        if (!process.env[key]) {
-          process.env[key] = value;
-        }
-      }
-    }
-  } catch {
-    // Ignore unreadable .env
-  }
-}
-
-function loadLocalConfig(): { projectSlug?: string; port?: number } {
-  const configPath = path.resolve(process.cwd(), ".fackrc.json");
-  if (!fs.existsSync(configPath)) return {};
-
-  try {
-    const raw = fs.readFileSync(configPath, "utf-8");
-    return JSON.parse(raw);
-  } catch {
-    return {};
-  }
-}
 
 export async function runDev(options: DevCommandOptions): Promise<void> {
   loadLocalEnv();
-  const config = loadLocalConfig();
+  const config = loadFackRc();
 
   const filePath = path.resolve(process.cwd(), options.file || "fack.enc");
 
@@ -101,8 +61,17 @@ export async function runDev(options: DevCommandOptions): Promise<void> {
     process.exit(1);
   }
 
-  const port =
-    options.port || config.port || parseInt(process.env.PORT || "4000", 10);
+  const rawPort =
+    options.port ?? config.port ?? parseInt(process.env.PORT || "4000", 10);
+  const port = Number(rawPort);
+
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    console.error(
+      `\x1b[31m[fack] Error: Invalid port "${rawPort}". Port must be an integer between 1 and 65535.\x1b[0m`,
+    );
+    process.exit(1);
+  }
+
   const host = options.host || "0.0.0.0";
 
   const server = new MockServer({
@@ -147,6 +116,34 @@ export async function runDev(options: DevCommandOptions): Promise<void> {
     console.log(
       "\n\x1b[2mReady for frontend requests. Press Ctrl+C to stop.\x1b[0m\n",
     );
+
+    // Live hot-reload when bundle file changes (e.g. via `fack pull` or re-export)
+    let watchDebounceTimer: NodeJS.Timeout | undefined;
+    try {
+      fs.watch(filePath, (eventType) => {
+        if (eventType === "change" || eventType === "rename") {
+          clearTimeout(watchDebounceTimer);
+          watchDebounceTimer = setTimeout(() => {
+            try {
+              if (!fs.existsSync(filePath)) return;
+              const updatedBuffer = fs.readFileSync(filePath);
+              const { bundle: updatedBundle } = decryptBundle(
+                updatedBuffer,
+                secretKey,
+              );
+              server.updateBundle(updatedBundle);
+              console.log(
+                `\n\x1b[32m✔ [fack] Hot-reloaded ${updatedBundle.routes.length} mock routes from ${path.basename(filePath)}\x1b[0m\n`,
+              );
+            } catch {
+              // Ignore transient file lock or incomplete write
+            }
+          }, 150);
+        }
+      });
+    } catch {
+      // Best-effort file watching
+    }
 
     const shutdown = async (): Promise<void> => {
       console.log("\n\x1b[33mShutting down Fack runner...\x1b[0m");

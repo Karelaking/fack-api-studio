@@ -35,7 +35,9 @@ export function openBrowser(url: string): boolean {
 
   if (process.platform === "win32") {
     command = "cmd";
-    args = ["/c", "start", "", url];
+    // In Windows cmd.exe, unescaped & splits commands; escape with ^&
+    const winUrl = url.replace(/&/g, "^&");
+    args = ["/c", "start", "", winUrl];
   } else if (process.platform === "darwin") {
     command = "open";
     args = [url];

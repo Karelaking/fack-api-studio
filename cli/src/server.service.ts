@@ -75,12 +75,19 @@ async function readRequestBody(
     });
 
     req.on("end", () => {
-      if (!body) {
+      if (!body || body.trim().length === 0) {
         resolve({});
         return;
       }
       try {
-        resolve(JSON.parse(body) as Record<string, unknown>);
+        const parsed = JSON.parse(body);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          resolve(parsed as Record<string, unknown>);
+        } else if (Array.isArray(parsed)) {
+          resolve({ items: parsed });
+        } else {
+          resolve({ value: parsed });
+        }
       } catch {
         resolve({ rawBody: body });
       }
@@ -102,6 +109,13 @@ export class MockServer {
     this.options = options;
     this.matcher = new RouteMatcher(options.bundle.routes);
     this.store = new MockStore(options.bundle.mockStates);
+  }
+
+  /** Dynamically updates the runtime bundle and recompiles routes without dropping connections. */
+  public updateBundle(bundle: FackRuntimeBundle): void {
+    this.options.bundle = bundle;
+    this.matcher = new RouteMatcher(bundle.routes);
+    this.store = new MockStore(bundle.mockStates);
   }
 
   public async start(): Promise<void> {
@@ -304,6 +318,13 @@ export class MockServer {
         resolve();
         return;
       }
+      try {
+        (
+          this.server as unknown as { closeIdleConnections?: () => void }
+        ).closeIdleConnections?.();
+      } catch {
+        // Ignore environments where closeIdleConnections is unavailable
+      }
       this.server.close((err) => {
         if (err) reject(err);
         else resolve();
@@ -377,13 +398,48 @@ export class MockServer {
 
     // 1. Stateful Mock Store CRUD
     if (collection) {
-      const idParam = params.id || params.userId || params.itemId;
+      const idParam =
+        params.id ||
+        params.userId ||
+        params.itemId ||
+        (Object.keys(params).length > 0 ? Object.values(params)[0] : undefined);
 
       if (method === "GET") {
         if (idParam) {
+          // If collection is empty, attempt auto-seeding before looking up
+          if (
+            this.store.list(collection).length === 0 &&
+            !route.responseTemplate
+          ) {
+            const seedPayload = await generatePayload(route.responseSchema);
+            if (Array.isArray(seedPayload) && seedPayload.length > 0) {
+              for (const item of seedPayload) {
+                if (item && typeof item === "object") {
+                  this.store.create(
+                    collection,
+                    item as Record<string, unknown>,
+                  );
+                }
+              }
+            }
+          }
+
           const item = this.store.get(collection, idParam);
           if (item) {
             return { status: 200, payload: item, headers: customHeaders };
+          }
+
+          // If the collection is initialized and item is not found, return 404
+          if (this.store.list(collection).length > 0) {
+            return {
+              status: 404,
+              payload: {
+                error: "Not Found",
+                message: `Item with id "${idParam}" not found in collection "${collection}".`,
+                id: idParam,
+              },
+              headers: customHeaders,
+            };
           }
         } else {
           let list = this.store.list(collection);

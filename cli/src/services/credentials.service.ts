@@ -31,12 +31,15 @@ export function normalizeStudioUrl(value: string): string {
   const trimmed = value.trim().replace(/\/+$/, "");
   if (!trimmed) return "";
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `http://${trimmed}`;
+  if (trimmed.startsWith("localhost") || trimmed.startsWith("127.0.0.1")) {
+    return `http://${trimmed}`;
+  }
+  return `https://${trimmed}`;
 }
 
 export function defaultStudioUrl(): string {
   return normalizeStudioUrl(
-    process.env.FACK_STUDIO_URL || "http://localhost:3000",
+    process.env.FACK_STUDIO_URL || "https://lotusapi-studio.vercel.app",
   );
 }
 

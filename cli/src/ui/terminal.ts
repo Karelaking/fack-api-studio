@@ -1,28 +1,48 @@
 /**
  * Fack CLI — terminal presentation helpers.
  *
- * Colour is opt-out (NO_COLOR or a piped stdout) so logs stay clean in CI.
+ * Built with picocolors and @clack/prompts for an award-winning developer experience.
+ * Automatically respects NO_COLOR and non-TTY environments for clean CI output.
  */
 
-const COLOUR_ENABLED = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
+import pc from "picocolors";
+import {
+  intro,
+  outro,
+  spinner,
+  note,
+  cancel,
+  isCancel,
+  select,
+  confirm,
+  text,
+} from "@clack/prompts";
 
-function wrap(open: string, close: string): (value: string) => string {
-  return (value: string): string =>
-    COLOUR_ENABLED ? `\x1b[${open}m${value}\x1b[${close}m` : value;
-}
+export {
+  intro,
+  outro,
+  spinner,
+  note,
+  cancel,
+  isCancel,
+  select,
+  confirm,
+  text,
+  pc,
+};
 
 export const t = {
-  bold: wrap("1", "22"),
-  dim: wrap("2", "22"),
-  italic: wrap("3", "23"),
-  underline: wrap("4", "24"),
-  red: wrap("31", "39"),
-  green: wrap("32", "39"),
-  yellow: wrap("33", "39"),
-  blue: wrap("34", "39"),
-  magenta: wrap("35", "39"),
-  cyan: wrap("36", "39"),
-  gray: wrap("90", "39"),
+  bold: pc.bold,
+  dim: pc.dim,
+  italic: pc.italic,
+  underline: pc.underline,
+  red: pc.red,
+  green: pc.green,
+  yellow: pc.yellow,
+  blue: pc.blue,
+  magenta: pc.magenta,
+  cyan: pc.cyan,
+  gray: pc.gray,
 };
 
 export const log = {

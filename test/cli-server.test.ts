@@ -23,6 +23,12 @@ const testBundle: FackRuntimeBundle = {
       basePath: "/api/secure",
       description: "",
     },
+    {
+      id: "ep_3",
+      name: "Products API",
+      basePath: "/api/products",
+      description: "",
+    },
   ],
   routes: [
     {
@@ -122,6 +128,40 @@ const testBundle: FackRuntimeBundle = {
       isEnabled: true,
       collectionName: undefined,
     },
+    {
+      id: "r_put_product",
+      endpointId: "ep_3",
+      method: "PUT",
+      path: "/:productId",
+      fullPath: "/api/products/:productId",
+      statusCode: 200,
+      responseSchema: {},
+      responseTemplate: undefined,
+      latencyMin: 0,
+      latencyMax: 0,
+      errorRate: 0,
+      customHeaders: {},
+      isAuthRequired: false,
+      isEnabled: true,
+      collectionName: "products",
+    },
+    {
+      id: "r_get_product",
+      endpointId: "ep_3",
+      method: "GET",
+      path: "/:productId",
+      fullPath: "/api/products/:productId",
+      statusCode: 200,
+      responseSchema: {},
+      responseTemplate: undefined,
+      latencyMin: 0,
+      latencyMax: 0,
+      errorRate: 0,
+      customHeaders: {},
+      isAuthRequired: false,
+      isEnabled: true,
+      collectionName: "products",
+    },
   ],
   scenarios: [],
   mockStates: [
@@ -161,7 +201,7 @@ describe("cli/src/server.service", () => {
     const data = await res.json();
     expect(data.status).toBe("ok");
     expect(data.project).toBe("Server Test Project");
-    expect(data.routesCount).toBe(5);
+    expect(data.routesCount).toBe(testBundle.routes.length);
   });
 
   it("should respond to CORS OPTIONS preflight with 204 and CORS headers", async () => {
@@ -248,6 +288,45 @@ describe("cli/src/server.service", () => {
     const list = await listRes.json();
     expect(list.some((i: { id: string }) => i.id === "temp_item")).toBe(false);
     expect(list.some((i: { id: string }) => i.id === "todo_1")).toBe(true);
+  });
+
+  it("should return 404 when querying non-existent item by ID on a populated collection", async () => {
+    const res = await fetch(`${BASE_URL}/api/todos/nonexistent_9999`);
+    expect(res.status).toBe(404);
+    const data = await res.json();
+    expect(data.error).toBe("Not Found");
+    expect(data.id).toBe("nonexistent_9999");
+  });
+
+  it("should support CRUD with custom non-standard param names like :productId", async () => {
+    // Upsert via PUT
+    const putRes = await fetch(`${BASE_URL}/api/products/prod_101`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Mechanical Keyboard", price: 120 }),
+    });
+    expect(putRes.status).toBe(200);
+    const saved = await putRes.json();
+    expect(saved.id).toBe("prod_101");
+    expect(saved.name).toBe("Mechanical Keyboard");
+
+    // Fetch via GET
+    const getRes = await fetch(`${BASE_URL}/api/products/prod_101`);
+    expect(getRes.status).toBe(200);
+    const fetched = await getRes.json();
+    expect(fetched.id).toBe("prod_101");
+    expect(fetched.name).toBe("Mechanical Keyboard");
+  });
+
+  it("should safely handle null or primitive request bodies without crashing", async () => {
+    const postRes = await fetch(`${BASE_URL}/api/todos`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "null",
+    });
+    expect(postRes.status).toBe(201);
+    const item = await postRes.json();
+    expect(item.id).toBeDefined();
   });
 
   it("should return 404 for unknown endpoints", async () => {

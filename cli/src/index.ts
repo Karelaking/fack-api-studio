@@ -3,230 +3,271 @@
 /**
  * Fack CLI - Main Entrypoint
  *
- * Lightweight, zero-dependency local mock runner.
+ * Ultra-fast, zero-overhead local mock runner built with Commander.
  */
 
 import fs from "node:fs";
 import path from "node:path";
+import { Command, InvalidArgumentError } from "commander";
 import { runDev } from "./commands/dev.command";
 import { runPull } from "./commands/pull.command";
 import { runInspect } from "./commands/inspect.command";
 import { runInit } from "./commands/init.command";
+import { runLogin } from "./commands/login.command";
+import { runLogout } from "./commands/logout.command";
+import { runProjects } from "./commands/projects.command";
+import { runWhoami } from "./commands/whoami.command";
 
 const VERSION = "1.19.0";
 
-function printHelp(): void {
-  console.log(`
-\x1b[36m\x1b[1m⚡ Fack API Local CLI\x1b[0m \x1b[2mv${VERSION}\x1b[0m
-Zero-overhead local runner for encrypted mock API projects.
-
-\x1b[1mUSAGE\x1b[0m
-  fack <command> [options]
-
-\x1b[1mCOMMANDS\x1b[0m
-  \x1b[32mdev\x1b[0m [file]               Starts the local mock HTTP server (default: fack.enc)
-  \x1b[32mpull\x1b[0m <slug>             Pulls the latest encrypted bundle from Fack Studio
-  \x1b[32minspect\x1b[0m [file]          Inspects endpoints, routes, and chaos rules in terminal
-  \x1b[32minit\x1b[0m                    Configures .env with your project secret key
-
-\x1b[1mOPTIONS\x1b[0m
-  --key, -k <key>         Project decryption / sync secret key
-  --port, -p <port>       Port to serve mock endpoints on (default: 4000)
-  --host <host>           Host to bind on (default: 0.0.0.0)
-  --url, -u <url>         Fack Studio base URL (default: http://localhost:3000)
-  --out, -o <path>        Output path for downloaded bundle (default: fack.enc)
-  --silent, -s            Suppress request logging output
-  --help, -h              Show this help message
-  --version, -v           Show version
-
-\x1b[1mEXAMPLES\x1b[0m
-  $ fack pull my-app --key fack_sec_a8b9...
-  $ fack dev
-  $ fack dev --port 5000
-  $ fack inspect
-`);
-}
-
-interface ParsedArgs {
-  command: string;
-  positionals: string[];
-  flags: Record<string, string | boolean>;
-}
-
-function parseArgs(args: string[]): ParsedArgs {
-  let command = "";
-  const positionals: string[] = [];
-  const flags: Record<string, string | boolean> = {};
-
-  const aliasMap: Record<string, string> = {
-    k: "key",
-    p: "port",
-    u: "url",
-    o: "out",
-    s: "silent",
-    h: "help",
-    v: "version",
-  };
-
-  const valueFlags = new Set([
-    "key",
-    "k",
-    "port",
-    "p",
-    "host",
-    "url",
-    "u",
-    "out",
-    "o",
-    "file",
-    "slug",
-  ]);
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-
-    if (arg.startsWith("--")) {
-      const eqIndex = arg.indexOf("=");
-      if (eqIndex > 0) {
-        const key = arg.slice(2, eqIndex);
-        const value = arg.slice(eqIndex + 1);
-        flags[key] = value;
-      } else {
-        const key = arg.slice(2);
-        if (
-          valueFlags.has(key) &&
-          i + 1 < args.length &&
-          !args[i + 1].startsWith("-")
-        ) {
-          flags[key] = args[i + 1];
-          i++;
-        } else {
-          flags[key] = true;
-        }
-      }
-    } else if (arg.startsWith("-")) {
-      const eqIndex = arg.indexOf("=");
-      if (eqIndex > 0) {
-        const rawKey = arg.slice(1, eqIndex);
-        const resolvedKey = aliasMap[rawKey] || rawKey;
-        const value = arg.slice(eqIndex + 1);
-        flags[resolvedKey] = value;
-      } else {
-        const rawKey = arg.slice(1);
-        const resolvedKey = aliasMap[rawKey] || rawKey;
-        if (
-          valueFlags.has(rawKey) &&
-          i + 1 < args.length &&
-          !args[i + 1].startsWith("-")
-        ) {
-          flags[resolvedKey] = args[i + 1];
-          i++;
-        } else {
-          flags[resolvedKey] = true;
-        }
-      }
-    } else if (!command) {
-      command = arg;
-    } else {
-      positionals.push(arg);
-    }
+function parsePort(value: string): number {
+  const port = parseInt(value, 10);
+  if (isNaN(port) || port < 1 || port > 65535) {
+    throw new InvalidArgumentError(
+      "Port must be an integer between 1 and 65535.",
+    );
   }
+  return port;
+}
 
-  return { command, positionals, flags };
+export function buildCliProgram(): Command {
+  const program = new Command();
+
+  program
+    .name("fack")
+    .description(
+      "\x1b[36m\x1b[1m⚡ Fack API Local CLI\x1b[0m\nZero-overhead local runner for encrypted mock API projects.",
+    )
+    .version(VERSION, "-v, --version", "Show current CLI version");
+
+  program
+    .command("dev [file]")
+    .alias("start")
+    .alias("serve")
+    .description("Starts the local mock HTTP server (default: fack.enc)")
+    .option("-p, --port <port>", "Port to serve mock endpoints on", parsePort)
+    .option(
+      "-h, --host <host>",
+      "Host to bind on (default: 0.0.0.0)",
+      "0.0.0.0",
+    )
+    .option("-k, --key <key>", "Project decryption / sync secret key")
+    .option("-s, --silent", "Suppress request logging output", false)
+    .action(
+      async (
+        file: string | undefined,
+        options: {
+          port?: number;
+          host?: string;
+          key?: string;
+          silent?: boolean;
+        },
+      ): Promise<void> => {
+        await runDev({
+          file: file || "fack.enc",
+          port: options.port,
+          host: options.host,
+          key: options.key,
+          silent: options.silent,
+        });
+      },
+    );
+
+  program
+    .command("pull [slug]")
+    .alias("sync")
+    .alias("fetch")
+    .description("Pulls the latest encrypted bundle from Fack Studio")
+    .option("-k, --key <key>", "Project secret key")
+    .option("-o, --out <path>", "Output path for downloaded bundle", "fack.enc")
+    .option(
+      "-u, --url <url>",
+      "Fack Studio base URL (default: https://lotusapi-studio.vercel.app)",
+    )
+    .action(
+      async (
+        slug: string | undefined,
+        options: {
+          key?: string;
+          out?: string;
+          url?: string;
+        },
+      ): Promise<void> => {
+        await runPull({
+          projectSlug: slug || "",
+          key: options.key,
+          out: options.out,
+          url: options.url,
+        });
+      },
+    );
+
+  program
+    .command("inspect [file]")
+    .alias("list")
+    .alias("routes")
+    .description("Inspects endpoints, routes, and chaos rules in terminal")
+    .option("-k, --key <key>", "Project decryption / sync secret key")
+    .action(
+      async (
+        file: string | undefined,
+        options: {
+          key?: string;
+        },
+      ): Promise<void> => {
+        await runInspect({
+          file: file || "fack.enc",
+          key: options.key,
+        });
+      },
+    );
+
+  program
+    .command("init [slug]")
+    .description("Connects Studio, downloads bundle, and provisions .env")
+    .option("-k, --key <key>", "Project secret key")
+    .option(
+      "-u, --url <url>",
+      "Fack Studio base URL (default: https://lotusapi-studio.vercel.app)",
+    )
+    .option("-o, --out <path>", "Output path for downloaded bundle")
+    .action(
+      async (
+        slug: string | undefined,
+        options: {
+          key?: string;
+          url?: string;
+          out?: string;
+        },
+      ): Promise<void> => {
+        await runInit({
+          projectSlug: slug,
+          key: options.key,
+          url: options.url,
+          out: options.out,
+        });
+      },
+    );
+
+  program
+    .command("login")
+    .alias("auth")
+    .description("Authorizes this terminal via device approval flow")
+    .option(
+      "-u, --url <url>",
+      "Fack Studio base URL (default: https://lotusapi-studio.vercel.app)",
+    )
+    .option(
+      "--device-name <name>",
+      "Custom label for this terminal during login",
+    )
+    .action(
+      async (options: { url?: string; deviceName?: string }): Promise<void> => {
+        await runLogin({
+          url: options.url,
+          deviceName: options.deviceName,
+        });
+      },
+    );
+
+  program
+    .command("logout")
+    .description("Revokes terminal token and clears stored credentials")
+    .option(
+      "-u, --url <url>",
+      "Fack Studio base URL (default: https://lotusapi-studio.vercel.app)",
+    )
+    .action(async (options: { url?: string }): Promise<void> => {
+      await runLogout({ url: options.url });
+    });
+
+  program
+    .command("projects")
+    .alias("proj")
+    .description("Lists all Studio projects accessible to this terminal")
+    .option(
+      "-u, --url <url>",
+      "Fack Studio base URL (default: https://lotusapi-studio.vercel.app)",
+    )
+    .option("-j, --json", "Output results as JSON", false)
+    .action(
+      async (options: { url?: string; json?: boolean }): Promise<void> => {
+        await runProjects({
+          url: options.url,
+          json: options.json,
+        });
+      },
+    );
+
+  program
+    .command("whoami")
+    .alias("me")
+    .description("Displays current Studio account and terminal status")
+    .option(
+      "-u, --url <url>",
+      "Fack Studio base URL (default: https://lotusapi-studio.vercel.app)",
+    )
+    .option("-j, --json", "Output results as JSON", false)
+    .action(
+      async (options: { url?: string; json?: boolean }): Promise<void> => {
+        await runWhoami({
+          url: options.url,
+          json: options.json,
+        });
+      },
+    );
+
+  return program;
 }
 
 async function main(): Promise<void> {
+  const program = buildCliProgram();
   const rawArgs = process.argv.slice(2);
-  const { command, positionals, flags } = parseArgs(rawArgs);
 
-  if (flags.help || flags.h) {
-    printHelp();
-    return;
-  }
+  const knownCommands = new Set([
+    "dev",
+    "start",
+    "serve",
+    "pull",
+    "sync",
+    "fetch",
+    "inspect",
+    "list",
+    "routes",
+    "init",
+    "login",
+    "auth",
+    "logout",
+    "projects",
+    "proj",
+    "whoami",
+    "me",
+    "help",
+    "--help",
+    "-h",
+    "--version",
+    "-v",
+    "-V",
+  ]);
 
-  if (flags.version || flags.v) {
-    console.log(`fack v${VERSION}`);
-    return;
-  }
-
-  // Determine command: if empty, check if fack.enc exists or if dev flags were passed
-  let effectiveCommand = command.toLowerCase();
-  if (!effectiveCommand) {
+  // If invoked with no arguments:
+  if (rawArgs.length === 0) {
     const defaultBundlePath = path.resolve(process.cwd(), "fack.enc");
-    const hasDevFlags =
-      flags.port || flags.key || flags.host || flags.silent || flags.file;
-
-    if (hasDevFlags || fs.existsSync(defaultBundlePath)) {
-      effectiveCommand = "dev";
-    } else {
-      printHelp();
+    if (fs.existsSync(defaultBundlePath)) {
+      await runDev({ file: "fack.enc" });
       return;
     }
+    program.outputHelp();
+    return;
   }
 
-  const secretKey = (flags.key as string) || undefined;
-
-  switch (effectiveCommand) {
-    case "dev":
-    case "start":
-    case "serve": {
-      const file = positionals[0] || (flags.file as string) || "fack.enc";
-      const port = flags.port ? parseInt(flags.port as string, 10) : undefined;
-      const host = (flags.host as string) || undefined;
-      const silent = Boolean(flags.silent);
-
-      await runDev({
-        file,
-        port,
-        host,
-        key: secretKey,
-        silent,
-      });
-      break;
-    }
-
-    case "pull":
-    case "sync":
-    case "fetch": {
-      const projectSlug = positionals[0] || (flags.slug as string) || "";
-      const out = (flags.out as string) || "fack.enc";
-      const url = (flags.url as string) || undefined;
-
-      await runPull({
-        projectSlug,
-        key: secretKey,
-        out,
-        url,
-      });
-      break;
-    }
-
-    case "inspect":
-    case "list":
-    case "routes": {
-      const file = positionals[0] || (flags.file as string) || "fack.enc";
-      await runInspect({
-        file,
-        key: secretKey,
-      });
-      break;
-    }
-
-    case "init": {
-      const projectSlug = positionals[0] || (flags.slug as string) || undefined;
-      await runInit({
-        projectSlug,
-        key: secretKey,
-      });
-      break;
-    }
-
-    default: {
-      console.error(`\x1b[31m[fack] Unknown command: "${command}"\x1b[0m\n`);
-      printHelp();
-      process.exit(1);
-    }
+  // If first argument is a flag like `-p` or `--port`, route to `dev`
+  const firstArg = rawArgs[0];
+  if (firstArg && !knownCommands.has(firstArg) && firstArg.startsWith("-")) {
+    rawArgs.unshift("dev");
   }
+
+  await program.parseAsync(rawArgs, { from: "user" });
 }
 
 main().catch((err) => {

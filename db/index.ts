@@ -73,11 +73,11 @@ function createDatabase() {
 
   // Apply SQLite runtime optimizations for local file databases
   if (isLocalFile) {
-    configureSqlitePragmas(client);
+    void configureSqlitePragmas(client);
   }
 
   // Bootstrap request_logs in SQLite/Turso if it does not exist
-  client
+  void client
     .execute(
       `
     CREATE TABLE IF NOT EXISTS request_logs (

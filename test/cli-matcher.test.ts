@@ -90,12 +90,45 @@ describe("cli/src/matcher.service", () => {
     expect(matchWildcard?.params.wildcard).toBe("documents/2026/report.pdf");
   });
 
-  it("should normalize trailing slashes", () => {
+  it("should normalize trailing slashes and multiple consecutive slashes", () => {
     const matcher = new RouteMatcher([makeRoute("GET", "/api/users")]);
 
-    const match = matcher.match("GET", "/api/users/");
+    const matchTrailing = matcher.match("GET", "/api/users/");
+    expect(matchTrailing).toBeDefined();
+    expect(matchTrailing?.route.fullPath).toBe("/api/users");
+
+    const matchDouble = matcher.match("GET", "/api//users");
+    expect(matchDouble).toBeDefined();
+    expect(matchDouble?.route.fullPath).toBe("/api/users");
+  });
+
+  it("should match parameters with hyphens and underscores in names", () => {
+    const matcher = new RouteMatcher([
+      makeRoute("GET", "/api/v1/users/:user-id"),
+      makeRoute("GET", "/api/v1/orders/{order-id}"),
+      makeRoute("GET", "/api/v1/tasks/[task-id]"),
+    ]);
+
+    const match1 = matcher.match("GET", "/api/v1/users/u-99");
+    expect(match1).toBeDefined();
+    expect(match1?.params["user-id"]).toBe("u-99");
+
+    const match2 = matcher.match("GET", "/api/v1/orders/ord-456");
+    expect(match2).toBeDefined();
+    expect(match2?.params["order-id"]).toBe("ord-456");
+
+    const match3 = matcher.match("GET", "/api/v1/tasks/task-789");
+    expect(match3).toBeDefined();
+    expect(match3?.params["task-id"]).toBe("task-789");
+  });
+
+  it("should safely handle malformed URI encoded parameters without throwing", () => {
+    const matcher = new RouteMatcher([makeRoute("GET", "/api/users/:id")]);
+
+    // Malformed URI percent encoding that would cause decodeURIComponent to throw URIError
+    const match = matcher.match("GET", "/api/users/%ZZ%E0%A4");
     expect(match).toBeDefined();
-    expect(match?.route.fullPath).toBe("/api/users");
+    expect(match?.params.id).toBe("%ZZ%E0%A4");
   });
 
   it("should return undefined for unmatched methods or paths", () => {

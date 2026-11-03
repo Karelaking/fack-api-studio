@@ -17,31 +17,32 @@ export interface FackRc {
 }
 
 export function loadLocalEnv(): void {
-  const envPath = path.resolve(process.cwd(), ".env");
-  if (!fs.existsSync(envPath)) return;
+  const envFiles = [".env", ".env.local"];
+  for (const filename of envFiles) {
+    const envPath = path.resolve(process.cwd(), filename);
+    if (!fs.existsSync(envPath)) continue;
 
-  try {
-    const content = fs.readFileSync(envPath, "utf-8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eqIndex = trimmed.indexOf("=");
-      if (eqIndex <= 0) continue;
+    try {
+      const content = fs.readFileSync(envPath, "utf-8");
+      for (const line of content.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const eqIndex = trimmed.indexOf("=");
+        if (eqIndex <= 0) continue;
 
-      const key = trimmed.slice(0, eqIndex).trim();
-      let value = trimmed.slice(eqIndex + 1).trim();
-      if (
-        (value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))
-      ) {
-        value = value.slice(1, -1);
-      }
-      if (!process.env[key]) {
+        const key = trimmed.slice(0, eqIndex).trim();
+        let value = trimmed.slice(eqIndex + 1).trim();
+        if (
+          (value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))
+        ) {
+          value = value.slice(1, -1);
+        }
         process.env[key] = value;
       }
+    } catch {
+      // Ignore unreadable environment file.
     }
-  } catch {
-    // Ignore unreadable .env.
   }
 }
 
@@ -76,12 +77,16 @@ export function writeFackRc(patch: Partial<FackRc>): string {
  * disturbing any other variable. Returns the relative path written.
  */
 export function writeProjectKeyEnv(secretKey: string): string {
-  const envPath = path.resolve(process.cwd(), ".env");
+  const localEnvExists = fs.existsSync(
+    path.resolve(process.cwd(), ".env.local"),
+  );
+  const targetEnv = localEnvExists ? ".env.local" : ".env";
+  const envPath = path.resolve(process.cwd(), targetEnv);
   const line = `FACK_PROJECT_KEY=${secretKey}`;
 
   if (!fs.existsSync(envPath)) {
     fs.writeFileSync(envPath, `# Fack API Local Runner\n${line}\n`, "utf-8");
-    return ".env";
+    return targetEnv;
   }
 
   const content = fs.readFileSync(envPath, "utf-8");
@@ -89,7 +94,7 @@ export function writeProjectKeyEnv(secretKey: string): string {
 
   if (pattern.test(content)) {
     fs.writeFileSync(envPath, content.replace(pattern, line), "utf-8");
-    return ".env";
+    return targetEnv;
   }
 
   const separator = content.endsWith("\n") ? "\n" : "\n\n";
@@ -98,7 +103,7 @@ export function writeProjectKeyEnv(secretKey: string): string {
     `${separator}# Fack API Local Runner\n${line}\n`,
     "utf-8",
   );
-  return ".env";
+  return targetEnv;
 }
 
 /** Resolves the bundle output path relative to the current directory. */

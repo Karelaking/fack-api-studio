@@ -51,11 +51,11 @@ export class RouteMatcher {
     const segments = cleanPath.split("/").filter((s) => s.length > 0);
 
     const regexSegments = segments.map((segment) => {
-      // Check for :param, {param}, or [param]
+      // Check for :param, {param}, or [param] (supporting alphanumeric, underscore, and hyphens)
       const paramMatch =
-        /^:([a-zA-Z0-9_]+)$/.exec(segment) ||
-        /^\{([a-zA-Z0-9_]+)\}$/.exec(segment) ||
-        /^\[([a-zA-Z0-9_]+)\]$/.exec(segment);
+        /^:([a-zA-Z0-9_-]+)$/.exec(segment) ||
+        /^\{([a-zA-Z0-9_-]+)\}$/.exec(segment) ||
+        /^\[([a-zA-Z0-9_-]+)\]$/.exec(segment);
 
       if (paramMatch) {
         const paramName = paramMatch[1];
@@ -99,7 +99,8 @@ export class RouteMatcher {
       return undefined;
     }
 
-    const normalizedPath = pathname.trim().replace(/\/+$/, "") || "/";
+    const normalizedPath =
+      pathname.trim().replace(/\/+/g, "/").replace(/\/+$/, "") || "/";
 
     for (const compiled of routes) {
       const match = compiled.regex.exec(normalizedPath);
@@ -109,7 +110,11 @@ export class RouteMatcher {
           const paramName = compiled.paramNames[i];
           const paramValue = match[i + 1];
           if (paramName && paramValue !== undefined) {
-            params[paramName] = decodeURIComponent(paramValue);
+            try {
+              params[paramName] = decodeURIComponent(paramValue);
+            } catch {
+              params[paramName] = paramValue;
+            }
           }
         }
 

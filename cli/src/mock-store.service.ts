@@ -55,13 +55,15 @@ export class MockStore {
     data: Record<string, unknown>,
   ): Record<string, unknown> {
     const col = this.getOrCreateCollection(collectionName);
+    const safeData =
+      data && typeof data === "object" && !Array.isArray(data) ? data : {};
     const id =
-      typeof data.id === "string" || typeof data.id === "number"
-        ? String(data.id)
+      typeof safeData.id === "string" || typeof safeData.id === "number"
+        ? String(safeData.id)
         : crypto.randomUUID();
 
     const item = {
-      ...data,
+      ...safeData,
       id,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -82,9 +84,11 @@ export class MockStore {
       return undefined;
     }
 
+    const safeData =
+      data && typeof data === "object" && !Array.isArray(data) ? data : {};
     const updated = {
       ...existing,
-      ...data,
+      ...safeData,
       id,
       updatedAt: new Date().toISOString(),
     };
