@@ -5,7 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { CommandMenu } from "@/components/command-menu";
 import { getProjectBySlug, getProjects } from "@/lib/actions/projects";
-import { parseProjectPath } from "@/lib/utils/project-slug";
+import { getProjectUrl, parseProjectPath } from "@/lib/utils/project-slug";
 import { ProjectProvider } from "@/components/project/ProjectContext";
 import { Separator } from "@/components/ui/separator";
 import { DashboardBreadcrumbs } from "@/components/dashboard/DashboardBreadcrumbs";
@@ -86,7 +86,7 @@ export default async function ProjectLayout({
 
   // Redirect bare project URL to the canvas subpage
   if (!subpage) {
-    redirect(`/projects/${projectSlug}/canvas`);
+    redirect(getProjectUrl(projectSlug, "canvas"));
   }
 
   return (

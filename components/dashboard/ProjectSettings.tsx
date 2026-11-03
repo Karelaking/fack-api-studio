@@ -6,6 +6,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { updateProjectSchema } from "@/lib/validators";
+import { getProjectUrl } from "@/lib/utils/project-slug";
 import { LoggerRegistry } from "@/lib/logger-registry";
 
 const uiTrace = LoggerRegistry.getTrace("ui-project-settings");
@@ -141,7 +142,7 @@ export function ProjectSettings({
       router.refresh();
       // Redirect if slug changed
       if (updated.slug !== project.slug) {
-        router.push(`/projects/${updated.slug}/settings`);
+        router.push(getProjectUrl(updated.slug, "settings"));
       }
     } catch (err) {
       toast.error("Failed to update workspace settings");

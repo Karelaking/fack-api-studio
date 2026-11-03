@@ -35,6 +35,21 @@ describe("Validators", () => {
       const result = createProjectSchema.safeParse(invalid);
       expect(result.success).toBe(false);
     });
+
+    it("should reject slugs with leading, trailing, or double slashes", () => {
+      expect(
+        createProjectSchema.safeParse({ name: "Test", slug: "/leading-slash" })
+          .success,
+      ).toBe(false);
+      expect(
+        createProjectSchema.safeParse({ name: "Test", slug: "trailing-slash/" })
+          .success,
+      ).toBe(false);
+      expect(
+        createProjectSchema.safeParse({ name: "Test", slug: "double//slash" })
+          .success,
+      ).toBe(false);
+    });
   });
 
   describe("updateProjectSchema", () => {

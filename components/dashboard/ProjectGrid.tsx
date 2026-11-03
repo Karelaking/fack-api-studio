@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 import { deleteProject, updateProject } from "@/lib/actions/projects";
 import { cn, formatRelativeTime } from "@/lib/utils";
+import { getProjectUrl } from "@/lib/utils/project-slug";
 import type { Project, Endpoint, Route } from "@/db/schema";
 import { PageShell } from "@/components/dashboard/PageShell";
 import { Button } from "@/components/ui/button";
@@ -515,7 +516,7 @@ export function ProjectGrid({
                   {recentProjects.map((project) => (
                     <li key={project.id}>
                       <Link
-                        href={`/projects/${project.slug}/canvas`}
+                        href={getProjectUrl(project.slug, "canvas")}
                         className="group hover:bg-muted/50 focus-visible:ring-ring focus-visible:ring-offset-background flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                       >
                         <span className="min-w-0">
@@ -656,7 +657,7 @@ export function ProjectGrid({
                     >
                       {/* Whole-card navigation target; actions sit above it. */}
                       <Link
-                        href={`/projects/${project.slug}/canvas`}
+                        href={getProjectUrl(project.slug, "canvas")}
                         className="absolute inset-0 z-10 rounded-xl focus-visible:outline-none"
                       >
                         <span className="sr-only">

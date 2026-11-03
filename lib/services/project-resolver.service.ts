@@ -40,7 +40,8 @@ function createResolution(
 export async function resolveProjectFromSlug(
   slugSegments: string[],
 ): Promise<ProjectResolution | null> {
-  const candidates = getCandidateSlugs(slugSegments);
+  const sanitizedSegments = slugSegments.filter(Boolean);
+  const candidates = getCandidateSlugs(sanitizedSegments);
 
   for (const candidate of candidates) {
     const cachedProject = getCachedProjectBySlug(candidate);
@@ -48,7 +49,7 @@ export async function resolveProjectFromSlug(
       projectResolverLogger.debug(
         `Resolved project slug from cache: ${candidate}`,
       );
-      return createResolution(cachedProject, candidate, slugSegments);
+      return createResolution(cachedProject, candidate, sanitizedSegments);
     }
   }
 
@@ -69,7 +70,7 @@ export async function resolveProjectFromSlug(
         `Resolved project slug (DB batch): ${project.slug}`,
       );
       setCachedProjectBySlug(candidate, project);
-      return createResolution(project, candidate, slugSegments);
+      return createResolution(project, candidate, sanitizedSegments);
     }
   }
 

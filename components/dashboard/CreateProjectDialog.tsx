@@ -9,6 +9,7 @@ import { createProject } from "@/lib/actions/projects";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { slugifyPath } from "@/lib/utils";
+import { getProjectUrl } from "@/lib/utils/project-slug";
 import {
   Dialog,
   DialogContent,
@@ -55,11 +56,14 @@ export function CreateProjectDialog(): React.JSX.Element {
       return;
     }
     const cleanedSlug = slug.trim()
-      ? slug.trim().replace(/^\/+|\/+$/g, "")
+      ? slug
+          .trim()
+          .replace(/^\/+|\/+$/g, "")
+          .replace(/\/+/g, "/")
       : undefined;
-    if (cleanedSlug && !/^[a-z0-9_/-]+$/.test(cleanedSlug)) {
+    if (cleanedSlug && !/^[a-z0-9_-]+(?:\/[a-z0-9_-]+)*$/.test(cleanedSlug)) {
       toast.error(
-        "Slug must be lowercase alphanumeric with hyphens, underscores, or slashes",
+        "Slug must be lowercase alphanumeric with hyphens or underscores, and single slashes for sub-paths",
       );
       return;
     }
@@ -76,7 +80,7 @@ export function CreateProjectDialog(): React.JSX.Element {
       setName("");
       setSlug("");
       setDescription("");
-      router.push(`/projects/${newProj.slug}/canvas`);
+      router.push(getProjectUrl(newProj.slug, "canvas"));
       router.refresh();
     } catch (err) {
       toast.error("Failed to create project");

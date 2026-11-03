@@ -18,6 +18,7 @@ import {
 } from "@/lib/actions/endpoints";
 import type { Endpoint, Route } from "@/db/schema";
 import { Button } from "@/components/ui/button";
+import { getProjectUrl } from "@/lib/utils/project-slug";
 import { CliRunDialog } from "@/components/dashboard/CliRunDialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -384,7 +385,9 @@ export const ProjectEndpoints = ({
                   variant="ghost"
                   size="sm"
                   className="group/btn w-full justify-between"
-                  onClick={() => router.push(`/projects/${projectSlug}/canvas`)}
+                  onClick={() =>
+                    router.push(getProjectUrl(projectSlug, "canvas"))
+                  }
                 >
                   <span>Open Route Canvas</span>
                   <RiArrowRightLine className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />

@@ -40,8 +40,9 @@ function normalizeTab(tab: string | undefined): ProjectTab {
 }
 
 function getProjectTabHref(slug: string, tab: string | undefined): Route {
+  const cleanSlug = slug.replace(/^\/+|\/+$/g, "").replace(/\/+/g, "/");
   const normalizedTab = normalizeTab(tab);
-  return `/projects/${slug}/${normalizedTab}` as Route;
+  return `/projects/${cleanSlug}/${normalizedTab}` as Route;
 }
 
 /**
@@ -91,6 +92,26 @@ export function DashboardBreadcrumbs({
 
     if (subpages.has(lastSegment)) {
       projectSlugSegments = segments.slice(1, -1);
+    }
+    projectSlug = projectSlugSegments.join("/");
+  } else if (
+    segments[0] === "dashboard" &&
+    segments[1] === "projects" &&
+    segments.length >= 3
+  ) {
+    isProjectPage = true;
+    const lastSegment = segments[segments.length - 1];
+    const subpages = new Set([
+      "canvas",
+      "endpoints",
+      "logs",
+      "notes",
+      "settings",
+    ]);
+    let projectSlugSegments = segments.slice(2);
+
+    if (subpages.has(lastSegment)) {
+      projectSlugSegments = segments.slice(2, -1);
     }
     projectSlug = projectSlugSegments.join("/");
   }

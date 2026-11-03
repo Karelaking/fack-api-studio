@@ -21,6 +21,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn, slugifyPath } from "@/lib/utils";
+import { getProjectUrl } from "@/lib/utils/project-slug";
 import {
   Sidebar,
   SidebarContent,
@@ -134,7 +135,7 @@ export const DashboardSidebar = ({
       setName("");
       setSlug("");
       setDescription("");
-      router.push(`/projects/${newProj.slug}/canvas`);
+      router.push(getProjectUrl(newProj.slug, "canvas"));
       router.refresh();
     } catch (err) {
       toast.error("Failed to create project");
@@ -252,7 +253,10 @@ export const DashboardSidebar = ({
                                 isActive={isSubActive}
                                 render={
                                   <Link
-                                    href={`/projects/${activeProject.slug}/${subItem.path}`}
+                                    href={getProjectUrl(
+                                      activeProject.slug,
+                                      subItem.path,
+                                    )}
                                     aria-label={subItem.name}
                                   />
                                 }

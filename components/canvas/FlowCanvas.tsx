@@ -23,6 +23,7 @@ import { updateRoute } from "@/lib/actions/routes";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryState, parseAsBoolean } from "nuqs";
+import { getProjectUrl } from "@/lib/utils/project-slug";
 import { RouteNode, type RouteNodeData } from "./RouteNode";
 import {
   buildDraftPlan,
@@ -675,7 +676,7 @@ function FlowCanvasInner({
             ) : (
               <Button
                 size="sm"
-                render={<Link href={`/projects/${projectSlug}/endpoints`} />}
+                render={<Link href={getProjectUrl(projectSlug, "endpoints")} />}
               >
                 Create an endpoint group
               </Button>

@@ -6,7 +6,7 @@ import { db, storageConnection } from "@/db";
 import { projects } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { generateId, slugify } from "@/lib/utils";
+import { generateId, slugify, slugifyPath } from "@/lib/utils";
 import { requireUserId } from "@/lib/auth";
 import { assertProjectQuota } from "@/lib/services/quota.service";
 import {
@@ -177,12 +177,10 @@ export async function createProject(
   try {
     const parsed = createProjectSchema.parse(input);
     const id = generateId();
-    const slug = parsed.slug
-      ? parsed.slug
-          .split("/")
-          .map((s) => slugify(s))
-          .join("/")
+    const rawSlug = parsed.slug
+      ? slugifyPath(parsed.slug)
       : slugify(parsed.name);
+    const slug = rawSlug || slugify(parsed.name);
 
     // Ensure slug uniqueness by appending a short suffix if needed
     const existing = await db.query.projects.findFirst({
@@ -247,10 +245,7 @@ export async function updateProject(
     }
 
     if (updates.slug) {
-      const normalizedSlug = updates.slug
-        .split("/")
-        .map((s) => slugify(s))
-        .join("/");
+      const normalizedSlug = slugifyPath(updates.slug);
 
       if (normalizedSlug === existing.slug) {
         updates.slug = normalizedSlug;

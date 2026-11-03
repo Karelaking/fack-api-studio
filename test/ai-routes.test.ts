@@ -54,6 +54,44 @@ describe("AI API Architect — Route Handlers & Proxy Dispatching", () => {
         "/api/mock/ecommerce-project/products",
       );
     });
+
+    it("should collapse consecutive slashes in request URLs with a 308 redirect", async () => {
+      const req = new NextRequest(
+        "http://localhost:3000/dashboard/projects//the-project-slug",
+        { method: "GET" },
+      );
+      // oxlint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = (await proxy(req, {} as any)) as any;
+      expect(res.status).toBe(308);
+      expect(res.headers.get("location")).toBe(
+        "http://localhost:3000/dashboard/projects/the-project-slug",
+      );
+    });
+
+    it("should standardize /dashboard/projects/:slug by redirecting to /projects/:slug", async () => {
+      const req = new NextRequest(
+        "http://localhost:3000/dashboard/projects/the-project-slug",
+        { method: "GET" },
+      );
+      // oxlint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = (await proxy(req, {} as any)) as any;
+      expect(res.status).toBe(308);
+      expect(res.headers.get("location")).toBe(
+        "http://localhost:3000/projects/the-project-slug",
+      );
+    });
+
+    it("should redirect bare /dashboard/projects to /dashboard", async () => {
+      const req = new NextRequest("http://localhost:3000/dashboard/projects", {
+        method: "GET",
+      });
+      // oxlint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = (await proxy(req, {} as any)) as any;
+      expect(res.status).toBe(308);
+      expect(res.headers.get("location")).toBe(
+        "http://localhost:3000/dashboard",
+      );
+    });
   });
 
   describe("POST /api/ai/generate handler", () => {

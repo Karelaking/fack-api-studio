@@ -110,6 +110,44 @@ const handleRequest = async (request: NextRequest): Promise<NextResponse> => {
   const host = request.headers.get("host") || "";
   proxyTrace.traceCall("proxy", request.method, pathname, host);
 
+  // ── Normalize Consecutive Slashes (Security & Canonicalization) ──────────
+  if (pathname.includes("//")) {
+    const cleanUrl = request.nextUrl.clone();
+    cleanUrl.pathname = pathname.replace(/\/+/g, "/");
+    proxyTrace.traceSuccess(
+      "proxy (Collapse consecutive slashes)",
+      cleanUrl.pathname,
+    );
+    return NextResponse.redirect(cleanUrl, 308);
+  }
+
+  // ── Standardize Project URLs (e.g., /dashboard/projects/* → /projects/*) ──
+  if (
+    pathname === "/dashboard/projects" ||
+    pathname === "/dashboard/projects/"
+  ) {
+    const cleanUrl = request.nextUrl.clone();
+    cleanUrl.pathname = "/dashboard";
+    proxyTrace.traceSuccess(
+      "proxy (Redirect /dashboard/projects to /dashboard)",
+      cleanUrl.pathname,
+    );
+    return NextResponse.redirect(cleanUrl, 308);
+  }
+
+  if (pathname.startsWith("/dashboard/projects/")) {
+    const cleanUrl = request.nextUrl.clone();
+    cleanUrl.pathname = pathname.replace(
+      /^\/dashboard\/projects\//,
+      "/projects/",
+    );
+    proxyTrace.traceSuccess(
+      "proxy (Standardize /dashboard/projects/ to /projects/)",
+      cleanUrl.pathname,
+    );
+    return NextResponse.redirect(cleanUrl, 308);
+  }
+
   // ── Detect System/Dashboard Paths ────────────────────────────────────────
   const systemPrefixes = [
     "/dashboard",

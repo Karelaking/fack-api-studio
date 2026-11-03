@@ -21,6 +21,7 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getProjectUrl } from "@/lib/utils/project-slug";
 import {
   Sidebar,
   SidebarContent,
@@ -181,7 +182,7 @@ export function FileManagerSidebar({
 
       toast.success(`Project "${result.project.name}" opened successfully`);
       await refreshStatus();
-      router.push(`/projects/${result.project.slug}/canvas`);
+      router.push(getProjectUrl(result.project.slug, "canvas"));
       router.refresh();
     } catch (err) {
       toast.error(
@@ -307,7 +308,7 @@ export function FileManagerSidebar({
                         isActive={isActive}
                         render={
                           <Link
-                            href={`/projects/${project.slug}/canvas`}
+                            href={getProjectUrl(project.slug, "canvas")}
                             aria-label={project.name}
                           />
                         }
@@ -389,7 +390,7 @@ export function FileManagerSidebar({
                   <SidebarMenuItem key={recent.filePath}>
                     <SidebarMenuButton
                       onClick={() => {
-                        router.push(`/projects/${recent.slug}/canvas`);
+                        router.push(getProjectUrl(recent.slug, "canvas"));
                       }}
                       className="group/recent flex items-center justify-between text-xs"
                     >

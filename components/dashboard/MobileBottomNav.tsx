@@ -12,6 +12,7 @@ import {
 } from "@remixicon/react";
 import type { Route } from "next";
 import { cn } from "@/lib/utils";
+import { getProjectUrl } from "@/lib/utils/project-slug";
 
 export function MobileBottomNav(): React.JSX.Element | null {
   const pathname = usePathname();
@@ -40,27 +41,27 @@ export function MobileBottomNav(): React.JSX.Element | null {
   const tabs = [
     {
       name: "Canvas",
-      href: `/projects/${projectSlug}/canvas` as Route,
+      href: getProjectUrl(projectSlug, "canvas") as Route,
       icon: RiGitBranchLine,
     },
     {
       name: "Endpoints",
-      href: `/projects/${projectSlug}/endpoints` as Route,
+      href: getProjectUrl(projectSlug, "endpoints") as Route,
       icon: RiPulseLine,
     },
     {
       name: "Logs",
-      href: `/projects/${projectSlug}/logs` as Route,
+      href: getProjectUrl(projectSlug, "logs") as Route,
       icon: RiFileHistoryLine,
     },
     {
       name: "Notes",
-      href: `/projects/${projectSlug}/notes` as Route,
+      href: getProjectUrl(projectSlug, "notes") as Route,
       icon: RiStickyNoteLine,
     },
     {
       name: "Settings",
-      href: `/projects/${projectSlug}/settings` as Route,
+      href: getProjectUrl(projectSlug, "settings") as Route,
       icon: RiSettings2Line,
     },
   ];

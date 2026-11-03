@@ -6,6 +6,8 @@ export type HttpMethod = (typeof httpMethods)[number];
 
 export const httpMethodSchema = z.enum(httpMethods);
 
+export const projectSlugRegex = /^[a-z0-9_-]+(?:\/[a-z0-9_-]+)*$/;
+
 // ─── Project ─────────────────────────────────────────────────────────────────
 export const createProjectSchema = z.object({
   name: z
@@ -16,8 +18,8 @@ export const createProjectSchema = z.object({
     .string()
     .max(100)
     .regex(
-      /^[a-z0-9_/-]+$/,
-      "Slug must be lowercase alphanumeric with hyphens, underscores, or slashes",
+      projectSlugRegex,
+      "Slug must be lowercase alphanumeric with hyphens or underscores, and single slashes for sub-paths (no leading/trailing/consecutive slashes)",
     )
     .optional(),
   description: z
@@ -39,8 +41,8 @@ export const updateProjectSchema = z.object({
     .min(1, "Slug is required")
     .max(100)
     .regex(
-      /^[a-z0-9_/-]+$/,
-      "Slug must be lowercase alphanumeric with hyphens, underscores, or slashes",
+      projectSlugRegex,
+      "Slug must be lowercase alphanumeric with hyphens or underscores, and single slashes for sub-paths (no leading/trailing/consecutive slashes)",
     )
     .optional(),
   description: z
