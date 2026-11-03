@@ -1,0 +1,43 @@
+import { NextRequest, NextResponse } from "next/server";
+
+import { startDeviceAuthorization } from "@/lib/cli/device-flow.service";
+
+export const dynamic = "force-dynamic";
+
+/**
+ * POST /api/cli/auth/device
+ *
+ * Starts a device-authorization handshake for `fack login`. The response carries
+ * the secret device code the terminal polls with and the short user code the
+ * developer types into the browser.
+ */
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  try {
+    const body = (await request.json().catch(() => ({}))) as {
+      deviceName?: unknown;
+      platform?: unknown;
+    };
+
+    const authorization = await startDeviceAuthorization({
+      deviceName:
+        typeof body.deviceName === "string" ? body.deviceName : undefined,
+      platform: typeof body.platform === "string" ? body.platform : undefined,
+    });
+
+    const authorizePath = `/cli/authorize?code=${encodeURIComponent(
+      authorization.userCode,
+    )}`;
+
+    return NextResponse.json({
+      ...authorization,
+      verificationUri: "/cli/authorize",
+      verificationUriComplete: authorizePath,
+    });
+  } catch (error: unknown) {
+    console.error("[Fack CLI] Failed to start device authorization:", error);
+    return NextResponse.json(
+      { error: "Failed to start device authorization" },
+      { status: 500 },
+    );
+  }
+}

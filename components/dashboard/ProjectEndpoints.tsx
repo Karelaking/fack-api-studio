@@ -18,6 +18,7 @@ import {
 } from "@/lib/actions/endpoints";
 import type { Endpoint, Route } from "@/db/schema";
 import { Button } from "@/components/ui/button";
+import { CliRunDialog } from "@/components/dashboard/CliRunDialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -187,114 +188,118 @@ export const ProjectEndpoints = ({
           </p>
         </div>
 
-        {/* Create Dialog */}
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger
-            render={
-              <Button
-                type="button"
-                size="sm"
-                title="Add Endpoint Group"
-                aria-label="Add Endpoint Group"
-                className="shrink-0"
-              />
-            }
-          >
-            <RiAddLine className="h-4 w-4" />
-            <span>Add Endpoint Group</span>
-          </DialogTrigger>
-          <DialogContent>
-            <form onSubmit={handleCreate}>
-              <DialogHeader>
-                <DialogTitle>New Endpoint Group</DialogTitle>
-                <DialogDescription>
-                  Group routes under a shared path prefix. (e.g.
-                  `/api/v1/auth/*`)
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="ep-name" className="text-sm font-semibold">
-                    Group Name
-                  </label>
-                  <Input
-                    id="ep-name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. User Service"
-                    maxLength={100}
-                    disabled={loading}
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label
-                    htmlFor="ep-basePath"
-                    className="text-sm font-semibold"
-                  >
-                    Base Path Prefix
-                  </label>
-                  <Input
-                    id="ep-basePath"
-                    value={basePath}
-                    onChange={(e) => setBasePath(e.target.value)}
-                    placeholder="e.g. /users or /v1"
-                    maxLength={200}
-                    disabled={loading}
-                  />
-                  <span className="text-muted-foreground text-[10px] italic">
-                    If left blank, routes inside this group will map directly to
-                    project root namespace.
-                  </span>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="ep-desc" className="text-sm font-semibold">
-                    Description
-                  </label>
-                  <Textarea
-                    id="ep-desc"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Endpoints matching auth functions..."
-                    maxLength={500}
-                    disabled={loading}
-                    className="h-20 resize-none"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
+        <div className="flex items-center gap-2">
+          <CliRunDialog projectId={projectId} projectSlug={projectSlug} />
+
+          {/* Create Dialog */}
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogTrigger
+              render={
                 <Button
                   type="button"
-                  variant="outline"
-                  title="Cancel creation"
-                  aria-label="Cancel creation"
-                  onClick={() => setCreateOpen(false)}
-                  disabled={loading}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  aria-disabled={loading}
-                  title="Create Endpoint Group"
-                  aria-label="Create Endpoint Group"
-                >
-                  {loading ? (
-                    <>
-                      <RiLoader2Line
-                        className="h-4 w-4 animate-spin"
-                        aria-hidden="true"
-                      />
-                      <span>Creating...</span>
-                    </>
-                  ) : (
-                    <span>Create Group</span>
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                  size="sm"
+                  title="Add Endpoint Group"
+                  aria-label="Add Endpoint Group"
+                  className="shrink-0"
+                />
+              }
+            >
+              <RiAddLine className="h-4 w-4" />
+              <span>Add Endpoint Group</span>
+            </DialogTrigger>
+            <DialogContent>
+              <form onSubmit={handleCreate}>
+                <DialogHeader>
+                  <DialogTitle>New Endpoint Group</DialogTitle>
+                  <DialogDescription>
+                    Group routes under a shared path prefix. (e.g.
+                    `/api/v1/auth/*`)
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="ep-name" className="text-sm font-semibold">
+                      Group Name
+                    </label>
+                    <Input
+                      id="ep-name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g. User Service"
+                      maxLength={100}
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor="ep-basePath"
+                      className="text-sm font-semibold"
+                    >
+                      Base Path Prefix
+                    </label>
+                    <Input
+                      id="ep-basePath"
+                      value={basePath}
+                      onChange={(e) => setBasePath(e.target.value)}
+                      placeholder="e.g. /users or /v1"
+                      maxLength={200}
+                      disabled={loading}
+                    />
+                    <span className="text-muted-foreground text-[10px] italic">
+                      If left blank, routes inside this group will map directly
+                      to project root namespace.
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="ep-desc" className="text-sm font-semibold">
+                      Description
+                    </label>
+                    <Textarea
+                      id="ep-desc"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Endpoints matching auth functions..."
+                      maxLength={500}
+                      disabled={loading}
+                      className="h-20 resize-none"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    title="Cancel creation"
+                    aria-label="Cancel creation"
+                    onClick={() => setCreateOpen(false)}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    aria-disabled={loading}
+                    title="Create Endpoint Group"
+                    aria-label="Create Endpoint Group"
+                  >
+                    {loading ? (
+                      <>
+                        <RiLoader2Line
+                          className="h-4 w-4 animate-spin"
+                          aria-hidden="true"
+                        />
+                        <span>Creating...</span>
+                      </>
+                    ) : (
+                      <span>Create Group</span>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Grid listing */}

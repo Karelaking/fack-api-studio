@@ -4,136 +4,125 @@
 
 ## Platform
 
-web
+web (Fack Studio) & native CLI (Fack Runner)
 
 ## Users
 
-Primary: frontend and full-stack developers whose real backend is missing,
-unstable, rate-limited, or still under active development, and who need a
-realistic, controllable API contract to keep building against.
+Primary: Frontend, mobile, and full-stack developers whose real backend is
+missing, unstable, rate-limited, or still under active development, and who need
+a fast, lightweight local API server to build and test their user interfaces
+without the friction of running a heavy fullstack application or Docker stack.
 
-Secondary: QA engineers who need predictable success and failure scenarios, and
-small teams or individuals who run the platform themselves (local machine,
-homelab, CI, or air-gapped environments).
+Secondary: QA engineers who need reproducible chaos/failure scenarios, and
+engineering teams collaborating on API contracts where frontend developers run
+lightweight local mock servers from an encrypted project specification.
 
 ## Product Purpose
 
-Fack API's is a self-hostable, node-based mock API platform. A developer
-defines projects, endpoints, and routes; builds deeply nested JSON response
-schemas on a visual canvas; maps fields to realistic mock-data providers;
-simulates latency, failures, and custom headers; and serves those routes as a
-live mock backend.
+Fack API is a hybrid mock API platform composed of a visual web design studio
+(**Fack Studio**) and a blazing-fast, zero-dependency standalone native CLI tool
+(**Fack CLI**).
 
-It exists so frontend and mobile teams can build and test independently of a
-backend that is not ready. Success means a developer can stand up a realistic,
-typed mock API and keep shipping without waiting for the real service.
+Developers design their API contracts, nested response schemas, dynamic faker
+generators, stateful CRUD collections, and chaos simulation rules once in the
+web studio. The studio compiles and exports an **AES-256-GCM encrypted runtime
+bundle** (`fack.enc`).
+
+During day-to-day frontend development, developers do **not** need to run the
+heavy fullstack web application, databases, Docker containers, or authentication
+servers. Instead, they run the lightweight local CLI (`fack dev`) in their
+frontend repository. The CLI decrypts the bundle strictly in memory, starts in
+**< 10ms**, and serves the mock endpoints locally with zero cloud latency, full
+offline support, and stateful in-memory persistence.
 
 ## Positioning
 
-The mechanism a neighboring product could not truthfully copy: user
-configuration is expressed spatially on a node canvas and synthesized into
-standard JSON Schema (carrying `x-faker` extensions), which a deterministic
-runtime consumes to match dynamic paths and generate payloads. The platform is
-local-first and self-hostable with no database server to run, and AI is a
-proposer only — the model proposes a specification, deterministic application
-code validates and executes it, and no model-generated code ever runs in the
-request path.
+The mechanism a neighboring product could not truthfully copy:
+
+1. **Decoupled Studio & Native Runtime:** API contracts and mock rules are
+   visually designed in a rich web canvas, but executed locally via a compiled,
+   zero-dependency standalone native binary (< 10ms startup, ~20MB RSS).
+2. **Encrypted Specification (`fack.enc`):** Project configurations are securely
+   encrypted with AES-256-GCM. Plaintext schemas and sensitive payloads never
+   touch disk in plaintext, making bundles safe to commit to version control or
+   share across distributed teams.
+3. **Dual Workflow (File & Cloud Sync):** Works completely offline from a
+   downloaded `fack.enc` file, or syncs on demand from the web platform via
+   `fack pull <project-id>`.
+4. **Deterministic In-Memory Engine:** Combines Radix Trie route matching,
+   dynamic Faker data synthesis, in-memory stateful CRUD persistence, and chaos
+   injection without executing untrusted model code.
 
 ## Operating Context
 
-- Self-hosted: local development, Docker / Docker Compose, homelab, or CI.
-  One Next.js container with SQLite; Postgres is optional for high-volume
-  request logging; Nginx is the documented reverse proxy.
-- Dashboard work happens in the browser at `/dashboard`: projects, a
-  per-project node canvas, schema editor, request console, logs, scenarios,
-  and settings.
-- Mock traffic is served over project namespaces: `/:projectSlug/...` base-path
-  routing or `<slug>.<domain>` subdomain routing.
-- Used during decoupled frontend/backend development, including regulated or
-  air-gapped environments where a hosted mock service is not acceptable.
-- The product must remain fully usable with no AI provider configured.
+- **Design Phase (Fack Studio):** Browser-based studio at `/dashboard` (hosted or
+  self-hosted Next.js application). Used for visual node canvas editing, schema
+  building, AI architecture proposals, team collaboration, and bundle export.
+- **Development Phase (Fack CLI):** Standalone native binary (`fack`) executed
+  inside any frontend project (React, Next.js, Vue, Svelte, iOS, Android, etc.).
+- **Distribution:** Precompiled native executables for Windows (`fack.exe`),
+  macOS (`fack`), and Linux (`fack`), installable via curl/PowerShell or standalone download.
+- **Offline & Air-Gapped:** The local CLI operates with zero internet access
+  once `fack.enc` is present.
+- **Security:** Decryption key (`FACK_PROJECT_KEY`) is provided via `.env`, CLI
+  argument (`--key`), or interactive terminal prompt, never persisted unencrypted.
 
 ## Capabilities and Constraints
 
-- Hierarchy is **Project → Endpoint → Route**; routes support GET, POST, PUT,
-  DELETE, PATCH.
-- Nested response-schema builder supporting objects, arrays, primitives, and
-  nullable fields, plus per-field mock-data providers backed by Faker.js
-  (mapped through the `x-faker` JSON Schema keyword).
-- Chaos simulation per route: latency min/max, error rate, custom headers, and
-  conditional rules; project-level scenarios apply a latency multiplier and a
-  forced error rate.
-- Dynamic route matching via `path-to-regexp` behind a catch-all `[...slug]`
-  handler; matched path parameters are injected into generated payloads.
-- Bounded LRU cache with TTL and per-project / per-route invalidation.
-- Stateful mock workflows (`mock_states`) and outbound webhooks.
-- Export and codegen: TypeScript types (`json-schema-to-typescript`), OpenAPI
-  generation, and code scaffolding (Express, TypeScript).
-- **AI Architect**: natural-language prompt → structured API proposal →
-  deterministic validation → reviewable change set → selective apply.
-  Provider-agnostic (`ai` SDK with Google and OpenAI adapters); credentials
-  stay server-side; project access stays isolated per user.
-- Auth: Clerk for the dashboard, project-level role-based access control, and
-  HMAC-signed simulated mock Bearer tokens for routes marked auth-required.
-- Persistence: SQLite via libSQL/Drizzle by default; Postgres optional for logs.
-- Terminology: "project", "endpoint", "route", "canvas", "schema", "provider"
-  (mock-data provider — not an AI vendor), "scenario", "chaos".
-- Undecided: commercial model and tiers (none was confirmed); any production
-  backend generation beyond scaffolding.
-- Landing-page copy contains several claims that the shipped architecture does
-  not support (for example "zero server storage", "client-side local SQLite &
-  IndexedDB persistence", and API keys kept in browser storage). These must be
-  reconciled before being reused; do not treat them as product truth.
+- **Hierarchy:** Project → Endpoint → Route (GET, POST, PUT, DELETE, PATCH).
+- **Bundle Compiler & Encryptor:**
+  - Flattens project endpoints, schemas, route parameters, headers, and status
+    codes into an optimized runtime AST.
+  - Authenticated encryption via **AES-256-GCM** (salt, 12-byte IV, 16-byte tag,
+    PBKDF2 key derivation).
+- **Native CLI Core:**
+  - Sub-10ms startup time, minimal resource consumption.
+  - High-performance HTTP mock server with automatic CORS handling for dev ports
+    (`localhost:*`).
+  - Fast Radix Trie route matcher with dynamic path parameters (`:id`) and wildcards (`*`).
+  - Stateful in-memory CRUD collections (e.g. `POST /users` creates records that
+    persist across requests in RAM during the dev session).
+  - Dynamic Faker.js synthesis for realistic per-request payload generation.
+  - Chaos & latency injection (configurable min/max delay, failure rates, custom headers).
+  - Formatted live terminal request logger: `[METHOD] /path -> STATUS (latency)`.
+- **Sync & Workflows:**
+  - `fack dev`: Starts local mock server from `fack.enc`.
+  - `fack pull <project-id>`: Downloads latest encrypted bundle using project secret.
+  - `fack init`: Interactively generates `.env` key configuration and fetches bundle.
+  - `fack inspect`: Inspects routes and status codes directly in the terminal.
+- **AI Architect (Studio):** Natural-language prompt → structured API proposal →
+  deterministic validation → reviewable change set. Model is a proposer only; no
+  generated code runs in the execution path.
+- **Auth Simulation:** HMAC-signed simulated mock Bearer tokens for routes marked
+  auth-required; Clerk used for Studio dashboard authentication.
 
 ## Brand Commitments
 
-- Name: **Fack API's** (also written "Fack API"); repository and package name
-  `fack-api`; canonical repo `github.com/Karelaking/fack-api`.
-- License: MIT; advertised as 100% free and open source, free for commercial
-  and open-source use, with no vendor lock-in.
+- Name: **Fack API** (Fack Studio & Fack CLI); package and binary `fack-api` / `fack`.
+- License: MIT; 100% free and open source with no vendor lock-in.
 - Existing identity assets: `public/logo-v2.png`, `public/logo.png`,
-  `public/logo.svg`, `public/social-preview.png`, and product screenshots under
-  `public/screenshots/`.
-- Voice: confident, developer-facing, and premium (README describes the product
-  as "a premium, self-hostable, node-based mock API platform"). The interface is
-  built for dark mode with Tailwind design tokens from `app/globals.css`.
-
-## Evidence on Hand
-
-- `PRD.md` — implementation brief for the Agentic AI API Architect feature,
-  including target users, goals, UX states, and acceptance criteria.
-- `project.md` — architectural blueprint (control plane vs data plane, React
-  Flow canvas, Zustand/Immer state, JSON Schema Faker, path-to-regexp, Docker
-  and SQLite strategy).
-- `README.md` — feature list, architecture diagram, stack table, setup and
-  deployment instructions, and API usage examples.
-- `CHANGELOG.md` — semantic-release history through v1.12.0.
-- `CONTRIBUTING.md` — local setup and coding/verification conventions.
-- Screenshots: `public/screenshots/dashboard.png`, `canvas.png`, `settings.png`.
-- Absences future work must not fabricate: no real customer testimonials, case
-  studies, logos of real customers, usage benchmarks, or paid pricing exist.
+  `public/logo.svg`, `public/social-preview.png`.
+- Voice: Confident, developer-first, and ultra-performant. Built for developers
+  who value speed, privacy, and frictionless local workflows.
 
 ## Product Principles
 
-1. **The specification is the source of truth.** AI proposes; deterministic
-   application logic validates and executes. Model-generated code is never
-   executed in the request path.
-2. **Local-first and self-hostable by default.** The product works with zero
-   external services and must never require a paid or hosted service; AI is
-   optional, not a precondition.
-3. **Visual-first.** API structure is expressed spatially and deep nesting is
-   built without hand-writing JSON Schema.
-4. **Fidelity over convenience.** Simulation reproduces real backend behavior —
-   latency, failures, headers, dynamic path parameters, and stateful flows —
-   not just static JSON.
-5. **One canonical model.** Editor, runtime, AI, and export all share the same
-   Project/Endpoint/Route and JSON Schema model; never introduce a parallel
-   competing representation.
+1. **Decoupled Design & Local Execution:** Heavy design tools belong in the
+   browser; local mock serving belongs in an ultra-fast, lightweight native binary.
+2. **Zero-Overhead Local Dev:** A frontend developer must never be forced to run
+   a fullstack web app, Docker container, or database server just to get mock APIs.
+3. **Confidential by Default:** Plaintext API specifications and mock data never
+   touch disk unencrypted. Bundles are tamper-proof and safe for version control.
+4. **Deterministic & Realistic:** The mock engine mirrors real production backend
+   behavior — dynamic route parameters, stateful in-memory CRUD, realistic
+   latency, and edge-case error simulation.
+5. **One Unified Specification:** Fack Studio, the CLI runner, export tools, and
+   AI architect all share the same canonical schema and AST representation.
 
 ## Accessibility & Inclusion
 
-The implementation brief (`PRD.md`, section 12) requires keyboard-accessible
-controls, labels for all form controls, visible focus states, validation and
-method state that is not conveyed through color alone, confirmation for
-destructive actions, and preserving the user's prompt or draft across
-recoverable provider errors.
+The Fack Studio interface adheres to full keyboard accessibility, clear visual
+focus rings, semantic form labels, colorblind-safe HTTP method and status
+indicators, and destructive action confirmations. The Fack CLI provides clean,
+accessible terminal output with non-color fallback formatting for assistive
+technologies and standard CI/terminal environments.

@@ -15,7 +15,17 @@ import {
   RiDeleteBin6Line,
   RiSaveLine,
   RiAlertLine,
+  RiTerminalBoxLine,
+  RiKey2Line,
+  RiFileCopyLine,
+  RiEyeLine,
+  RiEyeOffLine,
+  RiCheckLine,
 } from "@remixicon/react";
+import {
+  getProjectCliDetails,
+  type ProjectCliDetails,
+} from "@/lib/actions/bundle";
 import { updateProject, deleteProject } from "@/lib/actions/projects";
 import { cn, slugifyPath } from "@/lib/utils";
 import type { Project } from "@/db/schema";
@@ -69,6 +79,20 @@ export function ProjectSettings({
   const [deleteConfirmText, setDeleteConfirmText] = React.useState("");
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
+
+  const [cliDetails, setCliDetails] = React.useState<
+    ProjectCliDetails | undefined
+  >(undefined);
+  const [showSecretKey, setShowSecretKey] = React.useState(false);
+  const [copiedKey, setCopiedKey] = React.useState(false);
+  const [copiedPull, setCopiedPull] = React.useState(false);
+  const [copiedDev, setCopiedDev] = React.useState(false);
+
+  React.useEffect(() => {
+    getProjectCliDetails(project.id)
+      .then((details) => setCliDetails(details))
+      .catch(() => {});
+  }, [project.id]);
 
   const {
     register,
@@ -357,6 +381,188 @@ export function ProjectSettings({
           </CardFooter>
         </Card>
       </form>
+
+      {/* Local CLI & Encrypted Bundle Card */}
+      <Card className="border-primary/20 from-card to-card/60 bg-gradient-to-b">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <RiTerminalBoxLine className="text-primary h-5 w-5" />
+              <span>Local CLI Runner (Zero-Overhead Dev)</span>
+            </CardTitle>
+            <span className="bg-primary/10 text-primary border-primary/20 rounded-full border px-2.5 py-0.5 text-xs font-semibold">
+              AES-256-GCM
+            </span>
+          </div>
+          <CardDescription>
+            Develop your frontend with a sub-10ms local mock server. No Docker,
+            databases, or fullstack server required. Your project specification
+            is encrypted with AES-256-GCM and executed locally in process
+            memory.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Project Secret Key Box */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="secret-key-input"
+                className="text-muted-foreground flex items-center gap-1.5 text-xs font-semibold"
+              >
+                <RiKey2Line className="h-4 w-4" />
+                <span>Project Secret Key (Decryption Key)</span>
+              </label>
+              <span className="text-muted-foreground text-[11px]">
+                Never leaves your device in plaintext
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Input
+                  id="secret-key-input"
+                  readOnly
+                  type={showSecretKey ? "text" : "password"}
+                  value={cliDetails?.secretKey || "Generating key..."}
+                  className="bg-background/50 pr-10 font-mono text-xs"
+                  aria-label="Project Secret Key"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSecretKey(!showSecretKey)}
+                  className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2 p-1 transition-colors"
+                  title={showSecretKey ? "Hide key" : "Show key"}
+                >
+                  {showSecretKey ? (
+                    <RiEyeOffLine className="h-4 w-4" />
+                  ) : (
+                    <RiEyeLine className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (cliDetails?.secretKey) {
+                    void navigator.clipboard.writeText(cliDetails.secretKey);
+                    setCopiedKey(true);
+                    toast.success("Secret key copied to clipboard!");
+                    setTimeout(() => setCopiedKey(false), 2000);
+                  }
+                }}
+              >
+                {copiedKey ? (
+                  <>
+                    <RiCheckLine className="mr-1.5 h-4 w-4 text-green-500" />
+                    <span>Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <RiFileCopyLine className="mr-1.5 h-4 w-4" />
+                    <span>Copy Key</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Quick CLI Commands */}
+          <div className="space-y-3">
+            <span className="text-muted-foreground text-xs font-semibold">
+              Run in your frontend project repository:
+            </span>
+
+            <div className="border-border/60 bg-muted/30 space-y-2 rounded-lg border p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-mono text-[11px]">
+                  Step 1: Pull encrypted bundle
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (cliDetails) {
+                      void navigator.clipboard.writeText(
+                        cliDetails.pullCommand,
+                      );
+                      setCopiedPull(true);
+                      toast.success("Pull command copied!");
+                      setTimeout(() => setCopiedPull(false), 2000);
+                    }
+                  }}
+                  className="text-primary flex items-center gap-1 text-xs hover:underline"
+                >
+                  {copiedPull ? (
+                    <>
+                      <RiCheckLine className="h-3.5 w-3.5 text-green-500" />
+                      <span>Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <RiFileCopyLine className="h-3.5 w-3.5" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <pre className="text-foreground/90 selection:bg-primary/20 overflow-x-auto font-mono text-xs">
+                <code>
+                  {cliDetails?.pullCommand ||
+                    `fack pull ${project.slug} --key <KEY>`}
+                </code>
+              </pre>
+            </div>
+
+            <div className="border-border/60 bg-muted/30 space-y-2 rounded-lg border p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-mono text-[11px]">
+                  Step 2: Start local mock server
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard.writeText("fack dev");
+                    setCopiedDev(true);
+                    toast.success("Dev command copied!");
+                    setTimeout(() => setCopiedDev(false), 2000);
+                  }}
+                  className="text-primary flex items-center gap-1 text-xs hover:underline"
+                >
+                  {copiedDev ? (
+                    <>
+                      <RiCheckLine className="h-3.5 w-3.5 text-green-500" />
+                      <span>Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <RiFileCopyLine className="h-3.5 w-3.5" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <pre className="text-foreground/90 overflow-x-auto font-mono text-xs">
+                <code>fack dev</code>
+              </pre>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="border-border/40 justify-between border-t pt-4">
+          <span className="text-muted-foreground text-xs">
+            Supports stateful in-memory CRUD, Faker data &amp; chaos simulation.
+          </span>
+          <Button
+            type="button"
+            variant="default"
+            onClick={() => {
+              window.open(`/api/projects/${project.slug}/bundle`, "_blank");
+            }}
+          >
+            <RiDownloadCloud2Line className="mr-2 h-4 w-4" />
+            Download fack.enc
+          </Button>
+        </CardFooter>
+      </Card>
 
       {/* Code Export Card */}
       <Card>

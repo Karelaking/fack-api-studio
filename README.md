@@ -21,7 +21,54 @@
 
 ---
 
-Fack API is a self-hostable mock backend platform. It gives frontend and mobile teams realistic HTTP endpoints before the actual backend exists. You can design endpoints on a visual node canvas, configure nested JSON schemas, map fields to Faker.js data generators, simulate latency and network errors, and export TypeScript contracts. Everything runs locally on SQLite by default, with optional cloud synchronization through Turso.
+Fack API is a decoupled mock backend platform and local developer tool. It eliminates the friction of running heavy fullstack applications or Docker containers locally during frontend development.
+
+1. **Design in Fack Studio (Web):** Visually design endpoints on a node canvas, configure nested schemas, map fields to Faker.js data generators, simulate latency and network errors, and export an AES-256-GCM encrypted runtime bundle (`fack.enc`).
+2. **Execute with Fack CLI (Native):** Frontend developers run a single lightweight, standalone native binary (`fack dev`) in their frontend repositories. The CLI boots in **< 10ms**, decrypts the bundle into memory using the project secret key, and serves the mock endpoints locally with zero cloud latency, full offline support, and stateful in-memory CRUD persistence.
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Studio["Fack Studio (Web Control Plane)"]
+        Canvas["Visual Node Canvas"] --> Compiler["Bundle Compiler"]
+        Compiler --> Encryptor["AES-256-GCM Encryptor"]
+        Encryptor --> CloudBundle["Encrypted Bundle (Cloud / Download)"]
+    end
+
+    subgraph Developer["Local Frontend Repository (Data Plane)"]
+        CloudBundle -. "fack pull or file drop" .-> LocalEnc["fack.enc (Encrypted File)"]
+        LocalEnc --> CLI["fack CLI (Standalone Native Binary)"]
+        Key["FACK_PROJECT_KEY (.env)"] --> CLI
+        CLI --> InMemEngine["In-Memory Mock Engine + Stateful Store"]
+        InMemEngine --> LocalServer["Local Mock Server (e.g. :4000)"]
+        FrontendApp["Frontend App (React / Next / Vue / Mobile)"] <--> LocalServer
+    end
+```
+
+---
+
+## Local CLI Quickstart
+
+Install or run the standalone native binary in your frontend project:
+
+```bash
+# 1. Pull the encrypted project bundle from Fack Studio
+fack pull my-project --key fack_sec_a8b9...
+
+# 2. Start serving mock endpoints locally
+fack dev
+
+# Or inspect configured endpoints in your terminal
+fack inspect
+```
+
+- **Zero Runtime Dependencies**: No Node.js, Python, or Docker required on the developer's machine.
+- **Encrypted by Default**: Schemas and mock payloads are encrypted with AES-256-GCM; `fack.enc` is safe to commit to version control.
+- **Stateful In-Memory CRUD**: `POST /api/users` persists in RAM across requests; subsequent `GET /api/users/:id` or `DELETE` work seamlessly during dev sessions.
+- **Offline First**: Works without internet access once the bundle exists locally.
 
 ---
 

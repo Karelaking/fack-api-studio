@@ -15,7 +15,7 @@ import {
   RiFileList3Line,
   RiBarChartBoxLine,
   RiEarthLine,
-  RiKey2Line,
+  RiTerminalBoxLine,
   RiSettings3Line,
   RiSearchLine,
   RiArrowUpDownLine,
@@ -61,9 +61,9 @@ const configNavItems = [
     icon: RiEarthLine,
   },
   {
-    title: "API Keys",
+    title: "CLI Access",
     href: "/keys",
-    icon: RiKey2Line,
+    icon: RiTerminalBoxLine,
   },
   {
     title: "Settings",

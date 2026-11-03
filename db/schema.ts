@@ -395,6 +395,63 @@ export const notesRelations = relations(notes, ({ one }) => ({
   }),
 }));
 
+// ─── CLI Authorization Requests (Device Flow) ───────────────────────────────
+// Short-lived records created by `fack login`. The terminal polls with the
+// device code while the signed-in user approves the human-readable user code
+// in the browser. Raw codes are never stored — only their SHA-256 hashes.
+export const cliAuthRequests = sqliteTable(
+  "cli_auth_requests",
+  {
+    id: text("id").primaryKey(),
+    deviceCodeHash: text("device_code_hash").notNull().unique(),
+    userCode: text("user_code").notNull().unique(),
+    deviceName: text("device_name").notNull().default("Terminal"),
+    platform: text("platform").notNull().default("unknown"),
+    status: text("status", {
+      enum: ["pending", "approved", "denied", "consumed"],
+    })
+      .notNull()
+      .default("pending"),
+    userId: text("user_id"),
+    expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    approvedAt: integer("approved_at", { mode: "timestamp" }),
+    consumedAt: integer("consumed_at", { mode: "timestamp" }),
+  },
+  (table) => [
+    index("cli_auth_requests_status_idx").on(table.status),
+    index("cli_auth_requests_expires_at_idx").on(table.expiresAt),
+  ],
+);
+
+export const cliAuthRequestsRelations = relations(cliAuthRequests, () => ({}));
+
+// ─── CLI Devices (Long-lived Tokens) ────────────────────────────────────────
+// One row per authorized terminal. Only the token hash and a display prefix are
+// persisted, so a database leak cannot be replayed against the Studio API.
+export const cliDevices = sqliteTable(
+  "cli_devices",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    name: text("name").notNull(),
+    platform: text("platform").notNull().default("unknown"),
+    tokenHash: text("token_hash").notNull().unique(),
+    tokenPrefix: text("token_prefix").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    lastUsedAt: integer("last_used_at", { mode: "timestamp" }),
+    expiresAt: integer("expires_at", { mode: "timestamp" }),
+    revokedAt: integer("revoked_at", { mode: "timestamp" }),
+  },
+  (table) => [index("cli_devices_user_id_idx").on(table.userId)],
+);
+
+export const cliDevicesRelations = relations(cliDevices, () => ({}));
+
 // ─── Workspace Metadata (SaaS Quotas & Billing) ──────────────────────────────
 export const workspaceMeta = sqliteTable("workspace_meta", {
   id: text("id").primaryKey(),
@@ -442,6 +499,10 @@ export type Note = typeof notes.$inferSelect;
 export type NewNote = typeof notes.$inferInsert;
 export type WorkspaceMeta = typeof workspaceMeta.$inferSelect;
 export type NewWorkspaceMeta = typeof workspaceMeta.$inferInsert;
+export type CliAuthRequest = typeof cliAuthRequests.$inferSelect;
+export type NewCliAuthRequest = typeof cliAuthRequests.$inferInsert;
+export type CliDevice = typeof cliDevices.$inferSelect;
+export type NewCliDevice = typeof cliDevices.$inferInsert;
 
 export interface RequestLog {
   id: string;
