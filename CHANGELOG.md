@@ -1,3 +1,9 @@
+## [1.19.2](https://github.com/Karelaking/fack-api-studio/compare/v1.19.1...v1.19.2) (2026-11-03)
+
+### Bug Fixes
+
+- **auth:** remediate tenant isolation, ssrf, idor, and auth vulnerabilities ([0d60c21](https://github.com/Karelaking/fack-api-studio/commit/0d60c219de194c885daa5016bef33e6824c2910f))
+
 ## [1.19.1](https://github.com/Karelaking/fack-api-studio/compare/v1.19.0...v1.19.1) (2026-11-03)
 
 ### Bug Fixes
