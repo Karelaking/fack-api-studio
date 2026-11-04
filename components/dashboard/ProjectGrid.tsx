@@ -62,6 +62,53 @@ const METHOD_ORDER: Route["method"][] = [
   "DELETE",
 ];
 
+interface MethodStyleConfig {
+  label: Route["method"];
+  color: string;
+  bgTint: string;
+  borderTint: string;
+  trackBg: string;
+}
+
+const METHOD_M3_CONFIGS: Record<Route["method"], MethodStyleConfig> = {
+  GET: {
+    label: "GET",
+    color: "var(--method-get)",
+    bgTint: "color-mix(in oklch, var(--method-get) 12%, transparent)",
+    borderTint: "color-mix(in oklch, var(--method-get) 24%, transparent)",
+    trackBg: "color-mix(in oklch, var(--method-get) 10%, var(--color-muted))",
+  },
+  POST: {
+    label: "POST",
+    color: "var(--method-post)",
+    bgTint: "color-mix(in oklch, var(--method-post) 12%, transparent)",
+    borderTint: "color-mix(in oklch, var(--method-post) 24%, transparent)",
+    trackBg: "color-mix(in oklch, var(--method-post) 10%, var(--color-muted))",
+  },
+  PUT: {
+    label: "PUT",
+    color: "var(--method-put)",
+    bgTint: "color-mix(in oklch, var(--method-put) 12%, transparent)",
+    borderTint: "color-mix(in oklch, var(--method-put) 24%, transparent)",
+    trackBg: "color-mix(in oklch, var(--method-put) 10%, var(--color-muted))",
+  },
+  PATCH: {
+    label: "PATCH",
+    color: "var(--method-patch)",
+    bgTint: "color-mix(in oklch, var(--method-patch) 12%, transparent)",
+    borderTint: "color-mix(in oklch, var(--method-patch) 24%, transparent)",
+    trackBg: "color-mix(in oklch, var(--method-patch) 10%, var(--color-muted))",
+  },
+  DELETE: {
+    label: "DELETE",
+    color: "var(--method-delete)",
+    bgTint: "color-mix(in oklch, var(--method-delete) 12%, transparent)",
+    borderTint: "color-mix(in oklch, var(--method-delete) 24%, transparent)",
+    trackBg:
+      "color-mix(in oklch, var(--method-delete) 10%, var(--color-muted))",
+  },
+};
+
 interface ProjectGridProps {
   initialProjects: ProjectWithRelations[];
 }
@@ -453,53 +500,117 @@ export function ProjectGrid({
             </section>
 
             <section aria-labelledby="methods-heading" className="space-y-3">
-              <h2
-                id="methods-heading"
-                className="text-foreground text-base font-semibold tracking-tight"
-              >
-                Routes by method
-              </h2>
-              <div className="bg-card/30 border-border/50 space-y-3 rounded-xl border p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <h2
+                  id="methods-heading"
+                  className="text-foreground text-base font-semibold tracking-tight"
+                >
+                  Routes by method
+                </h2>
+                {stats.routeCount > 0 ? (
+                  <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                    {stats.routeCount} total
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="bg-card/40 border-border/60 space-y-4 rounded-2xl border p-4 shadow-xs backdrop-blur-xs">
                 {stats.routeCount === 0 ? (
                   <p className="text-muted-foreground text-xs leading-relaxed">
                     No routes yet. Add your first route from a project canvas.
                   </p>
                 ) : (
-                  METHOD_ORDER.map((method) => {
-                    const count = stats.methodCounts[method];
-                    const percent = Math.round(
-                      (count / stats.routeCount) * 100,
-                    );
-                    return (
-                      <div key={method} className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs">
-                          <span
-                            className="font-mono font-semibold"
-                            style={{
-                              color: `var(--method-${method.toLowerCase()})`,
-                            }}
-                          >
-                            {method}
-                          </span>
-                          <span className="text-muted-foreground tabular-nums">
-                            {count}
-                          </span>
-                        </div>
-                        <div
-                          aria-hidden="true"
-                          className="bg-muted h-1.5 overflow-hidden rounded-full"
-                        >
+                  <>
+                    {/* Material 3 Segmented Distribution Strip */}
+                    <div
+                      aria-hidden="true"
+                      className="bg-muted/50 border-border/40 flex h-2.5 w-full items-center gap-1 overflow-hidden rounded-full border p-0.5"
+                    >
+                      {METHOD_ORDER.map((method) => {
+                        const count = stats.methodCounts[method];
+                        if (count === 0) return null;
+                        const config = METHOD_M3_CONFIGS[method];
+                        return (
                           <div
-                            className="h-full rounded-full transition-[width] duration-300"
+                            key={method}
+                            className="h-full rounded-full transition-all duration-300"
                             style={{
-                              width: `${percent}%`,
-                              backgroundColor: `var(--method-${method.toLowerCase()})`,
+                              flex: count,
+                              backgroundColor: config.color,
                             }}
+                            title={`${method}: ${count} routes`}
                           />
-                        </div>
-                      </div>
-                    );
-                  })
+                        );
+                      })}
+                    </div>
+
+                    {/* Method rows with Material Design 3 Linear Progress Indicators */}
+                    <div className="space-y-3">
+                      {METHOD_ORDER.map((method) => {
+                        const count = stats.methodCounts[method];
+                        const percent =
+                          stats.routeCount > 0
+                            ? Math.round((count / stats.routeCount) * 100)
+                            : 0;
+                        const config = METHOD_M3_CONFIGS[method];
+
+                        return (
+                          <div
+                            key={method}
+                            className="group hover:bg-muted/30 -mx-1.5 space-y-1.5 rounded-lg px-1.5 py-1 transition-colors"
+                          >
+                            <div className="flex items-center justify-between text-xs">
+                              {/* M3 Tonal Assist Chip */}
+                              <span
+                                className="inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[11px] font-semibold tracking-wider transition-transform group-hover:scale-[1.02]"
+                                style={{
+                                  backgroundColor: config.bgTint,
+                                  color: config.color,
+                                  border: `1px solid ${config.borderTint}`,
+                                }}
+                              >
+                                {method}
+                              </span>
+
+                              {/* M3 Metrics Display */}
+                              <div className="flex items-baseline gap-1.5 tabular-nums">
+                                <span className="text-foreground text-xs font-semibold">
+                                  {count}
+                                </span>
+                                <span className="text-muted-foreground/70 text-[11px]">
+                                  {percent}%
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* M3 Tactile Linear Progress Track */}
+                            <div
+                              aria-hidden="true"
+                              className="relative h-2 w-full overflow-hidden rounded-full transition-colors"
+                              style={{
+                                backgroundColor: config.trackBg,
+                              }}
+                            >
+                              <div
+                                className="relative h-full rounded-full transition-[width] duration-500 ease-out"
+                                style={{
+                                  width: `${percent}%`,
+                                  backgroundColor: config.color,
+                                }}
+                              >
+                                {percent > 0 ? (
+                                  <div
+                                    className="absolute top-1/2 right-0.5 size-1 -translate-y-1/2 rounded-full bg-white/70 shadow-xs"
+                                    aria-hidden="true"
+                                  />
+                                ) : null}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
                 )}
               </div>
             </section>
