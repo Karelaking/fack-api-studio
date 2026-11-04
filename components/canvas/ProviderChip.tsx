@@ -56,6 +56,12 @@ export const ProviderChip = ({
     }
   };
 
+  const handleClick = () => {
+    if (routeSelected) {
+      onKeyboardAdd(provider.value);
+    }
+  };
+
   return (
     <TooltipProvider delay={400}>
       <Tooltip>
@@ -65,17 +71,18 @@ export const ProviderChip = ({
               ref={setNodeRef}
               type="button"
               style={style}
+              onClick={handleClick}
               className={cn(
-                "group bg-card border-border/60 hover:border-primary/40 hover:bg-primary/5 relative flex w-full cursor-grab flex-col gap-0.5 rounded-lg border px-2.5 py-2 text-left transition-all duration-150 active:cursor-grabbing",
+                "group bg-card border-border/70 hover:border-primary/50 hover:bg-primary/5 relative flex min-h-14.5 w-full cursor-grab flex-col justify-between rounded-lg border p-2 text-left transition-all duration-150 active:cursor-grabbing",
                 isDragging &&
                   "border-primary/60 bg-primary/8 shadow-primary/10 shadow-lg",
                 routeSelected &&
-                  "ring-primary/0 hover:ring-primary/20 hover:ring-1",
+                  "ring-primary/0 hover:ring-primary/20 hover:ring-1 cursor-pointer",
               )}
               aria-label={`Add ${provider.label} to selected route`}
               title={
                 routeSelected
-                  ? `Press Space/Enter to add ${provider.label}`
+                  ? `Click or press Space/Enter to add ${provider.label}`
                   : `Drag to add ${provider.label}`
               }
               onKeyDown={handleKeyDown}
@@ -85,24 +92,24 @@ export const ProviderChip = ({
           }
         >
           {/* Field name */}
-          <span className="text-foreground line-clamp-1 text-[11px] leading-tight font-semibold">
+          <span className="text-foreground line-clamp-1 text-xs leading-tight font-semibold">
             {provider.label}
           </span>
 
           {/* Example value preview */}
           <span className="text-muted-foreground line-clamp-1 font-mono text-[10px] leading-tight">
-            {provider.example.length > 20
-              ? `${provider.example.slice(0, 20)}…`
+            {provider.example.length > 22
+              ? `${provider.example.slice(0, 22)}…`
               : provider.example}
           </span>
 
-          {/* Keyboard shortcut hint when route selected */}
+          {/* Shortcut hint badge when route selected */}
           {routeSelected && (
             <span
               aria-hidden="true"
-              className="bg-primary/10 text-primary absolute top-1 right-1.5 rounded px-1 py-0.5 text-[9px] font-bold tracking-wider uppercase opacity-0 transition-opacity group-hover:opacity-100"
+              className="bg-primary/15 text-primary py-0.2 absolute top-1 right-1 rounded px-1 text-[9px] font-bold tracking-wider uppercase opacity-0 transition-opacity group-hover:opacity-100"
             >
-              ↵ Add
+              + Add
             </span>
           )}
         </TooltipTrigger>

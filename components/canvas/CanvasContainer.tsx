@@ -6,7 +6,7 @@ import { EditBar } from "@/components/edit-bar/EditBar";
 import { AgentComposer } from "@/components/ai/AgentComposer";
 import { AgentStoreProvider } from "@/stores/agent-store-provider";
 import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
-import { FieldInspector } from "./FieldInspector";
+import { NodeInspector } from "./NodeInspector";
 import type { Endpoint, Route } from "@/db/schema";
 
 interface CanvasContainerProps {
@@ -110,16 +110,19 @@ function CanvasContainerInner({
         <AgentComposer />
       </div>
 
-      {/* Right Sidebar: Field Inspector (contextual for inspected field) */}
-      {selectedRoute && inspectedFieldId && (
-        <div className="shrink-0">
-          <FieldInspector
-            route={selectedRoute}
-            onRouteUpdated={handleRouteUpdated}
-            onOpenAdvanced={() => setIsEditOpen(true)}
-          />
-        </div>
-      )}
+      {/* Right Sidebar: Node Inspector (ALWAYS VISIBLE dedicated to changing node values) */}
+      <aside
+        className="border-border/60 bg-background flex h-full w-80 shrink-0 flex-col border-l"
+        aria-label="Node Inspector"
+      >
+        <NodeInspector
+          route={selectedRoute}
+          inspectedFieldId={inspectedFieldId}
+          activeRoutesCount={activeRoutes.length}
+          onRouteUpdated={handleRouteUpdated}
+          onOpenAdvanced={() => setIsEditOpen(true)}
+        />
+      </aside>
 
       {/* Slide-out Edit Bar Sheet drawer panel for advanced route settings */}
       {selectedRoute && (

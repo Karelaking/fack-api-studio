@@ -4,16 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryState, parseAsBoolean } from "nuqs";
-import {
-  RiLoader2Line,
-  RiGitBranchLine,
-  RiPulseLine,
-  RiFileHistoryLine,
-  RiSettings2Line,
-  RiFileCopyLine,
-  RiStickyNoteLine,
-  RiSave3Line,
-} from "@remixicon/react";
+import { RiLoader2Line, RiFileCopyLine } from "@remixicon/react";
 import { toast } from "sonner";
 import { createProject } from "@/lib/actions/projects";
 import type { Project } from "@/db/schema";
@@ -27,12 +18,8 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import {
   Dialog,
@@ -146,141 +133,33 @@ export const DashboardSidebar = ({
     }
   };
 
+  const activeProject = projects.find((proj) =>
+    pathname.startsWith(`/projects/${proj.slug}`),
+  );
+
   return (
     <>
       <Sidebar>
-        <SidebarHeader className="flex flex-row items-center justify-between">
+        <SidebarHeader className="border-border/50 flex flex-row items-center justify-between border-b px-3 py-3">
           <Link
             href="/"
-            className="group flex items-center gap-2.5 text-lg font-bold tracking-tight"
+            className="group flex items-center gap-2.5 text-base font-bold tracking-tight"
           >
             <span className="flex size-6 shrink-0 items-center justify-center transition-transform group-hover:scale-105">
               <BrandLogo size={24} />
             </span>
-            <span>Fack API&apos;s</span>
+            <span className="text-foreground">Fack API&apos;s</span>
           </Link>
+          {activeProject && (
+            <span className="bg-muted text-muted-foreground max-w-36 truncate rounded-md px-2 py-0.5 font-mono text-[11px] font-medium">
+              {activeProject.name}
+            </span>
+          )}
         </SidebarHeader>
 
-        <SidebarContent>
-          <SidebarGroup className="mt-1">
-            {(() => {
-              const activeProject = projects.find((proj) =>
-                pathname.startsWith(`/projects/${proj.slug}`),
-              );
-
-              return (
-                <>
-                  <SidebarGroupLabel className="flex items-center justify-between">
-                    <span>Project Menu</span>
-                    {activeProject && (
-                      <button
-                        type="button"
-                        title="Save project to .fack file"
-                        aria-label="Save project to .fack file"
-                        onClick={async () => {
-                          try {
-                            const res = await fetch("/api/file-manager", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                action: "save",
-                                projectId: activeProject.id,
-                              }),
-                            });
-                            const data = await res.json();
-                            if (res.ok) {
-                              toast.success("Saved to .fack file", {
-                                description: data.filePath,
-                              });
-                            } else {
-                              throw new Error(data.error);
-                            }
-                          } catch (err) {
-                            toast.error(
-                              err instanceof Error
-                                ? err.message
-                                : "Failed to save project",
-                            );
-                          }
-                        }}
-                        className="hover:text-foreground text-muted-foreground flex cursor-pointer items-center gap-1 text-[11px] font-normal transition-colors"
-                      >
-                        <RiSave3Line className="h-3 w-3" />
-                        <span>Save .fack</span>
-                      </button>
-                    )}
-                  </SidebarGroupLabel>
-                  <SidebarGroupContent className="mt-1">
-                    {!activeProject ? (
-                      <div className="text-muted-foreground px-3 py-2 text-xs italic">
-                        No active project.
-                      </div>
-                    ) : (
-                      <SidebarMenu>
-                        {[
-                          {
-                            name: "Canvas",
-                            path: "canvas",
-                            icon: RiGitBranchLine,
-                          },
-                          {
-                            name: "Endpoints",
-                            path: "endpoints",
-                            icon: RiPulseLine,
-                          },
-                          {
-                            name: "Logs",
-                            path: "logs",
-                            icon: RiFileHistoryLine,
-                          },
-                          {
-                            name: "Notes",
-                            path: "notes",
-                            icon: RiStickyNoteLine,
-                          },
-                          {
-                            name: "Settings",
-                            path: "settings",
-                            icon: RiSettings2Line,
-                          },
-                        ].map((subItem) => {
-                          const Icon = subItem.icon;
-                          const isSubActive = pathname.endsWith(
-                            `/${subItem.path}`,
-                          );
-                          return (
-                            <SidebarMenuItem key={subItem.path}>
-                              <SidebarMenuButton
-                                isActive={isSubActive}
-                                render={
-                                  <Link
-                                    href={getProjectUrl(
-                                      activeProject.slug,
-                                      subItem.path,
-                                    )}
-                                    aria-label={subItem.name}
-                                  />
-                                }
-                                className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary transition-colors duration-200 data-[active=true]:font-medium max-md:h-11"
-                              >
-                                <Icon className="h-4 w-4 shrink-0" />
-                                <span>{subItem.name}</span>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          );
-                        })}
-                      </SidebarMenu>
-                    )}
-                  </SidebarGroupContent>
-                </>
-              );
-            })()}
-          </SidebarGroup>
-
-          {/* Canvas Mock Data Providers (displayed when viewing canvas) */}
-          {pathname.endsWith("/canvas") && (
-            <SidebarProvidersSection selectedRoute={selectedRoute} />
-          )}
+        <SidebarContent className="scrollbar-subtle flex-1 overflow-y-auto px-1 py-1">
+          {/* Canvas Mock Data Providers (displayed in the left sidebar) */}
+          <SidebarProvidersSection selectedRoute={selectedRoute} />
 
           {/* Dynamic Selected Route Links Section */}
           {selectedRoute && (
