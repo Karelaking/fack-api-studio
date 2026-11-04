@@ -10,7 +10,7 @@ import { ProjectProvider } from "@/components/project/ProjectContext";
 import { Separator } from "@/components/ui/separator";
 import { DashboardBreadcrumbs } from "@/components/dashboard/DashboardBreadcrumbs";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
-import { TopNavMenuBar } from "@/components/dashboard/TopNavMenuBar";
+import { SectionMenuBar } from "@/components/dashboard/SectionMenuBar";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ImportOpenApiDialog } from "@/components/ai/ImportOpenApiDialog";
@@ -123,7 +123,7 @@ export default async function ProjectLayout({
                       className="hidden h-4 shrink-0 sm:block"
                     />
                   </div>
-                  <TopNavMenuBar projectSlug={projectSlug} />
+                  <SectionMenuBar projectSlug={projectSlug} />
                 </header>
                 <div className="bg-background flex-1 overflow-auto pb-[calc(3.5rem_+_env(safe-area-inset-bottom))] md:pb-0">
                   {children}
