@@ -90,6 +90,7 @@ export function parseSseFrame(frame: string): AgentStreamEvent | null {
 export interface StreamApiGenerationInput {
   projectId?: string;
   prompt: string;
+  model?: string;
   signal?: AbortSignal;
   onEvent: (event: AgentStreamEvent) => void;
 }
@@ -104,13 +105,14 @@ export interface StreamApiGenerationInput {
 export async function streamApiGeneration({
   projectId,
   prompt,
+  model,
   signal,
   onEvent,
 }: StreamApiGenerationInput): Promise<void> {
   const response = await fetch("/api/ai/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ projectId, prompt, stream: true }),
+    body: JSON.stringify({ projectId, prompt, model, stream: true }),
     signal,
   });
 

@@ -13,6 +13,7 @@ import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { projects, generationTasks, generationProposals } from "@/db/schema";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import type {
@@ -49,6 +50,7 @@ import {
 export interface GenerateApiOptions {
   projectId?: string;
   prompt: string;
+  model?: string;
   onProgress?: (step: GenerationProgressStep) => void;
 }
 
@@ -59,6 +61,7 @@ export interface GenerateApiExecutionResult {
   conflicts?: RouteConflict[];
   durationMs?: number;
   modelUsed?: string;
+  provider?: "openrouter" | "google" | "openai" | "fallback";
   detailedPrompt?: string;
   detailedSummary?: string;
   error?: string;
@@ -67,28 +70,61 @@ export interface GenerateApiExecutionResult {
   clarificationRequest?: string;
 }
 
+export interface ResolvedAiModel {
+  model: Parameters<typeof generateObject>[0]["model"];
+  name: string;
+  provider: "openrouter" | "google" | "openai";
+}
+
 /**
  * Resolves the active model provider based on configured environment variables.
+ * Prioritizes OpenRouter, with fallback to Google Gemini and OpenAI.
  */
-function resolveAiModel():
-  | { model: Parameters<typeof generateObject>[0]["model"]; name: string }
-  | undefined {
+export function resolveAiModel(
+  requestedModel?: string,
+): ResolvedAiModel | undefined {
+  const openrouterKey = process.env.OPENROUTER_API_KEY;
+  if (openrouterKey) {
+    const openrouter = createOpenRouter({
+      apiKey: openrouterKey,
+      baseURL: process.env.OPENROUTER_BASE_URL,
+      appName: "Fack API Studio",
+      appUrl: "https://fackapi.studio",
+    });
+    const modelId =
+      requestedModel ||
+      process.env.OPENROUTER_MODEL ||
+      "anthropic/claude-3.5-sonnet";
+    const displayName = modelId.startsWith("openrouter/")
+      ? modelId
+      : `openrouter/${modelId}`;
+    return {
+      model: openrouter(modelId),
+      name: displayName,
+      provider: "openrouter",
+    };
+  }
+
   const geminiKey =
     process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (geminiKey) {
     const google = createGoogleGenerativeAI({ apiKey: geminiKey });
+    const modelId = requestedModel || "gemini-2.5-flash";
     return {
-      model: google("gemini-3.8-flash"),
-      name: "gemini-3.8-flash",
+      model: google(modelId),
+      name: `google/${modelId}`,
+      provider: "google",
     };
   }
 
   const openaiKey = process.env.OPENAI_API_KEY;
   if (openaiKey) {
     const openai = createOpenAI({ apiKey: openaiKey });
+    const modelId = requestedModel || "gpt-4o-mini";
     return {
-      model: openai("gpt-4o-mini"),
-      name: "gpt-4o-mini",
+      model: openai(modelId),
+      name: `openai/${modelId}`,
+      provider: "openai",
     };
   }
 
@@ -101,13 +137,14 @@ function resolveAiModel():
 export async function expandUserPrompt(
   rawPrompt: string,
   projectContext?: string,
+  requestedModel?: string,
 ): Promise<DetailedPromptResult> {
   const cleanPrompt = rawPrompt.trim();
   if (!cleanPrompt) {
     throw new Error("Prompt cannot be empty");
   }
 
-  const modelConfig = resolveAiModel();
+  const modelConfig = resolveAiModel(requestedModel);
   if (modelConfig) {
     try {
       const systemContext = projectContext
@@ -200,9 +237,13 @@ export async function generateApiSpecification(
     let existingRoutes: RouteWithEndpoint[] = [];
 
     if (projectId) {
-      const summary = await getProjectSummary(projectId);
-      existingEndpoints = await getEndpointsByProjectId(projectId);
-      existingRoutes = await getRoutesByProjectId(projectId);
+      const [summary, endpoints, routes] = await Promise.all([
+        getProjectSummary(projectId),
+        getEndpointsByProjectId(projectId),
+        getRoutesByProjectId(projectId),
+      ]);
+      existingEndpoints = endpoints;
+      existingRoutes = routes;
 
       if (summary) {
         projectSummaryText = `
@@ -230,6 +271,7 @@ When modifying, preserve existing resource conventions where appropriate, avoid 
     const detailedSpec = await expandUserPrompt(
       cleanPrompt,
       projectSummaryText,
+      options.model,
     );
     emitProgress(
       "expanding_prompt",
@@ -266,9 +308,10 @@ When modifying, preserve existing resource conventions where appropriate, avoid 
         : undefined,
     );
 
-    const modelConfig = resolveAiModel();
+    const modelConfig = resolveAiModel(options.model);
     let rawGeneratedApi: GeneratedApi;
     let modelUsed = "deterministic-architect-engine";
+    const provider = modelConfig ? modelConfig.provider : "fallback";
 
     if (modelConfig) {
       modelUsed = modelConfig.name;
@@ -366,6 +409,7 @@ When modifying, preserve existing resource conventions where appropriate, avoid 
       conflicts: changeSet.conflicts,
       durationMs,
       modelUsed,
+      provider,
       detailedPrompt: detailedSpec.detailedPrompt,
       detailedSummary: detailedSpec.summary,
       proposalId,

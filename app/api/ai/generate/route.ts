@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     const body = (await request.json()) as GenerateApiRequest;
-    const { projectId, prompt, stream } = body;
+    const { projectId, prompt, model, stream } = body;
 
     await requireUserId();
     if (projectId) {
@@ -55,6 +55,7 @@ export async function POST(request: NextRequest): Promise<Response> {
             const result = await generateApiSpecification({
               projectId,
               prompt,
+              model,
               onProgress: (step: GenerationProgressStep) => {
                 sendEvent("progress", step);
               },
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     const result = await generateApiSpecification({
       projectId,
       prompt,
+      model,
     });
 
     return NextResponse.json(result);

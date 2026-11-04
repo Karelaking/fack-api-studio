@@ -174,6 +174,7 @@ export interface GenerationProgressStep {
 export interface GenerateApiRequest {
   projectId?: string;
   prompt: string;
+  model?: string;
   stream?: boolean;
 }
 
@@ -184,6 +185,8 @@ export interface GenerateApiResponse {
   conflicts?: RouteConflict[];
   detailedPrompt?: string;
   detailedSummary?: string;
+  modelUsed?: string;
+  provider?: "openrouter" | "google" | "openai" | "fallback";
   error?: string;
   proposalId?: string;
   expectedVersion?: number;
