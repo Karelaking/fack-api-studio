@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getProjectUrl } from "@/lib/utils/project-slug";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
   Menubar,
   MenubarContent,
@@ -136,7 +137,7 @@ export const TopNavMenuBar = ({
         {/* Visible Section Navigation Tabs */}
         <nav
           aria-label="Project sections"
-          className="hidden items-center gap-1 md:flex"
+          className="hidden items-center gap-1 sm:flex"
         >
           {SECTIONS.map((section) => {
             const Icon = section.icon;
@@ -161,8 +162,13 @@ export const TopNavMenuBar = ({
           })}
         </nav>
 
+        <Separator
+          orientation="vertical"
+          className="hidden h-4 shrink-0 sm:block"
+        />
+
         {/* Desktop Application Menubar */}
-        <Menubar className="border-border/60 bg-muted/20 hidden h-8 items-center rounded-md border px-1 lg:flex">
+        <Menubar className="border-border/60 bg-muted/20 flex h-8 items-center rounded-md border px-1">
           {/* File Menu */}
           <MenubarMenu>
             <MenubarTrigger className="h-6 cursor-pointer px-2 text-xs font-medium">
@@ -213,71 +219,150 @@ export const TopNavMenuBar = ({
             </MenubarContent>
           </MenubarMenu>
 
-          {/* Sections Menu */}
+          {/* Canvas Section Menu */}
           <MenubarMenu>
             <MenubarTrigger className="h-6 cursor-pointer px-2 text-xs font-medium">
-              Sections
+              Canvas
             </MenubarTrigger>
             <MenubarContent>
               <MenubarGroup>
-                {SECTIONS.map((sec) => {
-                  const Icon = sec.icon;
-                  const isActive = pathname.endsWith(`/${sec.path}`);
-                  return (
-                    <MenubarItem
-                      key={sec.path}
-                      onClick={() =>
-                        router.push(getProjectUrl(projectSlug, sec.path))
-                      }
-                      className={cn(
-                        "cursor-pointer text-xs",
-                        isActive && "text-primary font-semibold",
-                      )}
-                    >
-                      <Icon
-                        className="h-3.5 w-3.5 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span>{sec.name}</span>
-                      <MenubarShortcut>{sec.shortcut}</MenubarShortcut>
-                    </MenubarItem>
-                  );
-                })}
+                <MenubarItem
+                  onClick={() =>
+                    router.push(getProjectUrl(projectSlug, "canvas"))
+                  }
+                  className="cursor-pointer text-xs"
+                >
+                  <RiGitBranchLine className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Open Canvas</span>
+                  <MenubarShortcut>⌘1</MenubarShortcut>
+                </MenubarItem>
+                <MenubarItem
+                  onClick={handleAddRoute}
+                  className="cursor-pointer text-xs"
+                >
+                  <RiAddLine className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Add Route Node</span>
+                  <MenubarShortcut>⌘R</MenubarShortcut>
+                </MenubarItem>
+                <MenubarItem
+                  onClick={handleOpenAiArchitect}
+                  className="cursor-pointer text-xs"
+                >
+                  <RiSparkling2Fill
+                    className="text-primary h-3.5 w-3.5"
+                    aria-hidden="true"
+                  />
+                  <span>AI Architect</span>
+                  <MenubarShortcut>⌘K</MenubarShortcut>
+                </MenubarItem>
+                <MenubarItem
+                  onClick={handleSaveCanvasLayout}
+                  disabled={isSavingLayout}
+                  className="cursor-pointer text-xs"
+                >
+                  <RiSaveLine className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Save Canvas Layout</span>
+                </MenubarItem>
               </MenubarGroup>
             </MenubarContent>
           </MenubarMenu>
 
-          {/* Canvas Actions Menu */}
-          {isCanvasPage && (
-            <MenubarMenu>
-              <MenubarTrigger className="h-6 cursor-pointer px-2 text-xs font-medium">
-                Canvas
-              </MenubarTrigger>
-              <MenubarContent>
-                <MenubarGroup>
-                  <MenubarItem
-                    onClick={handleAddRoute}
-                    className="cursor-pointer text-xs"
-                  >
-                    <RiAddLine className="h-3.5 w-3.5" aria-hidden="true" />
-                    <span>Add Route Node</span>
-                    <MenubarShortcut>⌘R</MenubarShortcut>
-                  </MenubarItem>
-                  <MenubarItem
-                    onClick={handleOpenAiArchitect}
-                    className="cursor-pointer text-xs"
-                  >
-                    <RiSparkling2Fill
-                      className="text-primary h-3.5 w-3.5"
-                      aria-hidden="true"
-                    />
-                    <span>AI Architect</span>
-                    <MenubarShortcut>⌘K</MenubarShortcut>
-                  </MenubarItem>
-                </MenubarGroup>
-              </MenubarContent>
-            </MenubarMenu>
-          )}
+          {/* Endpoints Section Menu */}
+          <MenubarMenu>
+            <MenubarTrigger className="h-6 cursor-pointer px-2 text-xs font-medium">
+              Endpoints
+            </MenubarTrigger>
+            <MenubarContent>
+              <MenubarGroup>
+                <MenubarItem
+                  onClick={() =>
+                    router.push(getProjectUrl(projectSlug, "endpoints"))
+                  }
+                  className="cursor-pointer text-xs"
+                >
+                  <RiPulseLine className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>View All Endpoints</span>
+                  <MenubarShortcut>⌘2</MenubarShortcut>
+                </MenubarItem>
+                <MenubarItem
+                  onClick={handleExportOpenApi}
+                  className="cursor-pointer text-xs"
+                >
+                  <RiDownloadLine className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Export OpenAPI Specs</span>
+                </MenubarItem>
+              </MenubarGroup>
+            </MenubarContent>
+          </MenubarMenu>
+
+          {/* Logs Section Menu */}
+          <MenubarMenu>
+            <MenubarTrigger className="h-6 cursor-pointer px-2 text-xs font-medium">
+              Logs
+            </MenubarTrigger>
+            <MenubarContent>
+              <MenubarGroup>
+                <MenubarItem
+                  onClick={() =>
+                    router.push(getProjectUrl(projectSlug, "logs"))
+                  }
+                  className="cursor-pointer text-xs"
+                >
+                  <RiFileHistoryLine
+                    className="h-3.5 w-3.5"
+                    aria-hidden="true"
+                  />
+                  <span>View Request Logs</span>
+                  <MenubarShortcut>⌘3</MenubarShortcut>
+                </MenubarItem>
+              </MenubarGroup>
+            </MenubarContent>
+          </MenubarMenu>
+
+          {/* Notes Section Menu */}
+          <MenubarMenu>
+            <MenubarTrigger className="h-6 cursor-pointer px-2 text-xs font-medium">
+              Notes
+            </MenubarTrigger>
+            <MenubarContent>
+              <MenubarGroup>
+                <MenubarItem
+                  onClick={() =>
+                    router.push(getProjectUrl(projectSlug, "notes"))
+                  }
+                  className="cursor-pointer text-xs"
+                >
+                  <RiStickyNoteLine
+                    className="h-3.5 w-3.5"
+                    aria-hidden="true"
+                  />
+                  <span>Open Notes</span>
+                  <MenubarShortcut>⌘4</MenubarShortcut>
+                </MenubarItem>
+              </MenubarGroup>
+            </MenubarContent>
+          </MenubarMenu>
+
+          {/* Settings Section Menu */}
+          <MenubarMenu>
+            <MenubarTrigger className="h-6 cursor-pointer px-2 text-xs font-medium">
+              Settings
+            </MenubarTrigger>
+            <MenubarContent>
+              <MenubarGroup>
+                <MenubarItem
+                  onClick={() =>
+                    router.push(getProjectUrl(projectSlug, "settings"))
+                  }
+                  className="cursor-pointer text-xs"
+                >
+                  <RiSettings2Line className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Project Settings</span>
+                  <MenubarShortcut>⌘5</MenubarShortcut>
+                </MenubarItem>
+              </MenubarGroup>
+            </MenubarContent>
+          </MenubarMenu>
         </Menubar>
       </div>
 
