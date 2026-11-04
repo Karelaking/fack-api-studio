@@ -53,11 +53,11 @@ const nodeTypes = {
  * card that grows a metrics footer never overlaps its sibling; the group
  * container is sized to fit its children plus padding.
  */
-const ROUTE_NODE_WIDTH = 280; // must match RouteNode's `w-70`
+const ROUTE_NODE_WIDTH = 320; // must match RouteNode's `w-80`
 const ROUTE_SIBLING_X = 30; // left inset of a route inside its group
 const GROUP_WIDTH = ROUTE_SIBLING_X + ROUTE_NODE_WIDTH + 18; // right inset
 const GROUP_HEADER_OFFSET = 92; // first route's y: group header bottom (~75px) + its mb-4 gap
-const ROUTE_NODE_SPACING = 214; // measured card height (198px: 47 header + 72 body + 77 two-row footer) + 16px gap
+const ROUTE_NODE_SPACING = 250; // card height with field badges + 16px gap
 
 function groupHeightFor(routeCount: number): number {
   return Math.max(

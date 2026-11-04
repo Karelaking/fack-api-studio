@@ -6,6 +6,7 @@
 
 import * as React from "react";
 import { Handle, Position } from "@xyflow/react";
+import { useDroppable } from "@dnd-kit/core";
 import {
   RiAlertLine,
   RiTimeLine,
@@ -13,15 +14,20 @@ import {
   RiCheckboxCircleLine,
   RiShieldCrossLine,
   RiFlashlightLine,
-  RiCodeLine,
   RiEqualizerLine,
   RiGitBranchLine,
   RiPencilLine,
+  RiAddCircleLine,
 } from "@remixicon/react";
+import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { DraftMark } from "./preview-nodes";
+import { FieldBadge } from "./FieldBadge";
+import { parseSchemaToFields } from "@/lib/schema-synthesizer";
+import { removeFieldFromRoute } from "@/lib/actions/canvas-dnd";
+import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
 
 export interface RouteNodeData {
   id: string;
@@ -52,25 +58,63 @@ interface RouteNodeProps {
  * Premium redesigned Custom Node representing a Mock API route.
  * Sleek card container, glowing indicators, copyable path styling, and rules indicators.
  */
+const MAX_VISIBLE_BADGES = 4;
+
 export const RouteNode = ({
   data,
   selected,
 }: RouteNodeProps): React.ReactElement => {
   const method = data.method.toUpperCase();
 
+  // DnD droppable: this route card is a drop target for provider chips
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: data.id,
+    data: { routeId: data.id },
+  });
+
+  const selectedRouteId = useCanvasDndStore((s) => s.selectedRouteId);
+  const isSelectedForDrop = selectedRouteId === data.id;
+
+  const fields = React.useMemo(() => {
+    try {
+      const parsed = JSON.parse(data.responseSchema ?? "{}");
+      return parseSchemaToFields(parsed);
+    } catch {
+      return [];
+    }
+  }, [data.responseSchema]);
+
+  const [showAllFields, setShowAllFields] = React.useState(false);
+  const visibleFields = showAllFields
+    ? fields
+    : fields.slice(0, MAX_VISIBLE_BADGES);
+  const hiddenCount = fields.length - MAX_VISIBLE_BADGES;
+
+  const handleRemoveField = async (fieldId: string) => {
+    try {
+      await removeFieldFromRoute(data.id, fieldId);
+      window.dispatchEvent(
+        new CustomEvent("canvas-field-removed", {
+          detail: { routeId: data.id, fieldId },
+        }),
+      );
+      toast.success("Field removed");
+    } catch {
+      toast.error("Failed to remove field");
+    }
+  };
+
   const getRouteVariants = (method: string) => ({
     wrapper: cn({
-      "border-l-method-get hover:shadow-method-get/10 hover:border-method-get/40":
-        method === "GET",
-      "border-l-method-post hover:shadow-method-post/10 hover:border-method-post/40":
+      "hover:shadow-method-get/10 hover:border-method-get/30": method === "GET",
+      "hover:shadow-method-post/10 hover:border-method-post/30":
         method === "POST",
-      "border-l-method-put hover:shadow-method-put/10 hover:border-method-put/40":
-        method === "PUT",
-      "border-l-method-delete hover:shadow-method-delete/10 hover:border-method-delete/40":
+      "hover:shadow-method-put/10 hover:border-method-put/30": method === "PUT",
+      "hover:shadow-method-delete/10 hover:border-method-delete/30":
         method === "DELETE",
-      "border-l-method-patch hover:shadow-method-patch/10 hover:border-method-patch/40":
+      "hover:shadow-method-patch/10 hover:border-method-patch/30":
         method === "PATCH",
-      "border-l-muted-foreground hover:border-muted/40": ![
+      "hover:border-muted/40": ![
         "GET",
         "POST",
         "PUT",
@@ -138,22 +182,6 @@ export const RouteNode = ({
     StatusIcon = RiShieldCrossLine;
   }
 
-  // Calculate configuration counts for Schema and Custom Headers
-  const schemaKeysCount = React.useMemo(() => {
-    try {
-      const parsed = JSON.parse(data.responseSchema || "{}");
-      if (parsed.type === "array" && parsed.items) {
-        return Object.keys(parsed.items.properties || {}).length;
-      }
-      return (
-        Object.keys(parsed.properties || {}).length ||
-        Object.keys(parsed).length
-      );
-    } catch {
-      return 0;
-    }
-  }, [data.responseSchema]);
-
   const headersKeysCount = React.useMemo(() => {
     try {
       const parsed = JSON.parse(data.customHeaders || "{}");
@@ -181,12 +209,16 @@ export const RouteNode = ({
 
   return (
     <div
+      ref={setDropRef}
       className={cn(
-        "bg-card border-border relative flex w-70 cursor-pointer flex-col overflow-hidden rounded-xl border border-l-4 shadow-sm transition-all duration-200 select-none",
+        "bg-card border-border relative flex w-80 cursor-pointer flex-col overflow-hidden rounded-xl border shadow-sm transition-all duration-200 select-none",
         variants.wrapper,
         selected
           ? "border-primary ring-primary/20 shadow-primary/5 -translate-y-1 scale-[1.02] shadow-lg ring-4"
           : "hover:-translate-y-0.5 hover:shadow-md",
+        isOver &&
+          "ring-primary/40 border-primary/60 ring-2 shadow-primary/10 shadow-md",
+        isSelectedForDrop && !selected && "ring-primary/20 ring-1",
         !data.isEnabled && "opacity-60 grayscale-[0.5]",
         data.draft?.changeType === "create" &&
           "agent-draft-enter border-primary/50 ring-primary/15 ring-2",
@@ -302,7 +334,7 @@ export const RouteNode = ({
         </div>
       </div>
 
-      {/* Body: Title & Description */}
+      {/* Body: Path, URL, and Field Badges */}
       <div className="flex flex-col gap-1 px-4 py-3">
         <span className="text-foreground line-clamp-1 text-sm font-semibold tracking-tight">
           {data.path}
@@ -310,24 +342,64 @@ export const RouteNode = ({
         <span className="text-muted-foreground text-mini line-clamp-1 font-mono">
           {data.mockUrl}
         </span>
+
+        {/* Field badges from response schema */}
+        {fields.length > 0 && (
+          <div
+            className="mt-2 flex flex-wrap gap-1"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            {visibleFields.map((field) => (
+              <FieldBadge
+                key={field.id}
+                field={field}
+                onRemove={handleRemoveField}
+              />
+            ))}
+            {!showAllFields && hiddenCount > 0 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAllFields(true);
+                }}
+                className="text-muted-foreground hover:text-primary border-border/60 hover:border-primary/40 rounded-md border border-dashed px-1.5 py-0.5 text-[10px] font-medium transition-colors"
+                aria-label={`Show ${hiddenCount} more fields`}
+              >
+                +{hiddenCount} more
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Drop zone cue when dragging over */}
+        {isOver && (
+          <div
+            className="border-primary/40 bg-primary/5 mt-2 flex items-center gap-1.5 rounded-md border border-dashed px-2 py-1.5"
+            aria-live="polite"
+            aria-label="Drop zone active — release to add field"
+          >
+            <RiAddCircleLine
+              className="text-primary h-3 w-3 shrink-0"
+              aria-hidden="true"
+            />
+            <span className="text-primary text-[10px] font-medium">
+              Drop to add field
+            </span>
+          </div>
+        )}
+
+        {/* Empty state: invite the user to drop a provider */}
+        {fields.length === 0 && !isOver && !data.draft && (
+          <p className="text-muted-foreground/60 mt-1.5 text-[10px] leading-snug">
+            Drag a provider from the left panel to add fields.
+          </p>
+        )}
       </div>
 
-      {/* Footer: Metadata Indicators */}
-      {(schemaKeysCount > 0 ||
-        headersKeysCount > 0 ||
-        rulesCount > 0 ||
-        hasLatency ||
-        hasErrors) && (
+      {/* Footer: Chaos / Headers / Rules metadata indicators */}
+      {(headersKeysCount > 0 || rulesCount > 0 || hasLatency || hasErrors) && (
         <div className="border-border/40 bg-muted/20 flex flex-wrap items-center gap-2 border-t px-4 py-2.5">
-          {schemaKeysCount > 0 && (
-            <div className="text-muted-foreground text-mini flex items-center gap-1 font-medium">
-              <RiCodeLine
-                className="text-success h-3.5 w-3.5 shrink-0"
-                aria-hidden="true"
-              />
-              <span>JSON</span>
-            </div>
-          )}
           {headersKeysCount > 0 && (
             <div className="text-muted-foreground text-mini flex items-center gap-1 font-medium">
               <RiEqualizerLine
