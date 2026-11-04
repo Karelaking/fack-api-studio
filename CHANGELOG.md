@@ -1,3 +1,9 @@
+# [1.24.0](https://github.com/Karelaking/fack-api-studio/compare/v1.23.0...v1.24.0) (2026-11-04)
+
+### Features
+
+- **dashboard:** redesign routes method progress bars with Material 3 styling ([34009ad](https://github.com/Karelaking/fack-api-studio/commit/34009ade8f68672dbe8a21509446c38563bd318b))
+
 # [1.23.0](https://github.com/Karelaking/fack-api-studio/compare/v1.22.0...v1.23.0) (2026-11-04)
 
 ### Features
