@@ -1,3 +1,9 @@
+# [1.22.0](https://github.com/Karelaking/fack-api-studio/compare/v1.21.0...v1.22.0) (2026-11-04)
+
+### Features
+
+- **mock-engine:** integrate OpenRouter AI provider and streamline agent workflow ([ec3ba54](https://github.com/Karelaking/fack-api-studio/commit/ec3ba54e46ab7c2b28ad3da80fe70646a63f450d))
+
 # [1.21.0](https://github.com/Karelaking/fack-api-studio/compare/v1.20.2...v1.21.0) (2026-11-04)
 
 ### Features
