@@ -2,11 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { SignIn, SignUp } from "@clerk/nextjs";
 import { ArrowLeft, Check } from "lucide-react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { CustomSignIn } from "@/components/auth/CustomSignIn";
+import { CustomSignUp } from "@/components/auth/CustomSignUp";
 
 export type AuthMode = "sign-in" | "sign-up";
 
@@ -230,7 +231,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps): React.JSX.Element => {
         </header>
 
         <main className="flex flex-1 items-center justify-center px-5 py-10 sm:px-8">
-          {mode === "sign-in" ? <SignIn /> : <SignUp />}
+          {mode === "sign-in" ? <CustomSignIn /> : <CustomSignUp />}
         </main>
 
         <footer className="px-5 pb-8 sm:px-8">

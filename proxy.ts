@@ -170,6 +170,7 @@ const handleRequest = async (request: NextRequest): Promise<NextResponse> => {
     "/opengraph-image",
     "/sign-in",
     "/sign-up",
+    "/sso-callback",
   ];
 
   const systemExactPaths = new Set(["/", "/robots.txt", "/sitemap.xml"]);
