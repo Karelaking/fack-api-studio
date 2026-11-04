@@ -1,3 +1,9 @@
+# [1.21.0](https://github.com/Karelaking/fack-api-studio/compare/v1.20.2...v1.21.0) (2026-11-04)
+
+### Features
+
+- **auth:** implement custom sign-in and sign-up flows with shadcn theme ([ee8acc0](https://github.com/Karelaking/fack-api-studio/commit/ee8acc019c7a9affb231e79ed4a714d99e5f77b8))
+
 ## [1.20.2](https://github.com/Karelaking/fack-api-studio/compare/v1.20.1...v1.20.2) (2026-11-03)
 
 ### Performance Improvements
