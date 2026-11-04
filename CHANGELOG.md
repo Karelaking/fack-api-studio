@@ -1,3 +1,9 @@
+# [1.23.0](https://github.com/Karelaking/fack-api-studio/compare/v1.22.0...v1.23.0) (2026-11-04)
+
+### Features
+
+- **mock-engine:** deepen agentic architecture, add telemetry and ai-seo docs ([6f0b527](https://github.com/Karelaking/fack-api-studio/commit/6f0b5273dd5183ba4f9eab1f9b3fc59eaaed526d))
+
 # [1.22.0](https://github.com/Karelaking/fack-api-studio/compare/v1.21.0...v1.22.0) (2026-11-04)
 
 ### Features
