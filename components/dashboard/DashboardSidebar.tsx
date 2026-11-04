@@ -43,6 +43,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { SidebarProvidersSection } from "./SidebarProvidersSection";
 
 interface DashboardSidebarProps {
   initialProjects: Project[];
@@ -275,6 +276,11 @@ export const DashboardSidebar = ({
               );
             })()}
           </SidebarGroup>
+
+          {/* Canvas Mock Data Providers (displayed when viewing canvas) */}
+          {pathname.endsWith("/canvas") && (
+            <SidebarProvidersSection selectedRoute={selectedRoute} />
+          )}
 
           {/* Dynamic Selected Route Links Section */}
           {selectedRoute && (

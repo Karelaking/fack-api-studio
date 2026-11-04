@@ -81,6 +81,11 @@ export const DragDropProvider = ({
     try {
       const updated = await addFieldToRoute(routeId, providerValue);
       onFieldAdded?.(routeId, providerValue, updated);
+      window.dispatchEvent(
+        new CustomEvent("canvas-field-added", {
+          detail: { routeId, providerValue, updatedRoute: updated },
+        }),
+      );
       toast.success(`Added "${providerLabel}" field`);
     } catch {
       toast.error(`Failed to add "${providerLabel}" field`);

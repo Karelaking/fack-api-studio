@@ -2,18 +2,19 @@
 
 import * as React from "react";
 import { RiDatabase2Line, RiCloseLine } from "@remixicon/react";
-import { cn } from "@/lib/utils";
 import { getGroupedProviders, type FakerCategory } from "@/lib/faker-registry";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ProviderChip } from "./ProviderChip";
+import { ProviderChip } from "@/components/canvas/ProviderChip";
 import {
   ProviderPaletteSearch,
   type CategoryTab,
-} from "./ProviderPaletteSearch";
+} from "@/components/canvas/ProviderPaletteSearch";
 import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
-import type { Route } from "@/db/schema";
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+} from "@/components/ui/sidebar";
 
-/** Derives a stable short label for a category tab. */
 function shortCategoryLabel(name: string): string {
   const short: Record<string, string> = {
     Person: "Person",
@@ -46,25 +47,23 @@ function shortCategoryLabel(name: string): string {
   return short[name] ?? name;
 }
 
-interface ProviderPaletteProps {
-  /** Active routes in this project (used for context-aware header). */
-  routes: Route[];
+interface SidebarProvidersSectionProps {
+  selectedRoute: {
+    id: string;
+    path: string;
+    method: string;
+    mockUrl: string;
+  } | null;
 }
 
 /**
- * Left sidebar palette listing every Faker.js provider as draggable chips.
+ * Mock Data Providers section embedded directly inside the project's DashboardSidebar.
  *
- * Layout rules (craft-floor):
- * - Full-height panel; never clips content on small screens — uses ScrollArea.
- * - Two-level hierarchy: category tabs strip -> chip grid within each group.
- * - Context header updates when a route is selected to anchor the user's intent.
- * - Search filters across all categories instantly.
- * - Keyboard shortcut ⌘K focuses search; Space/Enter on a chip (when route
- *   selected) adds the field without requiring a drag.
+ * Categorized, searchable, structured, and draggable directly onto canvas route cards.
  */
-export const ProviderPalette = ({
-  routes,
-}: ProviderPaletteProps): React.JSX.Element => {
+export function SidebarProvidersSection({
+  selectedRoute,
+}: SidebarProvidersSectionProps): React.JSX.Element {
   const selectedRouteId = useCanvasDndStore((s) => s.selectedRouteId);
   const setSelectedRoute = useCanvasDndStore((s) => s.setSelectedRoute);
 
@@ -93,7 +92,6 @@ export const ProviderPalette = ({
     [allCategories],
   );
 
-  // The filtered list of categories + providers based on query and active category
   const visibleCategories = React.useMemo(() => {
     const q = query.trim().toLowerCase();
 
@@ -120,62 +118,55 @@ export const ProviderPalette = ({
     0,
   );
 
-  const selectedRoute = React.useMemo(
-    () => routes.find((r) => r.id === selectedRouteId) ?? null,
-    [routes, selectedRouteId],
-  );
+  const effectiveRouteId = selectedRouteId ?? selectedRoute?.id ?? null;
 
-  // Keyboard-add: called when user presses Space/Enter on a chip with a route selected
   const handleKeyboardAdd = React.useCallback(
     async (providerValue: string) => {
-      if (!selectedRouteId) return;
+      if (!effectiveRouteId) return;
       const { addFieldToRoute } = await import("@/lib/actions/canvas-dnd");
       try {
-        await addFieldToRoute(selectedRouteId, providerValue);
-        // Trigger a soft router refresh to sync RouteNode field badges
+        const updated = await addFieldToRoute(effectiveRouteId, providerValue);
         window.dispatchEvent(
           new CustomEvent("canvas-field-added", {
-            detail: { routeId: selectedRouteId, providerValue },
+            detail: {
+              routeId: effectiveRouteId,
+              providerValue,
+              updatedRoute: updated,
+            },
           }),
         );
       } catch {
         const { toast } = await import("sonner");
-        toast.error("Failed to add field");
+        toast.error("Failed to add field to route");
       }
     },
-    [selectedRouteId],
+    [effectiveRouteId],
   );
 
   return (
-    <aside
-      className={cn(
-        "bg-background border-border/60 flex h-full w-64 shrink-0 flex-col border-r",
-      )}
-      aria-label="Provider palette"
-    >
-      {/* ── Header ───────────────────────────────────────────────── */}
-      <div className="border-border/60 shrink-0 space-y-3 border-b px-3 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <RiDatabase2Line
-              className="text-primary h-3.5 w-3.5"
-              aria-hidden="true"
-            />
-            <span className="text-foreground text-xs font-semibold">
-              Providers
-            </span>
-          </div>
-          <span className="text-muted-foreground font-mono text-[10px] tabular-nums">
-            {totalVisible}
+    <SidebarGroup className="border-border/50 mt-2 border-t pt-3">
+      <SidebarGroupLabel className="flex items-center justify-between px-2">
+        <div className="flex items-center gap-1.5">
+          <RiDatabase2Line
+            className="text-primary size-3.5"
+            aria-hidden="true"
+          />
+          <span className="text-foreground text-xs font-semibold">
+            Mock Providers
           </span>
         </div>
+        <span className="text-muted-foreground font-mono text-[10px] tabular-nums">
+          {totalVisible}
+        </span>
+      </SidebarGroupLabel>
 
-        {/* Context-aware target indicator */}
+      <SidebarGroupContent className="mt-2 space-y-2.5 px-2">
+        {/* Context-aware target route indicator */}
         {selectedRoute ? (
-          <div className="bg-primary/8 border-primary/20 flex items-center justify-between gap-1.5 rounded-lg border px-2 py-1.5">
+          <div className="border-primary/25 bg-primary/8 flex items-center justify-between gap-1.5 rounded-lg border px-2 py-1.5">
             <div className="flex min-w-0 items-center gap-1.5">
               <span
-                className="shrink-0 rounded px-1 py-0.5 font-mono text-[9px] font-bold tracking-wider uppercase"
+                className="shrink-0 rounded px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wider uppercase"
                 style={{
                   color: `var(--method-${selectedRoute.method.toLowerCase()})`,
                   backgroundColor: `color-mix(in oklch, var(--method-${selectedRoute.method.toLowerCase()}) 12%, transparent)`,
@@ -191,17 +182,19 @@ export const ProviderPalette = ({
               type="button"
               onClick={() => setSelectedRoute(null)}
               className="text-muted-foreground hover:text-foreground shrink-0 transition-colors"
-              aria-label="Deselect route"
+              aria-label="Deselect target route"
             >
-              <RiCloseLine className="h-3 w-3" aria-hidden="true" />
+              <RiCloseLine className="size-3" aria-hidden="true" />
             </button>
           </div>
         ) : (
-          <p className="text-muted-foreground text-[11px] leading-snug">
-            Select a route on the canvas, then drag a provider onto it.
+          <p className="text-muted-foreground px-0.5 text-[11px] leading-tight">
+            Drag a provider onto any route, or select a route and press
+            Space/Enter.
           </p>
         )}
 
+        {/* Real-time search and category tabs */}
         <ProviderPaletteSearch
           query={query}
           activeCategory={activeCategory}
@@ -209,27 +202,30 @@ export const ProviderPalette = ({
           onQueryChange={handleQueryChange}
           onCategoryChange={setActiveCategory}
         />
-      </div>
 
-      {/* ── Provider list ─────────────────────────────────────────── */}
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="space-y-4 px-2 py-3">
+        {/* Categorized provider chip list */}
+        <div className="scrollbar-subtle max-h-96 space-y-3.5 overflow-y-auto pr-1">
           {visibleCategories.length === 0 ? (
-            <p className="text-muted-foreground px-1 text-center text-xs leading-relaxed">
-              No providers match <strong>&ldquo;{query}&rdquo;</strong>
+            <p className="text-muted-foreground py-4 text-center text-xs">
+              No providers match &ldquo;{query}&rdquo;
             </p>
           ) : (
             visibleCategories.map((category) => (
               <section key={category.name} aria-label={category.name}>
-                <h3 className="text-muted-foreground mb-1.5 px-1 text-[10px] font-bold tracking-wider uppercase">
-                  {category.name}
-                </h3>
+                <div className="mb-1 flex items-center justify-between px-1">
+                  <h3 className="text-muted-foreground text-[10px] font-bold tracking-wider uppercase">
+                    {category.name}
+                  </h3>
+                  <span className="text-muted-foreground/70 font-mono text-[9px]">
+                    {category.providers.length}
+                  </span>
+                </div>
                 <div className="grid grid-cols-1 gap-1">
                   {category.providers.map((provider) => (
                     <ProviderChip
                       key={provider.value}
                       provider={provider}
-                      routeSelected={!!selectedRouteId}
+                      routeSelected={!!effectiveRouteId}
                       onKeyboardAdd={handleKeyboardAdd}
                     />
                   ))}
@@ -238,9 +234,9 @@ export const ProviderPalette = ({
             ))
           )}
         </div>
-      </ScrollArea>
-    </aside>
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
-};
+}
 
-export default ProviderPalette;
+export default SidebarProvidersSection;
