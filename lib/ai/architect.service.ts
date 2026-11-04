@@ -46,6 +46,12 @@ import {
   getRoutesByProjectId,
   type RouteWithEndpoint,
 } from "@/lib/services/route.service";
+import {
+  trackAgentGenerationStarted,
+  trackAgentPhaseTransitioned,
+  trackAgentGenerationCompleted,
+  trackAgentGenerationFailed,
+} from "./telemetry.service";
 
 export interface GenerateApiOptions {
   projectId?: string;
@@ -185,10 +191,25 @@ export async function generateApiSpecification(
     status: GenerationProgressStep["status"],
     detail?: string,
   ) => {
+    trackAgentPhaseTransitioned({
+      projectId,
+      phase: id,
+      status,
+      detail,
+    });
     if (onProgress) {
       onProgress({ id, label, status, detail });
     }
   };
+
+  const initialModel = resolveAiModel(options.model);
+  trackAgentGenerationStarted({
+    projectId,
+    promptLength: prompt.length,
+    model: initialModel ? initialModel.name : "deterministic-architect-engine",
+    provider: initialModel ? initialModel.provider : "fallback",
+    isStreaming: Boolean(onProgress),
+  });
 
   let taskId: string | undefined;
   let expectedVersion = 1;
@@ -380,6 +401,16 @@ When modifying, preserve existing resource conventions where appropriate, avoid 
 
     const durationMs = Date.now() - startTime;
 
+    trackAgentGenerationCompleted({
+      projectId,
+      model: modelUsed,
+      provider,
+      durationMs,
+      endpointsCount: validatedApi.endpoints.length,
+      routesCount: changeSet.summary.routesCount,
+      conflictsCount: changeSet.conflicts.length,
+    });
+
     let proposalId: string | undefined;
     if (taskId && projectId) {
       proposalId = nanoid();
@@ -418,6 +449,16 @@ When modifying, preserve existing resource conventions where appropriate, avoid 
   } catch (err) {
     const errorMessage =
       err instanceof Error ? err.message : "Unknown generation error";
+    const fallbackModel = resolveAiModel(options.model);
+    trackAgentGenerationFailed({
+      projectId,
+      model: fallbackModel
+        ? fallbackModel.name
+        : "deterministic-architect-engine",
+      provider: fallbackModel ? fallbackModel.provider : "fallback",
+      durationMs: Date.now() - startTime,
+      error: errorMessage,
+    });
     emitProgress("complete", `Generation failed: ${errorMessage}`, "failed");
     if (taskId) {
       await db

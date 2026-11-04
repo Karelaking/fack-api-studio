@@ -48,6 +48,7 @@ next-env.d.ts
 /data/
 *.db
 *.db-journal
+.impeccable/
 *.db-wal
 
 # graphify outputs

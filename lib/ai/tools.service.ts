@@ -38,7 +38,36 @@ import {
   validateAndNormalizeApi,
   type ValidationError,
 } from "./validator.service";
+import { trackAgentToolExecuted } from "./telemetry.service";
 import type { GeneratedProperty, GeneratedRoute } from "@/lib/ai/types";
+
+// ─── Telemetry Wrapper ────────────────────────────────────────────────────────
+
+function withTelemetry<TArgs, TResult>(
+  toolName: string,
+  executeFn: (args: TArgs) => Promise<TResult>,
+): (args: TArgs) => Promise<TResult> {
+  return async (args: TArgs): Promise<TResult> => {
+    const startTime = Date.now();
+    try {
+      const result = await executeFn(args);
+      trackAgentToolExecuted({
+        toolName,
+        success: true,
+        durationMs: Date.now() - startTime,
+      });
+      return result;
+    } catch (error) {
+      trackAgentToolExecuted({
+        toolName,
+        success: false,
+        durationMs: Date.now() - startTime,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  };
+}
 
 // ─── Tool Definitions ─────────────────────────────────────────────────────────
 
@@ -52,22 +81,25 @@ export const agentTools = {
     parameters: z.object({
       projectId: z.string().describe("The unique ID of the project"),
     }),
-    execute: async (args: {
-      projectId: string;
-    }): Promise<{
-      success: boolean;
-      error?: string;
-      project?: Awaited<ReturnType<typeof getProjectSummary>>;
-    }> => {
-      const summary = await getProjectSummary(args.projectId);
-      if (!summary) {
-        return {
-          success: false,
-          error: `Project not found with ID: ${args.projectId}`,
-        };
-      }
-      return { success: true, project: summary };
-    },
+    execute: withTelemetry(
+      "getProject",
+      async (args: {
+        projectId: string;
+      }): Promise<{
+        success: boolean;
+        error?: string;
+        project?: Awaited<ReturnType<typeof getProjectSummary>>;
+      }> => {
+        const summary = await getProjectSummary(args.projectId);
+        if (!summary) {
+          return {
+            success: false,
+            error: `Project not found with ID: ${args.projectId}`,
+          };
+        }
+        return { success: true, project: summary };
+      },
+    ),
   },
 
   /**
@@ -79,15 +111,18 @@ export const agentTools = {
     parameters: z.object({
       projectId: z.string().describe("The unique ID of the project"),
     }),
-    execute: async (args: {
-      projectId: string;
-    }): Promise<{
-      success: boolean;
-      endpoints: EndpointWithRoutes[];
-    }> => {
-      const endpoints = await getEndpointsByProjectId(args.projectId);
-      return { success: true, endpoints };
-    },
+    execute: withTelemetry(
+      "getEndpoints",
+      async (args: {
+        projectId: string;
+      }): Promise<{
+        success: boolean;
+        endpoints: EndpointWithRoutes[];
+      }> => {
+        const endpoints = await getEndpointsByProjectId(args.projectId);
+        return { success: true, endpoints };
+      },
+    ),
   },
 
   /**
@@ -98,15 +133,18 @@ export const agentTools = {
     parameters: z.object({
       projectId: z.string().describe("The unique ID of the project"),
     }),
-    execute: async (args: {
-      projectId: string;
-    }): Promise<{
-      success: boolean;
-      routes: RouteWithEndpoint[];
-    }> => {
-      const routes = await getRoutesByProjectId(args.projectId);
-      return { success: true, routes };
-    },
+    execute: withTelemetry(
+      "getRoutes",
+      async (args: {
+        projectId: string;
+      }): Promise<{
+        success: boolean;
+        routes: RouteWithEndpoint[];
+      }> => {
+        const routes = await getRoutesByProjectId(args.projectId);
+        return { success: true, routes };
+      },
+    ),
   },
 
   /**
@@ -118,22 +156,25 @@ export const agentTools = {
     parameters: z.object({
       routeId: z.string().describe("The unique ID of the route"),
     }),
-    execute: async (args: {
-      routeId: string;
-    }): Promise<{
-      success: boolean;
-      error?: string;
-      route?: Awaited<ReturnType<typeof findRouteById>>;
-    }> => {
-      const route = await findRouteById(args.routeId);
-      if (!route) {
-        return {
-          success: false,
-          error: `Route not found with ID: ${args.routeId}`,
-        };
-      }
-      return { success: true, route };
-    },
+    execute: withTelemetry(
+      "getRoute",
+      async (args: {
+        routeId: string;
+      }): Promise<{
+        success: boolean;
+        error?: string;
+        route?: Awaited<ReturnType<typeof findRouteById>>;
+      }> => {
+        const route = await findRouteById(args.routeId);
+        if (!route) {
+          return {
+            success: false,
+            error: `Route not found with ID: ${args.routeId}`,
+          };
+        }
+        return { success: true, route };
+      },
+    ),
   },
 
   /**
@@ -157,23 +198,26 @@ export const agentTools = {
         .optional()
         .describe("The base path prefix (e.g. /products)"),
     }),
-    execute: async (args: {
-      projectId: string;
-      name: string;
-      description?: string;
-      basePath?: string;
-    }): Promise<{
-      success: boolean;
-      endpoint: Awaited<ReturnType<typeof createEndpointRecord>>;
-    }> => {
-      const endpoint = await createEndpointRecord({
-        projectId: args.projectId,
-        name: args.name,
-        description: args.description,
-        basePath: args.basePath,
-      });
-      return { success: true, endpoint };
-    },
+    execute: withTelemetry(
+      "createEndpoint",
+      async (args: {
+        projectId: string;
+        name: string;
+        description?: string;
+        basePath?: string;
+      }): Promise<{
+        success: boolean;
+        endpoint: Awaited<ReturnType<typeof createEndpointRecord>>;
+      }> => {
+        const endpoint = await createEndpointRecord({
+          projectId: args.projectId,
+          name: args.name,
+          description: args.description,
+          basePath: args.basePath,
+        });
+        return { success: true, endpoint };
+      },
+    ),
   },
 
   /**
@@ -197,33 +241,36 @@ export const agentTools = {
       errorRate: z.number().min(0).max(100).default(0),
       customHeaders: z.string().optional(),
     }),
-    execute: async (args: {
-      endpointId: string;
-      method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-      path: string;
-      statusCode: number;
-      responseSchema?: string;
-      latencyMin?: number;
-      latencyMax?: number;
-      errorRate?: number;
-      customHeaders?: string;
-    }): Promise<{
-      success: boolean;
-      route: Awaited<ReturnType<typeof createRouteRecord>>;
-    }> => {
-      const route = await createRouteRecord({
-        endpointId: args.endpointId,
-        method: args.method,
-        path: args.path,
-        statusCode: args.statusCode,
-        responseSchema: args.responseSchema,
-        latencyMin: args.latencyMin,
-        latencyMax: args.latencyMax,
-        errorRate: args.errorRate,
-        customHeaders: args.customHeaders,
-      });
-      return { success: true, route };
-    },
+    execute: withTelemetry(
+      "createRoute",
+      async (args: {
+        endpointId: string;
+        method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+        path: string;
+        statusCode: number;
+        responseSchema?: string;
+        latencyMin?: number;
+        latencyMax?: number;
+        errorRate?: number;
+        customHeaders?: string;
+      }): Promise<{
+        success: boolean;
+        route: Awaited<ReturnType<typeof createRouteRecord>>;
+      }> => {
+        const route = await createRouteRecord({
+          endpointId: args.endpointId,
+          method: args.method,
+          path: args.path,
+          statusCode: args.statusCode,
+          responseSchema: args.responseSchema,
+          latencyMin: args.latencyMin,
+          latencyMax: args.latencyMax,
+          errorRate: args.errorRate,
+          customHeaders: args.customHeaders,
+        });
+        return { success: true, route };
+      },
+    ),
   },
 
   /**
@@ -243,23 +290,26 @@ export const agentTools = {
       errorRate: z.number().min(0).max(100).optional(),
       customHeaders: z.string().optional(),
     }),
-    execute: async (args: {
-      id: string;
-      method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-      path?: string;
-      statusCode?: number;
-      responseSchema?: string;
-      latencyMin?: number;
-      latencyMax?: number;
-      errorRate?: number;
-      customHeaders?: string;
-    }): Promise<{
-      success: boolean;
-      route?: Awaited<ReturnType<typeof updateRouteRecord>>;
-    }> => {
-      const route = await updateRouteRecord(args);
-      return { success: true, route };
-    },
+    execute: withTelemetry(
+      "updateRoute",
+      async (args: {
+        id: string;
+        method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+        path?: string;
+        statusCode?: number;
+        responseSchema?: string;
+        latencyMin?: number;
+        latencyMax?: number;
+        errorRate?: number;
+        customHeaders?: string;
+      }): Promise<{
+        success: boolean;
+        route?: Awaited<ReturnType<typeof updateRouteRecord>>;
+      }> => {
+        const route = await updateRouteRecord(args);
+        return { success: true, route };
+      },
+    ),
   },
 
   /**
@@ -270,15 +320,18 @@ export const agentTools = {
     parameters: z.object({
       routeId: z.string().describe("The unique ID of the route to delete"),
     }),
-    execute: async (args: {
-      routeId: string;
-    }): Promise<{
-      success: boolean;
-      deletedRouteId: string;
-    }> => {
-      await deleteRouteRecord(args.routeId);
-      return { success: true, deletedRouteId: args.routeId };
-    },
+    execute: withTelemetry(
+      "deleteRoute",
+      async (args: {
+        routeId: string;
+      }): Promise<{
+        success: boolean;
+        deletedRouteId: string;
+      }> => {
+        await deleteRouteRecord(args.routeId);
+        return { success: true, deletedRouteId: args.routeId };
+      },
+    ),
   },
 
   /**
@@ -288,30 +341,33 @@ export const agentTools = {
     description:
       "Validates route properties, REST path format, status code, and latency.",
     parameters: generatedRouteSchema,
-    execute: async (
-      route: GeneratedRoute,
-    ): Promise<{
-      success: boolean;
-      errors: ValidationError[];
-      normalizedRoute?: GeneratedRoute;
-    }> => {
-      const result = validateAndNormalizeApi({
-        name: "Validation API",
-        endpoints: [
-          {
-            name: "Temp",
-            basePath: "/temp",
-            routes: [route],
-          },
-        ],
-      });
+    execute: withTelemetry(
+      "validateRoute",
+      async (
+        route: GeneratedRoute,
+      ): Promise<{
+        success: boolean;
+        errors: ValidationError[];
+        normalizedRoute?: GeneratedRoute;
+      }> => {
+        const result = validateAndNormalizeApi({
+          name: "Validation API",
+          endpoints: [
+            {
+              name: "Temp",
+              basePath: "/temp",
+              routes: [route],
+            },
+          ],
+        });
 
-      return {
-        success: result.isValid,
-        errors: result.errors,
-        normalizedRoute: result.normalizedApi?.endpoints[0]?.routes[0],
-      };
-    },
+        return {
+          success: result.isValid,
+          errors: result.errors,
+          normalizedRoute: result.normalizedApi?.endpoints[0]?.routes[0],
+        };
+      },
+    ),
   },
 
   /**
@@ -323,23 +379,26 @@ export const agentTools = {
     parameters: z.object({
       properties: z.array(generatedPropertySchema),
     }),
-    execute: async (args: {
-      properties: GeneratedProperty[];
-    }): Promise<{
-      success: boolean;
-      schema: JsonSchemaDocument;
-      schemaJson: string;
-    }> => {
-      const schemaDoc = convertPropertiesToJsonSchema(args.properties);
-      const schemaJson = JSON.stringify(schemaDoc, null, 2);
-      const isValid = validateResponseSchema(schemaJson);
+    execute: withTelemetry(
+      "generateSchema",
+      async (args: {
+        properties: GeneratedProperty[];
+      }): Promise<{
+        success: boolean;
+        schema: JsonSchemaDocument;
+        schemaJson: string;
+      }> => {
+        const schemaDoc = convertPropertiesToJsonSchema(args.properties);
+        const schemaJson = JSON.stringify(schemaDoc, null, 2);
+        const isValid = validateResponseSchema(schemaJson);
 
-      return {
-        success: isValid,
-        schema: schemaDoc,
-        schemaJson,
-      };
-    },
+        return {
+          success: isValid,
+          schema: schemaDoc,
+          schemaJson,
+        };
+      },
+    ),
   },
 
   /**
@@ -351,22 +410,25 @@ export const agentTools = {
     parameters: z.object({
       projectId: z.string().describe("The project ID"),
     }),
-    execute: async (args: {
-      projectId: string;
-    }): Promise<{
-      success: boolean;
-      canvasStateId: string;
-      nodeCount: number;
-    }> => {
-      const endpoints = await getEndpointsByProjectId(args.projectId);
-      const layout = computeCanvasLayout(endpoints);
-      const saved = await persistCanvasState(args.projectId, layout);
+    execute: withTelemetry(
+      "updateCanvas",
+      async (args: {
+        projectId: string;
+      }): Promise<{
+        success: boolean;
+        canvasStateId: string;
+        nodeCount: number;
+      }> => {
+        const endpoints = await getEndpointsByProjectId(args.projectId);
+        const layout = computeCanvasLayout(endpoints);
+        const saved = await persistCanvasState(args.projectId, layout);
 
-      return {
-        success: true,
-        canvasStateId: saved.id,
-        nodeCount: layout.nodes.length,
-      };
-    },
+        return {
+          success: true,
+          canvasStateId: saved.id,
+          nodeCount: layout.nodes.length,
+        };
+      },
+    ),
   },
 };

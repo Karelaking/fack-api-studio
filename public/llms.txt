@@ -1,6 +1,6 @@
 # Fack API
 
-> Fack API is an open-source, self-hostable mock API platform and visual schema designer. Frontend and mobile teams use it to design endpoints on a node canvas, generate synthetic Faker.js responses, simulate network delays or errors, and test applications independently before a real backend is ready.
+> Fack API is an open-source, self-hostable mock API platform, visual schema designer, and Agentic AI API Architect. Frontend, mobile, and AI engineers use it to design endpoints on a visual node canvas, synthesize realistic mock data with Faker.js, simulate latency and chaos failures, and generate full REST architectures from natural language using Vercel AI SDK and OpenRouter.
 
 ## Overview
 
@@ -8,17 +8,25 @@
 - Web: https://fackapi.studio/
 - Repository: https://github.com/Karelaking/fack-api
 - License: MIT
-- Primary stack: Next.js 16, React 19, TypeScript, React Flow, Tailwind CSS v4, Drizzle ORM, SQLite
+- Primary Stack: Next.js 16, React 19, TypeScript, React Flow, Tailwind CSS v4, Vercel AI SDK, OpenRouter, Drizzle ORM, SQLite / libSQL
 
 ## Core Capabilities
 
-- Visual Node Canvas: Design endpoints, HTTP methods, and status codes graphically with React Flow.
-- Nested JSON Schema Builder: Construct deep response structures with objects, arrays, primitives, and nullable types.
-- Mock Data Synthesis: Map fields to Faker.js generators covering personal data, dates, locations, internet properties, and UUIDs.
-- Chaos Testing: Configure minimum and maximum latency delays, status codes (200, 201, 204, 400, 404, 500), and failure percentages per route.
-- Flexible Routing: Call mock endpoints via path namespaces (http://localhost:3000/:projectSlug/...) or subdomains (http://:projectSlug.localhost:3000/...).
-- Storage Tiers: Private file-based SQLite storage on disk by default, with optional cloud synchronization via Turso.
-- Contract Export: Generate client-side TypeScript definitions (.d.ts) and OpenAPI 3.0 specifications directly from visual schemas.
+- **Agentic AI Architect**: Autonomous 5-phase API generation (Understand, Inspect, Expand, Design, Validate, Conflict Check) driven by Vercel AI SDK and OpenRouter, with graceful fallback to an offline deterministic domain synthesizer when no API keys are present.
+- **Visual Node Canvas**: Design endpoints, HTTP methods, and status codes graphically with React Flow and automatic Dagre graph layout.
+- **Nested JSON Schema Builder**: Construct deep response structures with objects, arrays, primitives, and nullable types.
+- **Mock Data Synthesis**: Map fields to Faker.js generators covering personal data, dates, locations, internet properties, and UUIDs.
+- **Chaos Testing**: Configure minimum and maximum latency delays, status codes (200, 201, 204, 400, 404, 500), and failure percentages per route.
+- **Flexible Routing**: Call mock endpoints via path namespaces (`http://localhost:3000/:projectSlug/...`) or subdomains (`http://:projectSlug.localhost:3000/...`).
+- **Storage Tiers**: Private file-based SQLite storage on disk by default (Tier 1), self-hosted libSQL/Turso (Tier 2), and managed cloud (Tier 3).
+- **Contract Import & Export**: Import and export standard OpenAPI 3.0 specifications and client-side TypeScript type definitions (.d.ts).
+
+## Agentic AI Endpoints
+
+External AI coding agents (Claude, Cursor, Copilot, ChatGPT, custom agents) can interact directly with Fack API's agent endpoints:
+
+- `POST /api/ai/generate`: Initiates multi-phase API architecture generation from natural language prompts. Supports streaming progress via Server-Sent Events (SSE) and model overrides (`model: "anthropic/claude-3.5-sonnet"` or any OpenRouter model identifier).
+- `POST /api/ai/apply`: Atomically commits a generated proposal to a project with optimistic version locking, route conflict resolution, and automatic canvas positioning.
 
 ## Quick Start
 
@@ -30,7 +38,7 @@ pnpm drizzle-kit push
 pnpm dev
 ```
 
-The application runs locally at http://localhost:3000 with zero external API key requirements.
+The application runs locally at `http://localhost:3000` with zero external API key requirements.
 
 ## Full Documentation
 

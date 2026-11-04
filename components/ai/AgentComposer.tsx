@@ -305,6 +305,14 @@ export function AgentComposer(): React.JSX.Element {
               <span className="border-border/60 bg-muted/40 text-muted-foreground rounded-full border px-2.5 py-1 text-xs font-medium">
                 {changeSet.summary.fieldsCount} fields
               </span>
+              {result?.modelUsed ? (
+                <span className="border-primary/20 bg-primary/5 text-muted-foreground rounded-full border px-2.5 py-1 text-[11px] font-medium">
+                  {result.provider === "openrouter"
+                    ? "OpenRouter"
+                    : (result.provider ?? "Engine")}{" "}
+                  &middot; {result.modelUsed.replace(/^openrouter\//, "")}
+                </span>
+              ) : null}
               {conflicts.length > 0 ? (
                 <span className="border-warning/40 bg-warning/10 text-warning rounded-full border px-2.5 py-1 text-xs font-medium">
                   {conflicts.length} conflicts

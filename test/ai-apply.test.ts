@@ -1,9 +1,27 @@
 import { describe, it, expect } from "vite-plus/test";
 import { computeCanvasLayout } from "../lib/services/canvas.service";
 import { generateApiSpecification } from "../lib/ai/architect.service";
+import { applyAiProposal } from "../lib/ai/apply.service";
 import type { EndpointWithRoutes } from "../lib/services/endpoint.service";
 
 describe("AI API Architect — Generation & Canvas Layout Coordination", () => {
+  describe("applyAiProposal domain service", () => {
+    it("should reject input missing required parameters", async () => {
+      // @ts-expect-error testing runtime validation
+      const result = await applyAiProposal({});
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("required");
+    });
+
+    it("should fail gracefully when project does not exist", async () => {
+      const result = await applyAiProposal({
+        projectId: "non-existent-proj",
+        proposalId: "prop-123",
+        expectedVersion: 1,
+      });
+      expect(result.success).toBe(false);
+    });
+  });
   it("should generate a complete API specification matching an e-commerce requirement", async () => {
     const result = await generateApiSpecification({
       prompt:

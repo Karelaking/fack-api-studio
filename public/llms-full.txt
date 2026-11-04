@@ -13,6 +13,7 @@ Fack API is an open-source, self-hostable mock API platform and visual schema de
 7. Client Contract Export
 8. API Request Examples
 9. Docker Deployment
+10. Agentic AI API Architect
 
 ---
 
@@ -199,6 +200,58 @@ Access the studio dashboard at http://localhost:3000. Data persists in the fack-
 ```bash
 docker run -d -p 3000:3000 -v fack-data:/app/data mkkatiyar277/fake-api:latest
 ```
+
+---
+
+## 10. Agentic AI API Architect
+
+Fack API features an autonomous AI API Architect that generates complete, coherent REST APIs from natural language prompts.
+
+### Multi-Phase Generation Lifecycle
+
+The generation engine runs through five progressive phases:
+1. **Understanding**: Analyzes the raw prompt, identifying core domain scope, parent resources, sub-resources, and business relationships.
+2. **Inspection**: Concurrently queries existing endpoints, routes, and version data for the active project to preserve existing conventions and prevent inadvertent breaking changes.
+3. **Prompt Detailing & Expansion**: Expands concise user instructions into an exhaustive technical specification (OpenAPI-aligned data models, URI patterns, and validation rules). If requirements are fundamentally ambiguous, requests structured clarification.
+4. **API Design & Schema Synthesis**: Uses Vercel AI SDK with OpenRouter (e.g. Claude 3.5 Sonnet, Llama 3.3 70B, GPT-4o-mini) to generate endpoints, routes, and response schemas backed by realistic Faker.js providers.
+5. **Validation & Change Set Construction**: Enforces RESTful casing (kebab-case paths, camelCase properties), validates status codes and latency bounds, checks for collisions against existing routes, and generates a structured change set with conflict resolutions (`replace`, `skip`, `modify`).
+
+### Provider Configuration
+
+- **OpenRouter (Primary)**: Configured via `OPENROUTER_API_KEY`. Supports custom models via `OPENROUTER_MODEL` (default: `anthropic/claude-3.5-sonnet`) and per-request model overrides.
+- **Google Gemini (Fallback)**: Configured via `GEMINI_API_KEY` (model: `gemini-2.5-flash`).
+- **OpenAI (Fallback)**: Configured via `OPENAI_API_KEY` (model: `gpt-4o-mini`).
+- **Deterministic Domain Synthesizer (Offline)**: If no API keys are configured, a local algorithmic synthesizer generates production-grade specifications for common domains (e-commerce, social, food delivery, healthcare, etc.) with 0 external network requests.
+
+### Agent HTTP Endpoints
+
+#### Generate API
+`POST /api/ai/generate`
+Payload:
+```json
+{
+  "prompt": "Create an e-commerce platform with products and shopping cart",
+  "projectId": "proj_123",
+  "model": "anthropic/claude-3.5-sonnet",
+  "stream": true
+}
+```
+When `stream: true` is passed, emits Server-Sent Events (SSE) with `progress`, `complete`, and `error` event types.
+
+#### Apply Proposal
+`POST /api/ai/apply`
+Payload:
+```json
+{
+  "projectId": "proj_123",
+  "proposalId": "prop_456",
+  "expectedVersion": 1,
+  "resolutions": {
+    "GET:/products": "replace"
+  }
+}
+```
+Executes an atomic database transaction verifying project version, creates endpoints and routes, auto-calculates visual canvas positions, and snapshots revision history.
 
 ---
 
