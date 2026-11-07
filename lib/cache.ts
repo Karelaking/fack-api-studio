@@ -11,7 +11,7 @@
 
 import { LRUCache } from "lru-cache";
 import { createStorage } from "unstorage";
-import type { Project, Route, Webhook } from "@/db/schema";
+import type { Project, Route, Webhook, Scenario, Endpoint } from "@/db/schema";
 import { LoggerRegistry } from "@/lib/logger-registry";
 import { clearMatcherCache } from "@/lib/route-matcher";
 
@@ -28,6 +28,11 @@ export interface PageCacheEntry {
   limit: number;
   items: unknown[];
 }
+
+export type CachedRoute = Route & {
+  endpoint?: { id: string; basePath: string; name: string };
+  webhooks?: Webhook[];
+};
 
 /**
  * CacheManager manages separate bounded LRU caches for different entity domains.
@@ -47,7 +52,13 @@ type GlobalWithCacheManager = typeof globalThis & {
 export class CacheManager {
   private projectListCache: LRUCache<string, Project[]>;
   private projectBySlugCache: LRUCache<string, Project>;
-  private projectRoutesCache: LRUCache<string, Route[]>;
+  private projectRoutesCache: LRUCache<
+    string,
+    (Route & { endpoint: Endpoint })[]
+  >;
+  private mockRoutesCache: LRUCache<string, CachedRoute[]>;
+  private scenarioCache: LRUCache<string, Scenario>;
+  private negativeSlugCache: LRUCache<string, boolean>;
   private projectEndpointsCache: LRUCache<string, unknown[]>;
   private canvasStateCache: LRUCache<string, NonNullable<unknown>>;
   private routeMockDataCache: LRUCache<string, unknown[]>;
@@ -67,10 +78,31 @@ export class CacheManager {
       ttl: 10 * 60 * 1000,
     });
 
-    // Routes by project cache: 5 minute TTL, max 1,000 entries
-    this.projectRoutesCache = new LRUCache<string, Route[]>({
+    // Studio project routes cache (raw DB entities): 5 minute TTL, max 1,000 entries
+    this.projectRoutesCache = new LRUCache<
+      string,
+      (Route & { endpoint: Endpoint })[]
+    >({
       max: 1000,
       ttl: 5 * 60 * 1000,
+    });
+
+    // Mock engine compiled routes cache (normalized paths): 5 minute TTL, max 1,000 entries
+    this.mockRoutesCache = new LRUCache<string, CachedRoute[]>({
+      max: 1000,
+      ttl: 5 * 60 * 1000,
+    });
+
+    // Active scenarios cache: 5 minute TTL, max 500 entries
+    this.scenarioCache = new LRUCache<string, Scenario>({
+      max: 500,
+      ttl: 5 * 60 * 1000,
+    });
+
+    // Negative slug cache (cache penetration defense): 30 second TTL, max 1,000 entries
+    this.negativeSlugCache = new LRUCache<string, boolean>({
+      max: 1000,
+      ttl: 30 * 1000,
     });
 
     // Project endpoints cache: 5 minute TTL, max 500 entries
@@ -138,14 +170,53 @@ export class CacheManager {
     this.projectBySlugCache.set(slug, project);
   }
 
-  // ── Project Routes ───────────────────────────────────────────────────────
+  // ── Project Routes (Raw DB entities for Studio & Canvas) ──────────────────
 
-  public getRoutes(projectId: string): Route[] | undefined {
+  public getProjectRoutes(
+    projectId: string,
+  ): (Route & { endpoint: Endpoint })[] | undefined {
     return this.projectRoutesCache.get(projectId);
   }
 
-  public setRoutes(projectId: string, routes: Route[]): void {
+  public setProjectRoutes(
+    projectId: string,
+    routes: (Route & { endpoint: Endpoint })[],
+  ): void {
     this.projectRoutesCache.set(projectId, routes);
+  }
+
+  // ── Mock Routes (Compiled & Normalized for Mock Engine) ───────────────────
+
+  public getRoutes(projectId: string): CachedRoute[] | undefined {
+    return this.mockRoutesCache.get(projectId);
+  }
+
+  public setRoutes(projectId: string, routes: CachedRoute[]): void {
+    this.mockRoutesCache.set(projectId, routes);
+  }
+
+  // ── Scenarios ────────────────────────────────────────────────────────────
+
+  public getScenario(scenarioId: string): Scenario | undefined {
+    return this.scenarioCache.get(scenarioId);
+  }
+
+  public setScenario(scenarioId: string, scenario: Scenario): void {
+    this.scenarioCache.set(scenarioId, scenario);
+  }
+
+  public invalidateScenario(scenarioId: string): void {
+    this.scenarioCache.delete(scenarioId);
+  }
+
+  // ── Negative Slug Cache (Cache Penetration Defense) ──────────────────────
+
+  public isNegativeSlug(slug: string): boolean {
+    return this.negativeSlugCache.get(slug) === true;
+  }
+
+  public setNegativeSlug(slug: string): void {
+    this.negativeSlugCache.set(slug, true);
   }
 
   // ── Project Endpoints ─────────────────────────────────────────────────────
@@ -241,6 +312,7 @@ export class CacheManager {
   public invalidateProject(projectId?: string, projectSlug?: string): void {
     if (projectId) {
       this.projectRoutesCache.delete(projectId);
+      this.mockRoutesCache.delete(projectId);
       this.projectEndpointsCache.delete(projectId);
       this.canvasStateCache.delete(projectId);
     }
@@ -248,6 +320,7 @@ export class CacheManager {
     this.projectListCache.delete("all_projects");
     if (projectSlug) {
       this.projectBySlugCache.delete(projectSlug);
+      this.negativeSlugCache.delete(projectSlug);
     }
   }
 
@@ -268,6 +341,9 @@ export class CacheManager {
     this.projectListCache.clear();
     this.projectBySlugCache.clear();
     this.projectRoutesCache.clear();
+    this.mockRoutesCache.clear();
+    this.scenarioCache.clear();
+    this.negativeSlugCache.clear();
     this.projectEndpointsCache.clear();
     this.canvasStateCache.clear();
     this.routeMockDataCache.clear();
@@ -313,14 +389,34 @@ export function setCachedProjectBySlug(slug: string, project: Project): void {
   cacheTrace.traceSuccess("setCachedProjectBySlug", "void");
 }
 
-export type CachedRoute = Route & {
-  endpoint?: { id: string; basePath: string; name: string };
-  webhooks?: Webhook[];
-};
+export function getCachedProjectRoutes(
+  projectId: string,
+): (Route & { endpoint: Endpoint })[] | undefined {
+  cacheTrace.traceCall("getCachedProjectRoutes", projectId);
+  const res = cacheManager.getProjectRoutes(projectId);
+  cacheTrace.traceSuccess(
+    "getCachedProjectRoutes",
+    res ? `${res.length} routes` : "undefined",
+  );
+  return res;
+}
+
+export function setCachedProjectRoutes(
+  projectId: string,
+  routes: (Route & { endpoint: Endpoint })[],
+): void {
+  cacheTrace.traceCall(
+    "setCachedProjectRoutes",
+    projectId,
+    `${routes.length} routes`,
+  );
+  cacheManager.setProjectRoutes(projectId, routes);
+  cacheTrace.traceSuccess("setCachedProjectRoutes", "void");
+}
 
 export function getCachedRoutes(projectId: string): CachedRoute[] | undefined {
   cacheTrace.traceCall("getCachedRoutes", projectId);
-  const res = cacheManager.getRoutes(projectId) as CachedRoute[] | undefined;
+  const res = cacheManager.getRoutes(projectId);
   cacheTrace.traceSuccess(
     "getCachedRoutes",
     res ? `${res.length} routes` : "undefined",
@@ -333,8 +429,31 @@ export function setCachedRoutes(
   routes: CachedRoute[],
 ): void {
   cacheTrace.traceCall("setCachedRoutes", projectId, `${routes.length} routes`);
-  cacheManager.setRoutes(projectId, routes as Route[]);
+  cacheManager.setRoutes(projectId, routes);
   cacheTrace.traceSuccess("setCachedRoutes", "void");
+}
+
+export function getCachedScenario(scenarioId: string): Scenario | undefined {
+  return cacheManager.getScenario(scenarioId);
+}
+
+export function setCachedScenario(
+  scenarioId: string,
+  scenario: Scenario,
+): void {
+  cacheManager.setScenario(scenarioId, scenario);
+}
+
+export function invalidateCachedScenario(scenarioId: string): void {
+  cacheManager.invalidateScenario(scenarioId);
+}
+
+export function isNegativeSlug(slug: string): boolean {
+  return cacheManager.isNegativeSlug(slug);
+}
+
+export function setNegativeSlug(slug: string): void {
+  cacheManager.setNegativeSlug(slug);
 }
 
 export function getCachedEndpoints(projectId: string): unknown[] | undefined {

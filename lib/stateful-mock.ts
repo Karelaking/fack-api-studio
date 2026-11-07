@@ -21,24 +21,32 @@ export async function saveMockItem(
   const finalKey = itemKey ?? payloadId ?? nanoid();
   const finalPayload = { ...payload, id: finalKey };
 
-  // Delete existing if any (upsert behavior)
-  await db
-    .delete(mockStates)
-    .where(
-      and(
-        eq(mockStates.projectId, projectId),
-        eq(mockStates.collection, collection),
-        eq(mockStates.itemKey, finalKey),
-      ),
-    );
-
-  await db.insert(mockStates).values({
-    id: nanoid(),
-    projectId,
-    collection,
-    itemKey: finalKey,
-    data: JSON.stringify(finalPayload),
+  // In-place update if existing item matches (projectId, collection, itemKey) to preserve row identity
+  const existing = await db.query.mockStates.findFirst({
+    where: and(
+      eq(mockStates.projectId, projectId),
+      eq(mockStates.collection, collection),
+      eq(mockStates.itemKey, finalKey),
+    ),
   });
+
+  if (existing) {
+    await db
+      .update(mockStates)
+      .set({
+        data: JSON.stringify(finalPayload),
+        updatedAt: new Date(),
+      })
+      .where(eq(mockStates.id, existing.id));
+  } else {
+    await db.insert(mockStates).values({
+      id: nanoid(),
+      projectId,
+      collection,
+      itemKey: finalKey,
+      data: JSON.stringify(finalPayload),
+    });
+  }
 
   return finalPayload;
 }

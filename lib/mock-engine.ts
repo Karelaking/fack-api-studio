@@ -182,7 +182,24 @@ export function buildResponse(
     ...customHeaders,
   });
 
-  const response = new Response(JSON.stringify(payload, null, 2), {
+  let bodyContent: string;
+  if (typeof payload === "string") {
+    const contentType = headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      bodyContent = payload;
+    } else {
+      try {
+        JSON.parse(payload);
+        bodyContent = payload;
+      } catch {
+        bodyContent = JSON.stringify(payload, null, 2);
+      }
+    }
+  } else {
+    bodyContent = JSON.stringify(payload, null, 2);
+  }
+
+  const response = new Response(bodyContent, {
     status: statusCode,
     headers,
   });

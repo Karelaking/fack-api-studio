@@ -13,6 +13,8 @@ import {
   getCachedPageData,
   setCachedPageData,
   prunePageCache,
+  getCachedScenario,
+  setCachedScenario,
   type CachedRoute,
 } from "@/lib/cache";
 import {
@@ -77,43 +79,41 @@ async function flushLogQueue(): Promise<void> {
   if (isFlushing || logQueue.length === 0) return;
   isFlushing = true;
 
-  const batch = [...logQueue];
-  logQueue.length = 0; // clear queue
-
   try {
-    if (sqlClient) {
-      // postgres.js supports array insertion
-      await sqlClient`
-        INSERT INTO request_logs ${sqlClient(batch)}
-      `;
-    } else {
-      // @libsql/client supports batching
-      const statements = batch.map((entry) => ({
-        sql: `INSERT INTO request_logs (id, project_id, timestamp, method, path, query_params, headers, status_code, latency, is_error, response_payload) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [
-          entry.id,
-          entry.project_id,
-          entry.timestamp,
-          entry.method,
-          entry.path,
-          entry.query_params,
-          entry.headers,
-          entry.status_code,
-          entry.latency,
-          entry.is_error,
-          entry.response_payload,
-        ],
-      }));
-      await db.$client.batch(statements);
+    while (logQueue.length > 0) {
+      const batch = logQueue.splice(0, 100);
+      if (batch.length === 0) break;
+
+      if (sqlClient) {
+        // postgres.js supports array insertion
+        await sqlClient`
+          INSERT INTO request_logs ${sqlClient(batch)}
+        `;
+      } else {
+        // @libsql/client supports batching
+        const statements = batch.map((entry) => ({
+          sql: `INSERT INTO request_logs (id, project_id, timestamp, method, path, query_params, headers, status_code, latency, is_error, response_payload) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [
+            entry.id,
+            entry.project_id,
+            entry.timestamp,
+            entry.method,
+            entry.path,
+            entry.query_params,
+            entry.headers,
+            entry.status_code,
+            entry.latency,
+            entry.is_error,
+            entry.response_payload,
+          ],
+        }));
+        await db.$client.batch(statements);
+      }
     }
   } catch (error) {
     mockLogger.error("Failed to batch insert request logs:", error);
   } finally {
     isFlushing = false;
-    // If more items were added during flush, try to flush again
-    if (logQueue.length > 0) {
-      await flushLogQueue();
-    }
   }
 }
 
@@ -335,18 +335,32 @@ export async function processMockRequest({
     // ── 3.5 Active Scenario Check ────────────────────────────────────────
     let activeScenario = null;
     if (project.activeScenarioId) {
-      activeScenario = await db.query.scenarios.findFirst({
-        where: eq(scenarios.id, project.activeScenarioId),
-      });
+      const cached = getCachedScenario(project.activeScenarioId);
+      if (cached) {
+        activeScenario = cached;
+      } else {
+        const row = await db.query.scenarios.findFirst({
+          where: eq(scenarios.id, project.activeScenarioId),
+        });
+        if (row) {
+          setCachedScenario(project.activeScenarioId, row);
+          activeScenario = row;
+        }
+      }
     }
 
     // ── 4. Simulated Error Injection (Chaos Monkey) ──────────────────────
     let finalErrorRate = route.errorRate ?? 0;
     if (activeScenario && activeScenario.forcedErrorRate > 0) {
-      // if forced error rate is 0.5, the baseline error rate increases
+      // forcedErrorRate in scenarios is stored as 0.05 for 5% or 1.0 for 100%,
+      // but may also be configured as a whole percentage (e.g. 50).
+      const forcedPercentage =
+        activeScenario.forcedErrorRate <= 1.0
+          ? activeScenario.forcedErrorRate * 100
+          : activeScenario.forcedErrorRate;
       finalErrorRate = Math.min(
-        1.0,
-        finalErrorRate + activeScenario.forcedErrorRate,
+        100,
+        Math.max(0, finalErrorRate + forcedPercentage),
       );
     }
 

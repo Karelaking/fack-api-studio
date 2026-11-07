@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { revalidatePath } from "next/cache";
 import { requireProjectAccess } from "@/lib/auth";
+import { invalidateCachedScenario } from "@/lib/cache";
 
 export async function getScenarios(projectId: string): Promise<Scenario[]> {
   return db.query.scenarios.findMany({
@@ -38,6 +39,7 @@ export async function createScenario(
 
 export async function deleteScenario(scenarioId: string, projectId: string) {
   await requireProjectAccess(projectId);
+  invalidateCachedScenario(scenarioId);
   await db.delete(scenarios).where(eq(scenarios.id, scenarioId));
   revalidatePath(`/projects/${projectId}`);
 }
