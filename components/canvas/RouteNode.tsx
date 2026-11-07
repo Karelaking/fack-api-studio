@@ -353,6 +353,8 @@ export const RouteNode = ({
               <FieldBadge
                 key={field.id}
                 field={field}
+                routeId={data.id}
+                onOpenEdit={data.onOpenEdit}
                 onRemove={handleRemoveField}
               />
             ))}

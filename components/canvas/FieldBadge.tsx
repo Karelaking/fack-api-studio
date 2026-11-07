@@ -31,6 +31,10 @@ function getFieldColor(fakerProvider?: string): string {
 
 interface FieldBadgeProps {
   field: SchemaField;
+  /** The route that owns this field, used to open its inspector. */
+  routeId: string;
+  /** Opens the node inspector for the owning route. */
+  onOpenEdit: (routeId: string) => void;
   /** Callback to remove the field from the route. */
   onRemove: (fieldId: string) => void;
 }
@@ -38,11 +42,13 @@ interface FieldBadgeProps {
 /**
  * Inline field pill rendered inside a RouteNode card body.
  *
- * Click -> opens the FieldInspector for this specific field.
+ * Click -> opens the node inspector on this specific field.
  * ✕ button -> removes the field from the route schema.
  */
 export const FieldBadge = ({
   field,
+  routeId,
+  onOpenEdit,
   onRemove,
 }: FieldBadgeProps): React.JSX.Element => {
   const setInspectedField = useCanvasDndStore((s) => s.setInspectedField);
@@ -57,6 +63,9 @@ export const FieldBadge = ({
 
   const handleClickBadge = (e: React.MouseEvent) => {
     e.stopPropagation(); // Don't bubble to RouteNode selection
+    // Explicitly open the inspector: a badge click is an edit intent, unlike a
+    // plain node click which only targets the route for drag-and-drop.
+    onOpenEdit(routeId);
     setInspectedField(isInspected ? null : field.id);
   };
 

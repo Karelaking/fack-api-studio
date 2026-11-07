@@ -54,6 +54,8 @@ interface NodeInspectorProps {
   onRouteUpdated: (updatedRoute: Route) => void;
   /** Called to open the full advanced EditBar sheet. */
   onOpenAdvanced: () => void;
+  /** Called when the user closes the inspector (back/close). */
+  onCloseInspector: () => void;
 }
 
 interface FieldEditorProps {
@@ -138,7 +140,7 @@ const FieldEditor = ({
           <button
             type="button"
             onClick={onBack}
-            className="text-muted-foreground hover:text-foreground rounded p-0.5 transition-colors"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring flex size-8 items-center justify-center rounded-md p-1 transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
             aria-label="Back to route inspection"
           >
             <RiArrowLeftSLine className="h-4 w-4" aria-hidden="true" />
@@ -192,9 +194,9 @@ const FieldEditor = ({
                 onClick={() => setType(t)}
                 disabled={loading}
                 className={cn(
-                  "h-6 rounded-md border px-2 font-mono text-[10px] font-semibold transition-colors",
+                  "h-7 min-w-[2.5rem] rounded-md border px-2.5 font-mono text-[11px] font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                   type === t
-                    ? "border-primary bg-primary text-primary-foreground"
+                    ? "border-primary bg-primary text-primary-foreground shadow-xs"
                     : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
@@ -246,7 +248,7 @@ const FieldEditor = ({
           <button
             type="button"
             onClick={onOpenAdvanced}
-            className="text-muted-foreground hover:text-primary flex items-center gap-1.5 text-xs font-medium transition-colors"
+            className="text-muted-foreground hover:text-primary focus-visible:ring-ring flex items-center gap-1.5 rounded-sm text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
           >
             <RiSettings2Line className="h-3.5 w-3.5" aria-hidden="true" />
             <span>Advanced settings (chaos, headers…)</span>
@@ -372,7 +374,7 @@ const RouteEditor = ({
         <button
           type="button"
           onClick={onDeselect}
-          className="text-muted-foreground hover:text-foreground rounded p-0.5 transition-colors"
+          className="text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring flex size-7 items-center justify-center rounded-md p-1 transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
           title="Deselect route"
           aria-label="Deselect route"
         >
@@ -395,8 +397,9 @@ const RouteEditor = ({
                   key={m}
                   type="button"
                   onClick={() => setMethod(m)}
+                  aria-pressed={isSelected}
                   className={cn(
-                    "rounded px-2 py-1 font-mono text-[10px] font-bold tracking-wider uppercase transition-colors",
+                    "rounded-md px-2.5 py-1.5 font-mono text-[11px] font-bold tracking-wider uppercase transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                     isSelected
                       ? "bg-foreground text-background shadow-xs"
                       : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -488,7 +491,7 @@ const RouteEditor = ({
                   key={f.id}
                   type="button"
                   onClick={() => onSelectField(f.id)}
-                  className="bg-card hover:border-primary/50 hover:bg-primary/5 border-border/60 flex w-full items-center justify-between rounded-md border p-2 text-left transition-colors"
+                  className="bg-card hover:border-primary/50 hover:bg-primary/5 border-border/60 focus-visible:ring-ring flex w-full items-center justify-between rounded-md border p-2 text-left transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
                 >
                   <div className="flex min-w-0 flex-col">
                     <span className="text-foreground truncate font-mono text-xs font-semibold">
@@ -512,7 +515,7 @@ const RouteEditor = ({
           <button
             type="button"
             onClick={onOpenAdvanced}
-            className="text-muted-foreground hover:text-primary flex items-center gap-1.5 text-xs font-medium transition-colors"
+            className="text-muted-foreground hover:text-primary focus-visible:ring-ring flex items-center gap-1.5 rounded-sm text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
           >
             <RiSettings2Line className="h-3.5 w-3.5" aria-hidden="true" />
             <span>Chaos rules & headers drawer…</span>
@@ -571,8 +574,9 @@ const IdleInspector = ({
           No Node Selected
         </h3>
         <p className="text-muted-foreground mt-1.5 max-w-56 text-[11px] leading-relaxed">
-          Click any route node or field badge on the canvas to inspect and edit
-          its properties, types, and mock providers.
+          Click a route&apos;s pencil button to inspect and edit its properties,
+          or click a field badge to edit that field&apos;s type and mock
+          provider.
         </p>
 
         <div className="bg-muted/30 border-border/50 mt-6 w-full rounded-lg border p-3 text-left">
@@ -598,8 +602,8 @@ const IdleInspector = ({
  * Dedicated strictly to inspecting and editing node and field values on the canvas.
  * Handles three clean states:
  * 1. Field Node Editor (when a field badge is clicked)
- * 2. Route Node Editor (when a route card is clicked)
- * 3. Idle Inspector (when no node is selected)
+ * 2. Route Node Editor (when a route's pencil button is clicked)
+ * 3. Idle Inspector (when no node is explicitly opened for editing)
  */
 export const NodeInspector = ({
   route,
@@ -607,8 +611,8 @@ export const NodeInspector = ({
   activeRoutesCount,
   onRouteUpdated,
   onOpenAdvanced,
+  onCloseInspector,
 }: NodeInspectorProps): React.JSX.Element => {
-  const setSelectedRoute = useCanvasDndStore((s) => s.setSelectedRoute);
   const setInspectedField = useCanvasDndStore((s) => s.setInspectedField);
 
   // Parse fields for route
@@ -650,7 +654,7 @@ export const NodeInspector = ({
         route={route}
         onRouteUpdated={onRouteUpdated}
         onSelectField={(fieldId) => setInspectedField(fieldId)}
-        onDeselect={() => setSelectedRoute(null)}
+        onDeselect={onCloseInspector}
         onOpenAdvanced={onOpenAdvanced}
       />
     );
