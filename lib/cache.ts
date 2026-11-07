@@ -27,6 +27,26 @@ export type CachedRoute = Route & {
   webhooks?: Webhook[];
 };
 
+const MIB = 1024 * 1024;
+
+/**
+ * Approximate in-memory size of a cached value.
+ *
+ * Generated mock payloads are plain JSON, so the serialized length is a good
+ * proxy. It is doubled because JavaScript strings are UTF-16 in memory. This
+ * runs only on cache misses, and keeps the payload caches bounded by bytes as
+ * well as entries — two thousand arrays of 100+ objects can otherwise reach
+ * hundreds of MB.
+ */
+function payloadSize(value: unknown): number {
+  try {
+    const json = JSON.stringify(value);
+    return json ? json.length * 2 : 1;
+  } catch {
+    return 1;
+  }
+}
+
 /**
  * CacheManager manages separate bounded LRU caches for different entity domains.
  */
@@ -123,21 +143,27 @@ export class CacheManager {
       ttl: 5 * 60 * 1000,
     });
 
-    // Route mock data array cache: 5 minute TTL, max 2,000 entries
+    // Route mock data array cache: 5 minute TTL, max 2,000 entries / 32 MiB
     this.routeMockDataCache = new LRUCache<string, unknown[]>({
       max: 2000,
+      maxSize: 32 * MIB,
+      sizeCalculation: payloadSize,
       ttl: 5 * 60 * 1000,
     });
 
-    // Single route mock object cache: 5 minute TTL, max 2,000 entries
+    // Single route mock object cache: 5 minute TTL, max 2,000 entries / 8 MiB
     this.routeSingleMockDataCache = new LRUCache<string, NonNullable<unknown>>({
       max: 2000,
+      maxSize: 8 * MIB,
+      sizeCalculation: payloadSize,
       ttl: 5 * 60 * 1000,
     });
 
-    // Paged route cache: 5 minute TTL, max 2,000 entries
+    // Paged route cache: 5 minute TTL, max 2,000 entries / 32 MiB
     this.routePageCache = new LRUCache<string, PageCacheEntry[]>({
       max: 2000,
+      maxSize: 32 * MIB,
+      sizeCalculation: payloadSize,
       ttl: 5 * 60 * 1000,
     });
 
@@ -145,10 +171,14 @@ export class CacheManager {
     // safety net for multi-process deployments where another instance wrote.
     this.mockCollectionCache = new LRUCache<string, unknown[]>({
       max: 500,
+      maxSize: 16 * MIB,
+      sizeCalculation: payloadSize,
       ttl: 30 * 1000,
     });
     this.mockItemCache = new LRUCache<string, NonNullable<unknown>>({
       max: 2_000,
+      maxSize: 8 * MIB,
+      sizeCalculation: payloadSize,
       ttl: 30 * 1000,
     });
   }
