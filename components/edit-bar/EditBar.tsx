@@ -380,9 +380,9 @@ function EditBarInner({
                   onClick={() => setStatusCode(code)}
                   disabled={loading}
                   className={cn(
-                    "text-mini cursor-pointer rounded-sm border px-2 py-0.5 font-mono font-medium transition-colors",
+                    "cursor-pointer rounded-md border px-2.5 py-1 font-mono text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                     statusCode === code
-                      ? "bg-primary text-primary-foreground border-primary"
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
                       : "bg-background text-muted-foreground hover:text-foreground hover:bg-muted border-border/80",
                   )}
                 >

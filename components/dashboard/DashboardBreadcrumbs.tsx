@@ -151,7 +151,10 @@ export function DashboardBreadcrumbs({
 
   return (
     <div className="flex min-w-0 items-center gap-4">
-      <nav className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm font-medium select-none">
+      <nav
+        aria-label="Breadcrumb navigation"
+        className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm font-medium select-none"
+      >
         {breadcrumbs.map((crumb, idx) => {
           const isLast = idx === breadcrumbs.length - 1;
           const isFirst = idx === 0;
@@ -175,8 +178,8 @@ export function DashboardBreadcrumbs({
                         render={
                           <button
                             type="button"
-                            aria-label={crumb.label}
-                            className="group flex min-w-0 cursor-pointer items-center gap-1 transition-colors focus:outline-none"
+                            aria-label={`Select active project (Current: ${crumb.label})`}
+                            className="group hover:bg-muted/60 focus-visible:ring-ring flex min-w-0 cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-1"
                           />
                         }
                       >
@@ -230,8 +233,8 @@ export function DashboardBreadcrumbs({
                       render={
                         <button
                           type="button"
-                          aria-label={crumb.label}
-                          className="group flex cursor-pointer items-center gap-1 transition-colors focus:outline-none"
+                          aria-label={`Select active project (Current: ${crumb.label})`}
+                          className="group hover:bg-muted/60 focus-visible:ring-ring flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-1"
                         />
                       }
                     >
@@ -277,7 +280,7 @@ export function DashboardBreadcrumbs({
                 ) : (
                   <Link
                     href={crumb.href}
-                    className="hover:text-foreground block max-w-30 min-w-0 truncate font-normal transition-colors sm:max-w-xs"
+                    className="hover:text-foreground focus-visible:ring-ring block max-w-30 min-w-0 truncate rounded px-1 py-0.5 font-normal transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 sm:max-w-xs"
                   >
                     {crumb.label}
                   </Link>
