@@ -43,7 +43,7 @@ export const getProjects = cache(async function getProjects(): Promise<
     return [];
   }
 
-  const cached = getCachedProjectsList();
+  const cached = getCachedProjectsList(userId);
   if (cached) {
     projectsTrace.traceSuccess(
       "getProjects (LRU cache hit)",
@@ -53,19 +53,26 @@ export const getProjects = cache(async function getProjects(): Promise<
   }
 
   try {
+    // The dashboard only needs counts and HTTP-method breakdowns. Selecting full
+    // route rows pulled every `response_schema` blob (often several KB per route)
+    // for every project on every dashboard load. Narrow projections keep the
+    // same shape while shipping a fraction of the bytes.
     const list = await db.query.projects.findMany({
       where: userId === "system" ? undefined : eq(projects.userId, userId),
       orderBy: (projects, { desc }) => [desc(projects.updatedAt)],
       with: {
         endpoints: {
+          columns: { id: true },
           with: {
-            routes: true,
+            routes: {
+              columns: { method: true },
+            },
           },
         },
       },
     });
 
-    setCachedProjectsList(list);
+    setCachedProjectsList(list, userId);
     projectsTrace.traceSuccess(
       "getProjects (DB fetched)",
       `${list.length} projects`,
@@ -103,15 +110,11 @@ export const getProjectBySlug = cache(async function getProjectBySlug(
   if (!project) {
     cacheHit = false;
     try {
+      // Callers only need the project row itself (name/slug/auth checks) and
+      // fetch endpoints separately. Joining the whole endpoint/route graph here
+      // loaded every `response_schema` blob on each first page view.
       project = await db.query.projects.findFirst({
         where: eq(projects.slug, slug),
-        with: {
-          endpoints: {
-            with: {
-              routes: true,
-            },
-          },
-        },
       });
 
       if (project) {

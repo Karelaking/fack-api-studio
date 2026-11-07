@@ -79,9 +79,19 @@ export function computeCanvasLayout(
   const reconciledNodes: CanvasNodeLayout[] = [];
   const groupWidth = 300;
 
+  // Reconcile against an id-keyed map instead of `Array.find` per node. The
+  // previous nested `find` made layout O(nodes²) on projects with many routes
+  // (every reconcile call scanned the whole existing node list for each node).
+  const existingNodeById = new Map<string, CanvasNodeLayout>();
+  for (const node of existingNodes) {
+    if (node && typeof node.id === "string" && !existingNodeById.has(node.id)) {
+      existingNodeById.set(node.id, node);
+    }
+  }
+
   endpoints.forEach((ep, epIndex) => {
     const groupId = `group-${ep.id}`;
-    const existingGroup = existingNodes.find((n) => n.id === groupId);
+    const existingGroup = existingNodeById.get(groupId);
     const groupHeight = 110 + ep.routes.length * 96;
 
     if (existingGroup) {
@@ -111,7 +121,7 @@ export function computeCanvasLayout(
     }
 
     ep.routes.forEach((route, routeIndex) => {
-      const existingRouteNode = existingNodes.find((n) => n.id === route.id);
+      const existingRouteNode = existingNodeById.get(route.id);
       const routeData = {
         id: route.id,
         method: route.method,

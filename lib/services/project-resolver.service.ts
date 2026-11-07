@@ -2,8 +2,8 @@ import { inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { projects, type Project } from "@/db/schema";
 import {
-  getCachedProjectBySlug,
-  setCachedProjectBySlug,
+  getCachedMockProject,
+  setCachedMockProject,
   isNegativeSlug,
   setNegativeSlug,
 } from "@/lib/cache";
@@ -17,10 +17,24 @@ export interface ProjectResolution {
 
 const projectResolverLogger = LoggerRegistry.get("mock");
 
+/**
+ * Project slugs are validated at <= 100 characters, so at most ~50 single
+ * character segments can ever form one. Capping the candidate prefixes stops a
+ * deep (or malicious) mock URL from allocating thousands of strings, doing
+ * thousands of cache lookups, and issuing an `IN (...)` with thousands of
+ * parameters on every cache miss.
+ */
+const MAX_CANDIDATE_SEGMENTS = 51;
+const MAX_SLUG_LENGTH = 100;
+
 function getCandidateSlugs(slugSegments: string[]): string[] {
   const candidates: string[] = [];
-  for (let index = slugSegments.length; index > 0; index -= 1) {
-    candidates.push(slugSegments.slice(0, index).join("/"));
+  const startIndex = Math.min(slugSegments.length, MAX_CANDIDATE_SEGMENTS);
+  for (let index = startIndex; index > 0; index -= 1) {
+    const candidate = slugSegments.slice(0, index).join("/");
+    if (candidate.length <= MAX_SLUG_LENGTH) {
+      candidates.push(candidate);
+    }
   }
   return candidates;
 }
@@ -50,7 +64,7 @@ export async function resolveProjectFromSlug(
 
   // Check positive cache first
   for (const candidate of candidates) {
-    const cachedProject = getCachedProjectBySlug(candidate);
+    const cachedProject = getCachedMockProject(candidate);
     if (cachedProject) {
       projectResolverLogger.debug(
         `Resolved project slug from cache: ${candidate}`,
@@ -82,7 +96,7 @@ export async function resolveProjectFromSlug(
       projectResolverLogger.info(
         `Resolved project slug (DB batch): ${project.slug}`,
       );
-      setCachedProjectBySlug(candidate, project);
+      setCachedMockProject(candidate, project);
       return createResolution(project, candidate, sanitizedSegments);
     }
   }

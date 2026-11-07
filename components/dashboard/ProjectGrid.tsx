@@ -26,7 +26,7 @@ import { toast } from "sonner";
 import { deleteProject, updateProject } from "@/lib/actions/projects";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { getProjectUrl } from "@/lib/utils/project-slug";
-import type { Project, Endpoint, Route } from "@/db/schema";
+import type { Project, Route } from "@/db/schema";
 import { PageShell } from "@/components/dashboard/PageShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,10 +46,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// The dashboard list query projects only the fields the overview needs
+// (`endpoint.id` and `route.method`), so the relations are modeled narrowly
+// instead of pretending every full route row is present.
 type ProjectWithRelations = Project & {
-  endpoints?: (Endpoint & {
-    routes?: Route[];
-  })[];
+  endpoints?: {
+    id: string;
+    routes?: { method: Route["method"] }[];
+  }[];
 };
 
 type SortOption = "updated" | "name";

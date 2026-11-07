@@ -24,8 +24,8 @@ const nextConfig: NextConfig = {
     "/*": ["./drizzle/**/*"],
   },
   experimental: {
-    // Barrel icon package: only bundle the icons that are actually imported.
-    optimizePackageImports: ["@remixicon/react"],
+    // Barrel icon packages: only bundle the icons that are actually imported.
+    optimizePackageImports: ["@remixicon/react", "lucide-react"],
   },
   typedRoutes: true,
   allowedDevOrigins: ["192.168.29.142", "192.168.0.196"],

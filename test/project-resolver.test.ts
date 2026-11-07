@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 import type { Project } from "@/db/schema";
-import { clearCache, setCachedProjectBySlug } from "@/lib/cache";
+import { clearCache, setCachedMockProject } from "@/lib/cache";
 import { resolveProjectFromSlug } from "@/lib/services/project-resolver.service";
 
 describe("Project resolver", () => {
@@ -23,7 +23,7 @@ describe("Project resolver", () => {
   });
 
   it("resolves the longest cached namespace and preserves the request path", async () => {
-    setCachedProjectBySlug(project.slug, project);
+    setCachedMockProject(project.slug, project);
 
     await expect(
       resolveProjectFromSlug(["team", "api", "users", "42"]),
