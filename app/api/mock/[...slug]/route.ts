@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { SignJWT } from "jose";
 import { buildResponse, buildCorsPreflightResponse } from "@/lib/mock-engine";
 import { processMockRequest } from "@/lib/mock-handler-core";
 import { resolveProjectFromSlug } from "@/lib/services/project-resolver.service";
@@ -92,14 +93,13 @@ async function handleMockRequest(
         );
       }
 
-      const { SignJWT } = await import("jose");
       // Shares the exact same resolution as the verify side so minted tokens
       // validate; requires JWT_SECRET in production.
       const secret = getMockJwtSecret(project.id);
 
       let body: Record<string, unknown> = {};
       try {
-        body = await request.clone().json();
+        body = await request.json();
       } catch {}
 
       const payload = {

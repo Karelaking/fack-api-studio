@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
 import { db, storageConnection } from "@/db";
 import { sqlClient } from "@/db/postgres";
 import { scenarios, type Project } from "@/db/schema";
@@ -33,6 +34,7 @@ import {
   deleteMockItem,
 } from "@/lib/stateful-mock";
 import { matchProjectMockRoute } from "@/lib/services/mock-route.service";
+import { renderTemplate } from "@/lib/template-engine";
 import { LoggerRegistry } from "@/lib/logger-registry";
 import { MockResponseFormatterFactory } from "@/lib/mock-formatter";
 import {
@@ -137,10 +139,15 @@ async function recordRequestLog(
     Object.fromEntries(request.nextUrl.searchParams),
   );
   const reqHeaders = JSON.stringify(Object.fromEntries(request.headers));
+  // Bound both object and string payloads. Templates/conditional rules can
+  // return large strings, and an unbounded row bloats `request_logs`, the
+  // dashboard query, and the flush batch.
+  const serializedPayload =
+    typeof payload === "string" ? payload : JSON.stringify(payload);
   const resPayload =
-    typeof payload === "string"
-      ? payload
-      : JSON.stringify(payload).slice(0, 5000);
+    serializedPayload.length > 5_000
+      ? serializedPayload.slice(0, 5_000)
+      : serializedPayload;
 
   if (logQueue.length >= MAX_LOG_QUEUE) {
     const dropped = logQueue.shift();
@@ -295,7 +302,6 @@ export async function processMockRequest({
 
       const token = authHeader.split(" ")[1];
       try {
-        const { jwtVerify } = await import("jose");
         const secret = getMockJwtSecret(project.id);
         await jwtVerify(token, secret);
       } catch {
@@ -394,7 +400,6 @@ export async function processMockRequest({
 
     // ── 5.5 Handlebars Templating Bypass ────────────────────────────────
     if (route.responseTemplate && route.responseTemplate.trim() !== "") {
-      const { renderTemplate } = await import("@/lib/template-engine");
       const queryRecord: Record<string, string> = {};
       for (const [k, v] of request.nextUrl.searchParams.entries()) {
         queryRecord[k] = v;
@@ -402,7 +407,7 @@ export async function processMockRequest({
 
       let requestBody: Record<string, unknown> = {};
       try {
-        requestBody = await request.clone().json();
+        requestBody = await request.json();
       } catch {}
 
       const rawPayload = renderTemplate(route.responseTemplate, {
@@ -594,7 +599,7 @@ export async function processMockRequest({
       if (method === "POST" || method === "PUT" || method === "PATCH") {
         let requestBody: Record<string, unknown> = {};
         try {
-          requestBody = await request.clone().json();
+          requestBody = await request.json();
         } catch {
           // ignore
         }

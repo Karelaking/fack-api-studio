@@ -16,6 +16,25 @@ function normalizePath(path: string): string {
   return normalized || "/";
 }
 
+/**
+ * The enabled subset for a route snapshot is derived once per snapshot.
+ *
+ * `getProjectMockRoutes` returns a stable array until the project is edited, so
+ * keying this WeakMap by that array keeps the filter out of the request path.
+ * Deriving it with `.filter()` on every request also produced a brand-new array
+ * each time, which silently defeated the compiled-matcher cache.
+ */
+const enabledRoutesCache = new WeakMap<CachedRoute[], CachedRoute[]>();
+
+function getEnabledRoutes(routes: CachedRoute[]): CachedRoute[] {
+  let enabled = enabledRoutesCache.get(routes);
+  if (!enabled) {
+    enabled = routes.filter((route) => route.isEnabled);
+    enabledRoutesCache.set(routes, enabled);
+  }
+  return enabled;
+}
+
 export async function getProjectMockRoutes(
   projectId: string,
 ): Promise<CachedRoute[]> {
@@ -55,8 +74,11 @@ export async function matchProjectMockRoute(
   requestPath: string,
 ): Promise<RouteMatchResult | null> {
   const routes = await getProjectMockRoutes(projectId);
-  const enabledRoutes = routes.filter((route) => route.isEnabled);
-  const match = findMatchingRoute(enabledRoutes, method, requestPath);
+  const match = findMatchingRoute(
+    getEnabledRoutes(routes),
+    method,
+    requestPath,
+  );
   routeServiceTrace.traceSuccess(
     "matchProjectMockRoute",
     match ? `${method} ${requestPath}` : "no match",

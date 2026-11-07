@@ -15,7 +15,6 @@
  */
 
 import { createRouter } from "radix3";
-import { LRUCache } from "lru-cache";
 import type { Route } from "@/db/schema";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -43,43 +42,57 @@ interface CompiledMatcher {
   routeMap: Map<string, RouteDefinition>;
 }
 
+/**
+ * Compiled matchers keyed by the *identity* of the route array.
+ *
+ * The route service returns one stable array per project until the project is
+ * edited (edits replace the array), so a WeakMap gives O(1) lookups with no
+ * per-request allocation. The previous implementation rebuilt a string of every
+ * route id/path/updatedAt on every single mock request, which made matching
+ * O(routes) instead of O(path segments) and generated garbage under load.
+ *
+ * The holder is anchored to `globalThis` so every Next.js bundle in the process
+ * shares one matcher cache, and so `clearMatcherCache()` can swap it out.
+ */
 type GlobalWithMatcherCache = typeof globalThis & {
-  __fackApiMatcherCache?: LRUCache<string, CompiledMatcher>;
+  __fackApiMatcherCache?: WeakMap<
+    RouteDefinition[],
+    Map<string, CompiledMatcher | null>
+  >;
 };
 
-/**
- * Compiled-matcher cache, anchored to `globalThis` so that every Next.js
- * bundle in the process shares (and can clear) a single instance.
- */
-const matcherCache: LRUCache<string, CompiledMatcher> = (() => {
+function getMatcherCache(): WeakMap<
+  RouteDefinition[],
+  Map<string, CompiledMatcher | null>
+> {
   const globalScope = globalThis as GlobalWithMatcherCache;
-  globalScope.__fackApiMatcherCache ??= new LRUCache<string, CompiledMatcher>({
-    max: 500,
-  });
+  globalScope.__fackApiMatcherCache ??= new WeakMap();
   return globalScope.__fackApiMatcherCache;
-})();
-
-function getMatcherCacheKey(routes: RouteDefinition[], method: string): string {
-  return `${method}:${routes
-    .map(
-      (route) =>
-        `${route.id}:${route.path}:${route.method}:${route.updatedAt?.getTime() ?? ""}`,
-    )
-    .join("|")}`;
 }
 
 function compileMatcher(
   routes: RouteDefinition[],
   method: string,
 ): CompiledMatcher | null {
+  const matcherCache = getMatcherCache();
+  let byMethod = matcherCache.get(routes);
+  if (!byMethod) {
+    byMethod = new Map();
+    matcherCache.set(routes, byMethod);
+  }
+
+  // `undefined` = not compiled yet, `null` = compiled and had no routes for this
+  // method (negative cache, avoids re-filtering an empty method set).
+  const cached = byMethod.get(method);
+  if (cached !== undefined) return cached;
+
   const methodRoutes = routes.filter(
     (route) => route.method.toUpperCase() === method,
   );
-  if (methodRoutes.length === 0) return null;
-
-  const cacheKey = getMatcherCacheKey(methodRoutes, method);
-  const cached = matcherCache.get(cacheKey);
-  if (cached) return cached;
+  if (methodRoutes.length === 0) {
+    byMethod.set(method, null);
+    return null;
+  }
 
   const router = createRouter<MatchTarget>({ strictTrailingSlash: false });
   const routeMap = new Map<string, RouteDefinition>();
@@ -104,7 +117,7 @@ function compileMatcher(
   }
 
   const compiled = { router, routeMap };
-  matcherCache.set(cacheKey, compiled);
+  byMethod.set(method, compiled);
   return compiled;
 }
 
@@ -159,5 +172,7 @@ export function findMatchingRoute(
  * Useful when routes are modified and cached matchers may be stale.
  */
 export function clearMatcherCache(): void {
-  matcherCache.clear();
+  // WeakMaps cannot be cleared; replacing the instance is equivalent because
+  // the old one is only referenced by this holder and drops with the entries.
+  (globalThis as GlobalWithMatcherCache).__fackApiMatcherCache = new WeakMap();
 }
