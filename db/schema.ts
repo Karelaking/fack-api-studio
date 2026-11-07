@@ -4,6 +4,7 @@ import {
   integer,
   real,
   index,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 
@@ -281,9 +282,9 @@ export const mockStates = sqliteTable(
       .$defaultFn(() => new Date()),
   },
   (table) => [
-    // Covers get/delete by (project, collection, itemKey) and list by
-    // (project, collection) via the leftmost prefix.
-    index("mock_states_project_collection_key_idx").on(
+    // Unique so a stateful write is an atomic upsert instead of a racy
+    // select-then-insert. Also covers get/delete/list via the leftmost prefix.
+    uniqueIndex("mock_states_project_collection_key_idx").on(
       table.projectId,
       table.collection,
       table.itemKey,
