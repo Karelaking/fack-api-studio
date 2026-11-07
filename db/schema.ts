@@ -34,7 +34,8 @@ export const projects = sqliteTable(
   },
   (table) => [
     index("projects_user_id_idx").on(table.userId),
-    index("projects_slug_idx").on(table.slug),
+    // `slug` is UNIQUE, which already creates an index; a separate
+    // `projects_slug_idx` duplicated it.
   ],
 );
 
@@ -113,7 +114,8 @@ export const routes = sqliteTable(
       .$defaultFn(() => new Date()),
   },
   (table) => [
-    index("routes_endpoint_id_idx").on(table.endpointId),
+    // `endpointId` is the leftmost column of the composite index below, so a
+    // separate `routes_endpoint_id_idx` was redundant.
     index("routes_endpoint_method_path_idx").on(
       table.endpointId,
       table.method,
