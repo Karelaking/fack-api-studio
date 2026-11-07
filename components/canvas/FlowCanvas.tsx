@@ -32,6 +32,7 @@ import {
   type DraftPlan,
 } from "./preview-nodes";
 import { useAgentStore } from "@/stores/agent-store-provider";
+import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
 import { LoggerRegistry } from "@/lib/logger-registry";
 
 const canvasUiTrace = LoggerRegistry.getTrace("ui-flow-canvas");
@@ -299,6 +300,7 @@ function FlowCanvasInner({
 }: FlowCanvasInnerProps): React.JSX.Element {
   const reactFlowInstance = useReactFlow();
   const router = useRouter();
+  const setSelectedRouteInStore = useCanvasDndStore((s) => s.setSelectedRoute);
   const { resolvedTheme } = useTheme();
   const [newRouteQuery, setNewRouteQuery] = useQueryState(
     "newRoute",
@@ -419,17 +421,26 @@ function FlowCanvasInner({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // Sync selected node mock links with global dashboard sidebar
+  const lastDispatchedRouteKeyRef = React.useRef<string | null>(null);
+
+  // Sync selected node mock links with global dashboard sidebar and DnD store.
+  // Only dispatch when the selected route identity or attributes actually change,
+  // preventing 250 palette chips from re-rendering on node position updates / drag frames.
   React.useEffect(() => {
     const selectedRouteNode = nodes.find(
       (n) => n.selected && n.type === "routeNode",
     );
     if (selectedRouteNode) {
+      setSelectedRouteInStore(selectedRouteNode.id);
       const selectedRouteData = selectedRouteNode.data as {
         path: string;
         method: string;
         mockUrl: string;
       };
+      const key = `${selectedRouteNode.id}:${selectedRouteData.path}:${selectedRouteData.method}:${selectedRouteData.mockUrl}`;
+      if (lastDispatchedRouteKeyRef.current === key) return;
+      lastDispatchedRouteKeyRef.current = key;
+
       window.dispatchEvent(
         new CustomEvent("route-selected", {
           detail: {
@@ -441,9 +452,18 @@ function FlowCanvasInner({
         }),
       );
     } else {
+      setSelectedRouteInStore(null);
+      if (lastDispatchedRouteKeyRef.current === null) return;
+      lastDispatchedRouteKeyRef.current = null;
       window.dispatchEvent(new CustomEvent("route-selected", { detail: null }));
     }
-  }, [nodes]);
+  }, [nodes, setSelectedRouteInStore]);
+
+  const handlePaneClick = React.useCallback(() => {
+    setSelectedRouteInStore(null);
+    lastDispatchedRouteKeyRef.current = null;
+    window.dispatchEvent(new CustomEvent("route-selected", { detail: null }));
+  }, [setSelectedRouteInStore]);
 
   // Reconcile node state when endpoints or routes change, preserving positions.
   React.useEffect(() => {
@@ -614,6 +634,7 @@ function FlowCanvasInner({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={handleNodeClick}
+        onPaneClick={handlePaneClick}
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={FIT_VIEW_OPTIONS}

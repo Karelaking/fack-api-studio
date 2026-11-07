@@ -8,7 +8,6 @@ import type { FakerProvider } from "@/lib/faker-registry";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
@@ -28,42 +27,49 @@ interface ProviderChipProps {
  * - Space/Enter when a route is selected -> adds the field directly (no drag).
  * - Hover tooltip shows the live example value.
  */
-export const ProviderChip = ({
-  provider,
-  routeSelected,
-  onKeyboardAdd,
-}: ProviderChipProps): React.JSX.Element => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: `provider-${provider.value}`,
-      data: {
-        type: "provider",
-        value: provider.value,
-        label: provider.label,
-      },
-    });
+export const ProviderChip = React.memo(
+  ({
+    provider,
+    routeSelected,
+    onKeyboardAdd,
+  }: ProviderChipProps): React.JSX.Element => {
+    const { attributes, listeners, setNodeRef, transform, isDragging } =
+      useDraggable({
+        id: `provider-${provider.value}`,
+        data: {
+          type: "provider",
+          value: provider.value,
+          label: provider.label,
+        },
+      });
 
-  const style: React.CSSProperties = {
-    transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.4 : 1,
-    zIndex: isDragging ? 9999 : undefined,
-  };
+    const style: React.CSSProperties = {
+      transform: CSS.Translate.toString(transform),
+      opacity: isDragging ? 0.4 : 1,
+      zIndex: isDragging ? 9999 : undefined,
+    };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if ((e.key === " " || e.key === "Enter") && routeSelected) {
-      e.preventDefault();
-      onKeyboardAdd(provider.value);
-    }
-  };
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      if ((e.key === " " || e.key === "Enter") && routeSelected) {
+        e.preventDefault();
+        e.stopPropagation();
+        onKeyboardAdd(provider.value);
+        return;
+      }
+      // Let dnd-kit handle other keys
+      const dndKeyDown = listeners?.onKeyDown as
+        | ((event: React.KeyboardEvent<HTMLButtonElement>) => void)
+        | undefined;
+      dndKeyDown?.(e);
+    };
 
-  const handleClick = () => {
-    if (routeSelected) {
-      onKeyboardAdd(provider.value);
-    }
-  };
+    const handleClick = () => {
+      if (routeSelected) {
+        onKeyboardAdd(provider.value);
+      }
+    };
 
-  return (
-    <TooltipProvider delay={400}>
+    return (
       <Tooltip>
         <TooltipTrigger
           render={
@@ -73,21 +79,25 @@ export const ProviderChip = ({
               style={style}
               onClick={handleClick}
               className={cn(
-                "group bg-card border-border/70 hover:border-primary/50 hover:bg-primary/5 relative flex min-h-14.5 w-full cursor-grab flex-col justify-between rounded-lg border p-2 text-left transition-all duration-150 active:cursor-grabbing",
+                "group bg-card border-border/70 hover:border-primary/50 hover:bg-primary/5 active:scale-[0.98] relative flex min-h-11 w-full cursor-grab touch-action-none flex-col justify-between rounded-lg border p-2 text-left transition-[border-color,background-color,box-shadow,transform] duration-150 active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 isDragging &&
-                  "border-primary/60 bg-primary/8 shadow-primary/10 shadow-lg",
+                  "border-primary/60 bg-primary/8 shadow-primary/10 shadow-lg scale-95",
                 routeSelected &&
-                  "ring-primary/0 hover:ring-primary/20 hover:ring-1 cursor-pointer",
+                  "hover:ring-primary/20 hover:ring-1 cursor-pointer",
               )}
-              aria-label={`Add ${provider.label} to selected route`}
+              aria-label={
+                routeSelected
+                  ? `Add ${provider.label} to selected route`
+                  : `${provider.label} provider, drag to add`
+              }
               title={
                 routeSelected
                   ? `Click or press Space/Enter to add ${provider.label}`
                   : `Drag to add ${provider.label}`
               }
-              onKeyDown={handleKeyDown}
               {...listeners}
               {...attributes}
+              onKeyDown={handleKeyDown}
             />
           }
         >
@@ -107,7 +117,7 @@ export const ProviderChip = ({
           {routeSelected && (
             <span
               aria-hidden="true"
-              className="bg-primary/15 text-primary py-0.2 absolute top-1 right-1 rounded px-1 text-[9px] font-bold tracking-wider uppercase opacity-0 transition-opacity group-hover:opacity-100"
+              className="bg-primary/15 text-primary absolute top-1.5 right-1.5 translate-x-1 rounded px-1 py-0.5 text-[9px] font-bold tracking-wider uppercase opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100"
             >
               + Add
             </span>
@@ -127,8 +137,10 @@ export const ProviderChip = ({
           </p>
         </TooltipContent>
       </Tooltip>
-    </TooltipProvider>
-  );
-};
+    );
+  },
+);
+
+ProviderChip.displayName = "ProviderChip";
 
 export default ProviderChip;
