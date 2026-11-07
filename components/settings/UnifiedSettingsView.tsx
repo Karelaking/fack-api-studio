@@ -108,6 +108,112 @@ function formatDate(iso: string | null): string {
   return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
 }
 
+interface SettingsCategoryMeta {
+  key: SidebarCategoryKey;
+  label: string;
+  scope: "workspace" | "project";
+  icon: React.ComponentType<{ className?: string }>;
+  keywords: string[];
+}
+
+const SETTINGS_CATEGORIES: SettingsCategoryMeta[] = [
+  {
+    key: "workspace-identity",
+    label: "Identity & Branding",
+    scope: "workspace",
+    icon: RiFolderSettingsLine,
+    keywords: ["identity", "branding", "name", "workspace", "rename", "config"],
+  },
+  {
+    key: "workspace-storage",
+    label: "Storage & Backup",
+    scope: "workspace",
+    icon: RiHardDrive2Line,
+    keywords: [
+      "storage",
+      "backup",
+      "sqlite",
+      "wal",
+      "json",
+      "export",
+      "import",
+      "database",
+      "disk",
+    ],
+  },
+  {
+    key: "workspace-telemetry",
+    label: "Telemetry & Cache",
+    scope: "workspace",
+    icon: RiPulseLine,
+    keywords: [
+      "telemetry",
+      "cache",
+      "lru",
+      "latency",
+      "queue",
+      "postgres",
+      "history",
+      "logs",
+    ],
+  },
+  {
+    key: "project-meta",
+    label: "Metadata & Routing",
+    scope: "project",
+    icon: RiGitBranchLine,
+    keywords: [
+      "metadata",
+      "routing",
+      "slug",
+      "namespace",
+      "path",
+      "caching",
+      "url",
+    ],
+  },
+  {
+    key: "project-chaos",
+    label: "Chaos & Resilience",
+    scope: "project",
+    icon: RiFlashlightLine,
+    keywords: [
+      "chaos",
+      "monkey",
+      "resilience",
+      "scenario",
+      "failure",
+      "delay",
+      "jitter",
+      "fault",
+    ],
+  },
+  {
+    key: "project-cli",
+    label: "CLI Credentials",
+    scope: "project",
+    icon: RiTerminalBoxLine,
+    keywords: [
+      "cli",
+      "credentials",
+      "secret",
+      "key",
+      "token",
+      "fack dev",
+      "aes",
+      "terminal",
+      "curl",
+    ],
+  },
+  {
+    key: "danger-zone",
+    label: "Danger Zone",
+    scope: "project",
+    icon: RiAlertLine,
+    keywords: ["danger", "delete", "destroy", "purge", "remove"],
+  },
+];
+
 /**
  * Unified Settings Categorized Multi-Column Architecture
  *
@@ -210,6 +316,8 @@ export const UnifiedSettingsView = ({
   const [copiedKey, setCopiedKey] = React.useState(false);
   const [copiedDev, setCopiedDev] = React.useState(false);
   const [copiedCurl, setCopiedCurl] = React.useState(false);
+  const [copiedMockBase, setCopiedMockBase] = React.useState(false);
+  const [copiedDbPath, setCopiedDbPath] = React.useState(false);
 
   // Direction Navigation States
   const [activeTabDirectionA, setActiveTabDirectionA] = React.useState<
@@ -435,18 +543,18 @@ export const UnifiedSettingsView = ({
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSaveWorkspace} className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label
                 htmlFor="ws-name"
-                className="text-muted-foreground text-xs font-semibold tracking-wider uppercase"
+                className="text-foreground text-xs font-medium"
               >
-                Display Name
+                Workspace Display Name
               </label>
               <Input
                 id="ws-name"
                 value={workspaceName}
                 onChange={(e) => setWorkspaceName(e.target.value)}
-                placeholder="My Workspace"
+                placeholder="e.g. My Workspace"
                 maxLength={100}
                 className="h-9"
               />
@@ -491,37 +599,37 @@ export const UnifiedSettingsView = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <dl className="grid grid-cols-2 gap-4 text-xs">
-            <div className="bg-muted/20 rounded-md border p-2.5">
+          <dl className="divide-border/40 divide-y text-xs">
+            <div className="flex items-center justify-between py-2.5 first:pt-0">
               <dt className="text-muted-foreground font-medium">
                 Storage Tier
               </dt>
-              <dd className="text-foreground mt-0.5 font-semibold">
-                {isLocal ? "Tier 1 (Zero Latency)" : "Tier 2 (Postgres)"}
+              <dd className="text-foreground font-semibold">
+                {isLocal ? "Tier 1 · Local Machine" : "Tier 2 · Self-Hosted"}
               </dd>
             </div>
-            <div className="bg-muted/20 rounded-md border p-2.5">
+            <div className="flex items-center justify-between py-2.5">
               <dt className="text-muted-foreground font-medium">
-                SQLite PRAGMAs
+                SQLite Engine
               </dt>
-              <dd className="mt-0.5 font-semibold text-emerald-600 dark:text-emerald-400">
+              <dd className="font-semibold text-emerald-600 dark:text-emerald-400">
                 WAL Mode · 64MB Cache
               </dd>
             </div>
-            <div className="bg-muted/20 rounded-md border p-2.5">
+            <div className="flex items-center justify-between py-2.5">
               <dt className="text-muted-foreground font-medium">
-                Active Projects
+                Registered Projects
               </dt>
-              <dd className="text-foreground mt-0.5 font-semibold">
-                {projects.length} Registered
+              <dd className="text-foreground font-semibold tabular-nums">
+                {projects.length}
               </dd>
             </div>
-            <div className="bg-muted/20 rounded-md border p-2.5">
+            <div className="flex items-center justify-between py-2.5 last:pb-0">
               <dt className="text-muted-foreground font-medium">
                 Scratchpad Notes
               </dt>
-              <dd className="text-foreground mt-0.5 font-semibold">
-                {status.counts.notes} Cached
+              <dd className="text-foreground font-semibold tabular-nums">
+                {status.counts.notes}
               </dd>
             </div>
           </dl>
@@ -604,34 +712,53 @@ export const UnifiedSettingsView = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <dl className="grid grid-cols-1 gap-y-2.5 text-xs sm:grid-cols-2">
-            <div className="flex flex-col">
+          <dl className="divide-border/40 divide-y text-xs">
+            <div className="flex items-center justify-between py-2 first:pt-0">
               <dt className="text-muted-foreground font-medium">
                 Database Target
               </dt>
-              <dd className="mt-0.5 font-mono text-[11px] break-all">
-                {status.target}
+              <dd className="flex items-center gap-1.5 font-mono text-[11px]">
+                <span className="max-w-[220px] truncate" title={status.target}>
+                  {status.target}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    copyToClipboard(status.target, setCopiedDbPath)
+                  }
+                  className="text-muted-foreground hover:text-foreground"
+                  title="Copy path"
+                >
+                  {copiedDbPath ? (
+                    <RiCheckLine className="h-3.5 w-3.5 text-emerald-500" />
+                  ) : (
+                    <RiFileCopyLine className="h-3.5 w-3.5" />
+                  )}
+                </button>
               </dd>
             </div>
-            <div className="flex flex-col">
+            <div className="flex items-center justify-between py-2">
               <dt className="text-muted-foreground font-medium">
                 Data Directory
               </dt>
-              <dd className="mt-0.5 font-mono text-[11px] break-all">
+              <dd
+                className="max-w-[240px] truncate font-mono text-[11px]"
+                title={status.dataDir}
+              >
                 {status.dataDir}
               </dd>
             </div>
-            <div className="flex flex-col">
+            <div className="flex items-center justify-between py-2">
               <dt className="text-muted-foreground font-medium">
                 Database Size
               </dt>
-              <dd className="mt-0.5 font-semibold">
+              <dd className="text-foreground font-semibold tabular-nums">
                 {formatBytes(status.dbSizeBytes)}
               </dd>
             </div>
-            <div className="flex flex-col">
+            <div className="flex items-center justify-between py-2 last:pb-0">
               <dt className="text-muted-foreground font-medium">Last Backup</dt>
-              <dd className="mt-0.5 font-medium">
+              <dd className="text-foreground font-medium">
                 {formatDate(status.lastBackupAt)}
               </dd>
             </div>
@@ -672,9 +799,24 @@ export const UnifiedSettingsView = ({
               ? "Dedicated PostgreSQL logging database is attached. High-throughput non-blocking queues buffer request telemetry."
               : "Set the LOGS_POSTGRES_URL environment variable to record live headers, query params, and payloads."}
           </p>
-          <div className="bg-muted/20 rounded-md border p-2.5 font-mono text-[11px]">
-            Queue Batch Size: 25 requests · Max Drain Time: 250ms
-          </div>
+          <dl className="divide-border/40 divide-y pt-1 text-xs">
+            <div className="flex items-center justify-between py-2 first:pt-0">
+              <dt className="text-muted-foreground font-medium">
+                Batch Ingestion Size
+              </dt>
+              <dd className="text-foreground font-semibold tabular-nums">
+                25 requests
+              </dd>
+            </div>
+            <div className="flex items-center justify-between py-2 last:pb-0">
+              <dt className="text-muted-foreground font-medium">
+                Maximum Drain Interval
+              </dt>
+              <dd className="text-foreground font-semibold tabular-nums">
+                250ms
+              </dd>
+            </div>
+          </dl>
         </CardContent>
       </Card>
 
@@ -699,25 +841,33 @@ export const UnifiedSettingsView = ({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-xs">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-muted/20 rounded-md border p-2 text-center">
-              <span className="text-muted-foreground block text-[10px] font-semibold uppercase">
+          <dl className="divide-border/40 divide-y text-xs">
+            <div className="flex items-center justify-between py-2 first:pt-0">
+              <dt className="text-muted-foreground font-medium">
                 Mock Routes Cache
-              </span>
-              <span className="mt-0.5 block text-xs font-semibold">
-                500 Slots
-              </span>
+              </dt>
+              <dd className="text-foreground font-semibold tabular-nums">
+                500 entries (LRU)
+              </dd>
             </div>
-            <div className="bg-muted/20 rounded-md border p-2 text-center">
-              <span className="text-muted-foreground block text-[10px] font-semibold uppercase">
+            <div className="flex items-center justify-between py-2">
+              <dt className="text-muted-foreground font-medium">
                 Negative Slug Cache
-              </span>
-              <span className="mt-0.5 block text-xs font-semibold">
-                1,000 Slots
-              </span>
+              </dt>
+              <dd className="text-foreground font-semibold tabular-nums">
+                1,000 entries (LRU)
+              </dd>
             </div>
-          </div>
-          <p className="text-muted-foreground text-[11px]">
+            <div className="flex items-center justify-between py-2 last:pb-0">
+              <dt className="text-muted-foreground font-medium">
+                Penetration Defense
+              </dt>
+              <dd className="font-semibold text-emerald-600 dark:text-emerald-400">
+                Zero-Overhead Active
+              </dd>
+            </div>
+          </dl>
+          <p className="text-muted-foreground pt-1 text-[11px] leading-relaxed">
             Prevents database cache penetration on high-frequency 404 scans and
             rapid iteration loops.
           </p>
@@ -763,7 +913,7 @@ export const UnifiedSettingsView = ({
               <div className="grid gap-1.5">
                 <label
                   htmlFor="proj-name"
-                  className="text-muted-foreground text-xs font-semibold tracking-wider uppercase"
+                  className="text-foreground text-xs font-medium"
                 >
                   Project Name
                 </label>
@@ -771,7 +921,7 @@ export const UnifiedSettingsView = ({
                   id="proj-name"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
-                  placeholder="Billing Microservice"
+                  placeholder="e.g. Billing Microservice"
                   maxLength={100}
                   className="h-9"
                   required
@@ -781,7 +931,7 @@ export const UnifiedSettingsView = ({
               <div className="grid gap-1.5">
                 <label
                   htmlFor="proj-slug"
-                  className="text-muted-foreground text-xs font-semibold tracking-wider uppercase"
+                  className="text-foreground text-xs font-medium"
                 >
                   Namespace Slug
                 </label>
@@ -789,18 +939,37 @@ export const UnifiedSettingsView = ({
                   id="proj-slug"
                   value={projectSlug}
                   onChange={(e) => setProjectSlug(slugifyPath(e.target.value))}
-                  placeholder="billing"
+                  placeholder="e.g. billing"
                   maxLength={100}
                   className="h-9 font-mono text-xs"
                   required
                 />
               </div>
 
-              <div className="bg-muted/30 space-y-1 rounded-md border p-3">
-                <span className="text-muted-foreground block text-[11px] font-semibold tracking-wider uppercase">
-                  Live Mock Base URL
-                </span>
-                <code className="text-primary block font-mono text-xs break-all select-all">
+              <div className="bg-muted/30 space-y-1.5 rounded-lg border p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs font-medium">
+                    Live Mock Endpoint Base
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      copyToClipboard(
+                        `/api/mock/${projectSlug || "default"}`,
+                        setCopiedMockBase,
+                      )
+                    }
+                    className="text-primary flex items-center gap-1 text-xs font-medium hover:underline"
+                  >
+                    {copiedMockBase ? (
+                      <RiCheckLine className="h-3.5 w-3.5 text-emerald-500" />
+                    ) : (
+                      <RiFileCopyLine className="h-3.5 w-3.5" />
+                    )}
+                    <span>{copiedMockBase ? "Copied" : "Copy"}</span>
+                  </button>
+                </div>
+                <code className="text-primary block font-mono text-xs font-semibold break-all select-all">
                   /api/mock/{projectSlug || "..."}/...
                 </code>
               </div>
@@ -808,7 +977,7 @@ export const UnifiedSettingsView = ({
               <div className="grid gap-1.5">
                 <label
                   htmlFor="proj-desc"
-                  className="text-muted-foreground text-xs font-semibold tracking-wider uppercase"
+                  className="text-foreground text-xs font-medium"
                 >
                   Description
                 </label>
@@ -955,7 +1124,7 @@ export const UnifiedSettingsView = ({
           <div className="space-y-1.5">
             <label
               htmlFor="chaos-profile-select"
-              className="text-muted-foreground block text-xs font-semibold tracking-wider uppercase"
+              className="text-foreground block text-xs font-medium"
             >
               Active Profile Selection
             </label>
@@ -1013,33 +1182,34 @@ export const UnifiedSettingsView = ({
         </CardHeader>
         <CardContent>
           {activeScenarioObj ? (
-            <dl className="grid grid-cols-2 gap-3 text-xs">
-              <div className="bg-muted/20 rounded-md border p-2.5">
+            <dl className="divide-border/40 divide-y text-xs">
+              <div className="flex items-center justify-between py-2.5 first:pt-0">
                 <dt className="text-muted-foreground font-medium">
                   Profile Name
                 </dt>
-                <dd className="text-foreground mt-0.5 font-semibold">
+                <dd className="text-foreground font-semibold">
                   {activeScenarioObj.name}
                 </dd>
               </div>
-              <div className="bg-muted/20 rounded-md border p-2.5">
+              <div className="flex items-center justify-between py-2.5">
                 <dt className="text-muted-foreground font-medium">Status</dt>
-                <dd className="mt-0.5 font-semibold text-emerald-500">
+                <dd className="font-semibold text-emerald-600 dark:text-emerald-400">
                   Armed &amp; Injecting
                 </dd>
               </div>
-              <div className="bg-muted/20 col-span-2 rounded-md border p-2.5">
+              <div className="space-y-1 py-2.5 last:pb-0">
                 <dt className="text-muted-foreground font-medium">
                   Description
                 </dt>
-                <dd className="text-muted-foreground mt-0.5">
-                  {activeScenarioObj.description || "No custom notes set."}
+                <dd className="text-foreground leading-relaxed">
+                  {activeScenarioObj.description ||
+                    "Default latency and fault injection rules applied."}
                 </dd>
               </div>
             </dl>
           ) : (
-            <div className="text-muted-foreground rounded-md border border-dashed p-6 text-center text-xs">
-              No chaos profile currently selected. Select one on the left to
+            <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs">
+              No chaos profile currently armed. Select a scenario on the left to
               inspect simulation rules.
             </div>
           )}
@@ -1085,7 +1255,7 @@ export const UnifiedSettingsView = ({
             <div className="space-y-2">
               <label
                 htmlFor="project-secret-key"
-                className="text-muted-foreground block text-xs font-semibold tracking-wider uppercase"
+                className="text-foreground block text-xs font-medium"
               >
                 Project Secret Key
               </label>
@@ -1135,8 +1305,8 @@ export const UnifiedSettingsView = ({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="border-border/60 bg-card shadow-xs">
           <CardHeader>
-            <CardTitle className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-              1. Start Headless Dev CLI
+            <CardTitle className="text-sm font-semibold">
+              Headless Dev Server
             </CardTitle>
             <CardDescription className="text-xs">
               Runs the Fack mock daemon on your local port with hot reload.
@@ -1176,8 +1346,8 @@ export const UnifiedSettingsView = ({
 
         <Card className="border-border/60 bg-card shadow-xs">
           <CardHeader>
-            <CardTitle className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-              2. Direct Curl Test Command
+            <CardTitle className="text-sm font-semibold">
+              API Test via cURL
             </CardTitle>
             <CardDescription className="text-xs">
               Validate API authentication headers directly from the terminal.
@@ -1290,13 +1460,17 @@ export const UnifiedSettingsView = ({
     </div>
   );
 
-  // Filter sidebar navigation items based on search query
-  const matchesSearch = (label: string): boolean => {
-    if (!searchQuery.trim()) {
-      return true;
+  const filteredCategories = React.useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) {
+      return SETTINGS_CATEGORIES;
     }
-    return label.toLowerCase().includes(searchQuery.toLowerCase().trim());
-  };
+    return SETTINGS_CATEGORIES.filter(
+      (cat) =>
+        cat.label.toLowerCase().includes(q) ||
+        cat.keywords.some((k) => k.toLowerCase().includes(q)),
+    );
+  }, [searchQuery]);
 
   return (
     <div className="space-y-8">
@@ -1372,15 +1546,25 @@ export const UnifiedSettingsView = ({
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Filter settings..."
-                className="bg-muted/20 h-8 pl-8 text-xs"
+                placeholder="Search settings..."
+                className="bg-muted/20 h-8 pr-7 pl-8 text-xs"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="text-muted-foreground hover:text-foreground absolute top-2 right-2 p-0.5 text-xs"
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
             {/* Active Project Switcher Capsule */}
             {projects.length > 0 && (
               <div className="space-y-1.5 border-b pb-4">
-                <span className="text-muted-foreground block text-[11px] font-semibold tracking-wider uppercase">
+                <span className="text-muted-foreground block text-[11px] font-medium tracking-wide">
                   Active Project
                 </span>
                 <Select
@@ -1405,126 +1589,129 @@ export const UnifiedSettingsView = ({
               </div>
             )}
 
-            {/* Category Group 1: Workspace Scope */}
-            <div className="space-y-1">
-              <span className="text-muted-foreground block px-2 text-[11px] font-semibold tracking-wider uppercase">
-                Workspace
-              </span>
-              {matchesSearch("Identity General") && (
-                <button
+            {filteredCategories.length === 0 ? (
+              <div className="space-y-2 py-6 text-center">
+                <p className="text-muted-foreground text-xs">
+                  No settings match &ldquo;{searchQuery}&rdquo;
+                </p>
+                <Button
                   type="button"
-                  onClick={() => setSidebarItemDirectionB("workspace-identity")}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    sidebarItemDirectionB === "workspace-identity"
-                      ? "bg-primary text-primary-foreground font-semibold"
-                      : "hover:bg-muted text-foreground",
-                  )}
+                  variant="outline"
+                  size="xs"
+                  onClick={() => setSearchQuery("")}
+                  className="h-7 text-xs"
                 >
-                  <span>Identity &amp; Branding</span>
-                  <RiArrowRightSLine className="h-3.5 w-3.5 opacity-60" />
-                </button>
-              )}
-              {matchesSearch("Storage Backup Infrastructure") && (
-                <button
-                  type="button"
-                  onClick={() => setSidebarItemDirectionB("workspace-storage")}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    sidebarItemDirectionB === "workspace-storage"
-                      ? "bg-primary text-primary-foreground font-semibold"
-                      : "hover:bg-muted text-foreground",
-                  )}
-                >
-                  <span>Storage &amp; Backup</span>
-                  <RiArrowRightSLine className="h-3.5 w-3.5 opacity-60" />
-                </button>
-              )}
-              {matchesSearch("Telemetry Health Metrics Cache") && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSidebarItemDirectionB("workspace-telemetry")
-                  }
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    sidebarItemDirectionB === "workspace-telemetry"
-                      ? "bg-primary text-primary-foreground font-semibold"
-                      : "hover:bg-muted text-foreground",
-                  )}
-                >
-                  <span>Telemetry &amp; Cache</span>
-                  <RiArrowRightSLine className="h-3.5 w-3.5 opacity-60" />
-                </button>
-              )}
-            </div>
+                  Clear Filter
+                </Button>
+              </div>
+            ) : (
+              <>
+                {/* Category Group 1: Workspace Scope */}
+                {filteredCategories.some((c) => c.scope === "workspace") && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground block px-2 text-[11px] font-medium tracking-wide">
+                      Workspace Scope
+                    </span>
+                    {filteredCategories
+                      .filter((c) => c.scope === "workspace")
+                      .map((cat) => {
+                        const Icon = cat.icon;
+                        const isSelected = sidebarItemDirectionB === cat.key;
+                        return (
+                          <button
+                            key={cat.key}
+                            type="button"
+                            onClick={() => setSidebarItemDirectionB(cat.key)}
+                            className={cn(
+                              "group flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                              isSelected
+                                ? "bg-accent text-accent-foreground font-semibold shadow-2xs"
+                                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                            )}
+                          >
+                            <span className="flex items-center gap-2">
+                              <Icon
+                                className={cn(
+                                  "h-3.5 w-3.5",
+                                  isSelected
+                                    ? "text-primary"
+                                    : "text-muted-foreground group-hover:text-foreground",
+                                )}
+                              />
+                              <span>{cat.label}</span>
+                            </span>
+                            <RiArrowRightSLine
+                              className={cn(
+                                "h-3.5 w-3.5 transition-transform",
+                                isSelected
+                                  ? "opacity-100 translate-x-0.5 text-primary"
+                                  : "opacity-30 group-hover:opacity-70",
+                              )}
+                            />
+                          </button>
+                        );
+                      })}
+                  </div>
+                )}
 
-            {/* Category Group 2: Project Scope */}
-            <div className="space-y-1">
-              <span className="text-muted-foreground block px-2 text-[11px] font-semibold tracking-wider uppercase">
-                Project Scope: {activeProject?.name ?? "None"}
-              </span>
-              {matchesSearch("Metadata Routing Namespace") && (
-                <button
-                  type="button"
-                  onClick={() => setSidebarItemDirectionB("project-meta")}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    sidebarItemDirectionB === "project-meta"
-                      ? "bg-primary text-primary-foreground font-semibold"
-                      : "hover:bg-muted text-foreground",
-                  )}
-                >
-                  <span>Metadata &amp; Routing</span>
-                  <RiArrowRightSLine className="h-3.5 w-3.5 opacity-60" />
-                </button>
-              )}
-              {matchesSearch("Chaos Monkey Scenarios Resilience") && (
-                <button
-                  type="button"
-                  onClick={() => setSidebarItemDirectionB("project-chaos")}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    sidebarItemDirectionB === "project-chaos"
-                      ? "bg-primary text-primary-foreground font-semibold"
-                      : "hover:bg-muted text-foreground",
-                  )}
-                >
-                  <span>Chaos &amp; Resilience</span>
-                  <RiArrowRightSLine className="h-3.5 w-3.5 opacity-60" />
-                </button>
-              )}
-              {matchesSearch("CLI Credentials Developer Secret Key") && (
-                <button
-                  type="button"
-                  onClick={() => setSidebarItemDirectionB("project-cli")}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    sidebarItemDirectionB === "project-cli"
-                      ? "bg-primary text-primary-foreground font-semibold"
-                      : "hover:bg-muted text-foreground",
-                  )}
-                >
-                  <span>CLI Credentials</span>
-                  <RiArrowRightSLine className="h-3.5 w-3.5 opacity-60" />
-                </button>
-              )}
-              {matchesSearch("Danger Zone Delete Purge") && (
-                <button
-                  type="button"
-                  onClick={() => setSidebarItemDirectionB("danger-zone")}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    sidebarItemDirectionB === "danger-zone"
-                      ? "bg-destructive text-destructive-foreground font-semibold"
-                      : "text-destructive hover:bg-destructive/10",
-                  )}
-                >
-                  <span>Danger Zone</span>
-                  <RiAlertLine className="h-3.5 w-3.5 opacity-60" />
-                </button>
-              )}
-            </div>
+                {/* Category Group 2: Project Scope */}
+                {filteredCategories.some((c) => c.scope === "project") && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground block px-2 text-[11px] font-medium tracking-wide">
+                      Project: {activeProject?.name ?? "None"}
+                    </span>
+                    {filteredCategories
+                      .filter((c) => c.scope === "project")
+                      .map((cat) => {
+                        const Icon = cat.icon;
+                        const isSelected = sidebarItemDirectionB === cat.key;
+                        const isDanger = cat.key === "danger-zone";
+                        return (
+                          <button
+                            key={cat.key}
+                            type="button"
+                            onClick={() => setSidebarItemDirectionB(cat.key)}
+                            className={cn(
+                              "group flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                              isSelected
+                                ? isDanger
+                                  ? "bg-destructive/15 text-destructive font-semibold"
+                                  : "bg-accent text-accent-foreground font-semibold shadow-2xs"
+                                : isDanger
+                                  ? "text-destructive/80 hover:bg-destructive/10 hover:text-destructive"
+                                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                            )}
+                          >
+                            <span className="flex items-center gap-2">
+                              <Icon
+                                className={cn(
+                                  "h-3.5 w-3.5",
+                                  isSelected
+                                    ? isDanger
+                                      ? "text-destructive"
+                                      : "text-primary"
+                                    : "text-muted-foreground group-hover:text-foreground",
+                                )}
+                              />
+                              <span>{cat.label}</span>
+                            </span>
+                            <RiArrowRightSLine
+                              className={cn(
+                                "h-3.5 w-3.5 transition-transform",
+                                isSelected
+                                  ? isDanger
+                                    ? "opacity-100 text-destructive"
+                                    : "opacity-100 translate-x-0.5 text-primary"
+                                  : "opacity-30 group-hover:opacity-70",
+                              )}
+                            />
+                          </button>
+                        );
+                      })}
+                  </div>
+                )}
+              </>
+            )}
 
             {/* Rail Footer Status Badge */}
             <div className="text-muted-foreground flex items-center justify-between border-t pt-4 text-[11px]">

@@ -106,6 +106,7 @@ export function ProjectSettings({
   const [copiedKey, setCopiedKey] = React.useState(false);
   const [copiedPull, setCopiedPull] = React.useState(false);
   const [copiedDev, setCopiedDev] = React.useState(false);
+  const [copiedEndpoint, setCopiedEndpoint] = React.useState(false);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -243,11 +244,32 @@ export function ProjectSettings({
       <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-[260px_1fr]">
         {/* Left Category Rail */}
         <div className="bg-card sticky top-20 space-y-4 rounded-xl border p-3 shadow-xs">
-          <div className="space-y-1 border-b px-2 pt-1 pb-2">
-            <span className="text-muted-foreground block text-[10px] font-bold tracking-wider uppercase">
-              Target Endpoint Base
-            </span>
-            <code className="text-primary block font-mono text-xs break-all">
+          <div className="border-border/50 space-y-1.5 border-b px-2 pt-1 pb-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground block text-xs font-medium">
+                Target Endpoint Base
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  copyToClipboard(
+                    `/api/mock/${watchedSlug || project.slug}`,
+                    setCopiedEndpoint,
+                  )
+                }
+                className="text-muted-foreground hover:text-foreground h-6 gap-1 px-1.5 text-[11px]"
+              >
+                {copiedEndpoint ? (
+                  <RiCheckLine className="h-3 w-3 text-emerald-500" />
+                ) : (
+                  <RiFileCopyLine className="h-3 w-3" />
+                )}
+                <span>{copiedEndpoint ? "Copied" : "Copy"}</span>
+              </Button>
+            </div>
+            <code className="text-primary bg-muted/40 block rounded-md px-2 py-1 font-mono text-xs break-all">
               /api/mock/{watchedSlug || project.slug}
             </code>
           </div>
@@ -257,77 +279,77 @@ export function ProjectSettings({
               type="button"
               onClick={() => setActiveCategory("meta")}
               className={cn(
-                "w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "group flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 activeCategory === "meta"
-                  ? "bg-primary text-primary-foreground font-semibold"
-                  : "hover:bg-muted text-foreground",
+                  ? "bg-accent text-accent-foreground font-semibold shadow-2xs"
+                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
               )}
             >
               <span className="flex items-center gap-2">
                 <RiGitBranchLine className="h-3.5 w-3.5" />
                 <span>Metadata &amp; Routing</span>
               </span>
-              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-60" />
+              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100" />
             </button>
 
             <button
               type="button"
               onClick={() => setActiveCategory("chaos")}
               className={cn(
-                "w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "group flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 activeCategory === "chaos"
-                  ? "bg-primary text-primary-foreground font-semibold"
-                  : "hover:bg-muted text-foreground",
+                  ? "bg-accent text-accent-foreground font-semibold shadow-2xs"
+                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
               )}
             >
               <span className="flex items-center gap-2">
                 <RiFlashlightLine className="h-3.5 w-3.5" />
                 <span>Chaos &amp; Resilience</span>
               </span>
-              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-60" />
+              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100" />
             </button>
 
             <button
               type="button"
               onClick={() => setActiveCategory("cli")}
               className={cn(
-                "w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "group flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 activeCategory === "cli"
-                  ? "bg-primary text-primary-foreground font-semibold"
-                  : "hover:bg-muted text-foreground",
+                  ? "bg-accent text-accent-foreground font-semibold shadow-2xs"
+                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
               )}
             >
               <span className="flex items-center gap-2">
                 <RiTerminalBoxLine className="h-3.5 w-3.5" />
                 <span>Developer CLI &amp; Keys</span>
               </span>
-              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-60" />
+              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100" />
             </button>
 
             <button
               type="button"
               onClick={() => setActiveCategory("export")}
               className={cn(
-                "w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "group flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 activeCategory === "export"
-                  ? "bg-primary text-primary-foreground font-semibold"
-                  : "hover:bg-muted text-foreground",
+                  ? "bg-accent text-accent-foreground font-semibold shadow-2xs"
+                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
               )}
             >
               <span className="flex items-center gap-2">
                 <RiDownloadCloud2Line className="h-3.5 w-3.5" />
                 <span>Codebase &amp; Export</span>
               </span>
-              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-60" />
+              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100" />
             </button>
 
             <button
               type="button"
               onClick={() => setActiveCategory("danger")}
               className={cn(
-                "w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "group flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 activeCategory === "danger"
-                  ? "bg-destructive text-destructive-foreground font-semibold"
+                  ? "bg-destructive/10 text-destructive font-semibold shadow-2xs"
                   : "text-destructive hover:bg-destructive/10",
               )}
             >
@@ -335,7 +357,7 @@ export function ProjectSettings({
                 <RiAlertLine className="h-3.5 w-3.5" />
                 <span>Danger Zone</span>
               </span>
-              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-60" />
+              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100" />
             </button>
           </div>
         </div>
@@ -362,7 +384,7 @@ export function ProjectSettings({
                     <div className="grid gap-1.5">
                       <label
                         htmlFor="proj-name-input"
-                        className="text-muted-foreground text-xs font-semibold tracking-wider uppercase"
+                        className="text-foreground text-xs font-medium"
                       >
                         Project Name
                       </label>
@@ -384,7 +406,7 @@ export function ProjectSettings({
                     <div className="grid gap-1.5">
                       <label
                         htmlFor="proj-slug-input"
-                        className="text-muted-foreground text-xs font-semibold tracking-wider uppercase"
+                        className="text-foreground text-xs font-medium"
                       >
                         Namespace Slug
                       </label>
@@ -409,7 +431,7 @@ export function ProjectSettings({
                     <div className="grid gap-1.5">
                       <label
                         htmlFor="proj-desc-input"
-                        className="text-muted-foreground text-xs font-semibold tracking-wider uppercase"
+                        className="text-foreground text-xs font-medium"
                       >
                         Description
                       </label>
@@ -438,54 +460,56 @@ export function ProjectSettings({
                       Sub-5ms response caching and request log persistence.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="bg-muted/20 flex items-center justify-between rounded-lg border p-3">
-                      <div className="space-y-0.5 pr-2">
-                        <span className="block text-xs font-semibold">
-                          Enable Mock Caching
-                        </span>
-                        <span className="text-muted-foreground block text-[11px]">
-                          Store responses in LRU cache to guarantee sub-5ms
-                          latency.
-                        </span>
+                  <CardContent>
+                    <div className="divide-border/40 divide-y">
+                      <div className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                        <div className="space-y-0.5 pr-4">
+                          <span className="text-foreground block text-xs font-semibold">
+                            Enable Mock Caching
+                          </span>
+                          <span className="text-muted-foreground block text-[11px] leading-relaxed">
+                            Store responses in LRU cache to guarantee sub-5ms
+                            latency.
+                          </span>
+                        </div>
+                        <Controller
+                          control={control}
+                          name="isCachingEnabled"
+                          render={({ field }) => (
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSubmitting}
+                              aria-label="Toggle mock caching"
+                            />
+                          )}
+                        />
                       </div>
-                      <Controller
-                        control={control}
-                        name="isCachingEnabled"
-                        render={({ field }) => (
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            disabled={isSubmitting}
-                            aria-label="Toggle mock caching"
-                          />
-                        )}
-                      />
-                    </div>
 
-                    <div className="bg-muted/20 flex items-center justify-between rounded-lg border p-3">
-                      <div className="space-y-0.5 pr-2">
-                        <span className="block text-xs font-semibold">
-                          Capture Request History
-                        </span>
-                        <span className="text-muted-foreground block text-[11px]">
-                          {isLogsDbConfigured
-                            ? "Store incoming mock payloads in PostgreSQL."
-                            : "Disabled: LOGS_POSTGRES_URL environment variable missing."}
-                        </span>
+                      <div className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                        <div className="space-y-0.5 pr-4">
+                          <span className="text-foreground block text-xs font-semibold">
+                            Capture Request History
+                          </span>
+                          <span className="text-muted-foreground block text-[11px] leading-relaxed">
+                            {isLogsDbConfigured
+                              ? "Store incoming mock payloads in PostgreSQL."
+                              : "Disabled: LOGS_POSTGRES_URL environment variable missing."}
+                          </span>
+                        </div>
+                        <Controller
+                          control={control}
+                          name="isLoggingEnabled"
+                          render={({ field }) => (
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSubmitting || !isLogsDbConfigured}
+                              aria-label="Toggle request logging"
+                            />
+                          )}
+                        />
                       </div>
-                      <Controller
-                        control={control}
-                        name="isLoggingEnabled"
-                        render={({ field }) => (
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            disabled={isSubmitting || !isLogsDbConfigured}
-                            aria-label="Toggle request logging"
-                          />
-                        )}
-                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -536,7 +560,7 @@ export function ProjectSettings({
                   <div className="space-y-1.5">
                     <label
                       htmlFor="project-chaos-select"
-                      className="text-muted-foreground block text-xs font-semibold tracking-wider uppercase"
+                      className="text-foreground block text-xs font-medium"
                     >
                       Active Scenario Profile
                     </label>
@@ -601,28 +625,28 @@ export function ProjectSettings({
                 </CardHeader>
                 <CardContent>
                   {activeScenario ? (
-                    <dl className="grid grid-cols-2 gap-3 text-xs">
-                      <div className="bg-muted/20 rounded-md border p-2.5">
+                    <dl className="divide-border/40 divide-y text-xs">
+                      <div className="flex items-center justify-between py-2.5 first:pt-0">
                         <dt className="text-muted-foreground font-medium">
                           Scenario Name
                         </dt>
-                        <dd className="text-foreground mt-0.5 font-semibold">
+                        <dd className="text-foreground font-mono font-semibold">
                           {activeScenario.name}
                         </dd>
                       </div>
-                      <div className="bg-muted/20 rounded-md border p-2.5">
+                      <div className="flex items-center justify-between py-2.5">
                         <dt className="text-muted-foreground font-medium">
                           Status
                         </dt>
-                        <dd className="mt-0.5 font-semibold text-emerald-500">
+                        <dd className="font-semibold text-emerald-500">
                           Armed &amp; Injecting
                         </dd>
                       </div>
-                      <div className="bg-muted/20 col-span-2 rounded-md border p-2.5">
+                      <div className="space-y-1 py-2.5 last:pb-0">
                         <dt className="text-muted-foreground font-medium">
                           Notes
                         </dt>
-                        <dd className="text-muted-foreground mt-0.5">
+                        <dd className="text-muted-foreground leading-relaxed">
                           {activeScenario.description || "No custom notes set."}
                         </dd>
                       </div>
@@ -668,7 +692,7 @@ export function ProjectSettings({
                     <div className="space-y-2">
                       <label
                         htmlFor="project-settings-secret"
-                        className="text-muted-foreground block text-xs font-semibold tracking-wider uppercase"
+                        className="text-foreground block text-xs font-medium"
                       >
                         Project Secret Key (Decryption Token)
                       </label>
@@ -722,8 +746,8 @@ export function ProjectSettings({
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <Card className="border-border/60 bg-card shadow-xs">
                   <CardHeader>
-                    <CardTitle className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-                      1. Pull Offline Bundle
+                    <CardTitle className="text-sm font-semibold">
+                      Pull Offline Bundle
                     </CardTitle>
                     <CardDescription className="text-xs">
                       Sync mock definitions directly into your frontend
@@ -765,8 +789,8 @@ export function ProjectSettings({
 
                 <Card className="border-border/60 bg-card shadow-xs">
                   <CardHeader>
-                    <CardTitle className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-                      2. Start Headless Dev CLI
+                    <CardTitle className="text-sm font-semibold">
+                      Start Headless Dev CLI
                     </CardTitle>
                     <CardDescription className="text-xs">
                       Run local daemon with hot-reload and stateful in-memory
