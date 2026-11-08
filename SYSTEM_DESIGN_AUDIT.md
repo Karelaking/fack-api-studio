@@ -196,6 +196,23 @@ The unused `unstorage` instance in `lib/cache.ts` was removed. It was created at
 module load but never mounted or used, and it implied distributed caching that
 did not exist.
 
+### 2.15 Generated-payload caches bounded by bytes
+
+The per-route payload caches (`routeMockDataCache`, `routeSingleMockDataCache`,
+`routePageCache`) and the stateful read caches gained `maxSize` +
+`sizeCalculation` in addition to their entry limits. `payloadSize` measures the
+serialized JSON length (doubled for UTF-16 in memory) only on a cache miss.
+
+**Impact:** a handful of large generated arrays can no longer push RSS into the
+hundreds of MB; entry counts and TTLs are unchanged.
+
+### 2.16 Redundant indexes dropped
+
+`projects_slug_idx` duplicated the index created by the `UNIQUE` slug
+constraint, and `routes_endpoint_id_idx` was the leftmost prefix of
+`routes_endpoint_method_path_idx`. Migration
+`drizzle/0016_drop_redundant_indexes.sql` drops both.
+
 ---
 
 ## 3. Remaining design risks and recommendations
@@ -203,18 +220,26 @@ did not exist.
 These are intentionally **not** changed here because they are architectural or
 require deployment decisions.
 
-| Priority | Finding                                                                | Why it matters                                                                                                                                                                                                                                       | Recommendation                                                                                                                                                            |
-| -------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P0       | All caches are per-process (`LRUCache` on `globalThis`)                | In multi-instance/serverless deployments, invalidation only clears the instance that handled the write. Other instances serve stale projects/routes/state for up to the TTL (5–10 min).                                                              | Mount a shared driver through `unstorage` (Redis/Upstash) or publish cross-instance invalidation events. Until then, treat TTLs as the correctness window.                |
-| P0       | Rate limiter is per-process and `getClientIp` trusts `X-Forwarded-For` | Each instance allows the full limit, and a client can spoof a new IP per request to bypass it entirely.                                                                                                                                              | Only trust `X-Forwarded-For` behind a configured trusted proxy (or use the platform header: Vercel/Cloudflare), then use a shared counter (Redis) for distributed limits. |
-| P1       | `request_logs` writes are SQLite writes                                | Local SQLite is single-writer. Enabling logging on a busy SQLite install serializes the `after()` batches.                                                                                                                                           | Keep logging disabled for SQLite unless needed, or make the Postgres log DB the default for high traffic. Batch size is already bounded.                                  |
-| P1       | Mock data caches are count-bounded, not byte-bounded                   | `routeMockDataCache` and `routePageCache` hold up to 2,000 arrays; each array can contain 100+ generated objects. Worst case is tens–hundreds of MB.                                                                                                 | Add `maxSize`/`sizeCalculation`, or cap cached array lengths per route.                                                                                                   |
-| P1       | Redundant SQLite indexes                                               | `projects_slug_idx` duplicates the automatic index created by the `UNIQUE` slug constraint; `routes_endpoint_id_idx` is the leftmost prefix of `routes_endpoint_method_path_idx`.                                                                    | Drop both in a dedicated migration. Left out here to avoid an extra schema migration in the same change.                                                                  |
-| P1       | Migration drift                                                        | `0013_performance_indexes.sql`, `0014_schema_enhancements.sql` and `0015_wal_mode_pragmas.sql` exist on disk but are **not** in `drizzle/meta/_journal.json`, so the migrator never runs them. Some of their columns are absent from `db/schema.ts`. | Pick one schema path (`db:push` or journaled migrations) and reconcile. Future migrations should be generated and journaled, as `0015_mock_states_unique` is.             |
-| P2       | Slug rename/delete staleness across instances                          | The studio project and mock project caches are keyed by slug with a 10-minute TTL; a rename only evicts the local instance.                                                                                                                          | Version snapshot keys by `project.updatedAt`/`version`, or shorten the slug TTL and rely on the resolver's batched lookup.                                                |
-| P2       | Dashboard cache stampede                                               | Any project mutation clears the whole per-user list cache. With many active users this can cause repeated list queries.                                                                                                                              | Use stale-while-revalidate or per-project invalidation once the list is keyed more precisely.                                                                             |
-| P2       | `getProjectBySlug` return type erases relations                        | The action's declared return type is the base `Project` even though it used to include relations.                                                                                                                                                    | Now aligned with the narrowed query; keep relation-bearing reads in dedicated actions.                                                                                    |
-| P2       | No distributed negative-cache                                          | The 30s negative slug cache is also per-instance.                                                                                                                                                                                                    | Fine at current scale; share it if scans become a database load problem.                                                                                                  |
+**Resolved after this report:**
+
+- **Byte-bounded payload caches** — see §2.15 (`008e382`).
+- **Redundant SQLite indexes** — see §2.16 (`6c58627`, migration `0016`).
+- **Migration drift** — the duplicate `0013_performance_indexes.sql` was deleted
+  (its indexes are already journaled in `0013_shiny_plazm.sql`), and the
+  reference-only `0014_schema_enhancements.sql` / `0015_wal_mode_pragmas.sql`
+  were moved to `drizzle/reference/` so they can no longer be mistaken for
+  pending migrations. The SQLite PRAGMAs they describe are applied at connection
+  time in `db/index.ts`.
+
+| Priority | Finding                                                                | Why it matters                                                                                                                                                                          | Recommendation                                                                                                                                                            |
+| -------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P0       | All caches are per-process (`LRUCache` on `globalThis`)                | In multi-instance/serverless deployments, invalidation only clears the instance that handled the write. Other instances serve stale projects/routes/state for up to the TTL (5–10 min). | Mount a shared driver through `unstorage` (Redis/Upstash) or publish cross-instance invalidation events. Until then, treat TTLs as the correctness window.                |
+| P0       | Rate limiter is per-process and `getClientIp` trusts `X-Forwarded-For` | Each instance allows the full limit, and a client can spoof a new IP per request to bypass it entirely.                                                                                 | Only trust `X-Forwarded-For` behind a configured trusted proxy (or use the platform header: Vercel/Cloudflare), then use a shared counter (Redis) for distributed limits. |
+| P1       | `request_logs` writes are SQLite writes                                | Local SQLite is single-writer. Enabling logging on a busy SQLite install serializes the `after()` batches.                                                                              | Keep logging disabled for SQLite unless needed, or make the Postgres log DB the default for high traffic. Batch size is already bounded.                                  |
+| P2       | Slug rename/delete staleness across instances                          | The studio project and mock project caches are keyed by slug with a 10-minute TTL; a rename only evicts the local instance.                                                             | Version snapshot keys by `project.updatedAt`/`version`, or shorten the slug TTL and rely on the resolver's batched lookup.                                                |
+| P2       | Dashboard cache stampede                                               | Any project mutation clears the whole per-user list cache. With many active users this can cause repeated list queries.                                                                 | Use stale-while-revalidate or per-project invalidation once the list is keyed more precisely.                                                                             |
+| P2       | `getProjectBySlug` return type erases relations                        | The action's declared return type is the base `Project` even though it used to include relations.                                                                                       | Now aligned with the narrowed query; keep relation-bearing reads in dedicated actions.                                                                                    |
+| P2       | No distributed negative-cache                                          | The 30s negative slug cache is also per-instance.                                                                                                                                       | Fine at current scale; share it if scans become a database load problem.                                                                                                  |
 
 ---
 
@@ -225,10 +250,7 @@ require deployment decisions.
    single largest remaining scalability constraint.
 2. **Harden client identity.** Add explicit trusted-proxy configuration, then
    key rate limits on an authenticated user or trusted client IP.
-3. **Add cache size accounting** to the generated-payload caches so RSS stays
-   predictable under adversarial schemas.
-4. **Reconcile migrations** and drop the two redundant indexes.
-5. **Instrument the hot path** (query count per mock request, cache hit ratio,
+3. **Instrument the hot path** (query count per mock request, cache hit ratio,
    p95 latency, log rows/day) before making further micro-optimizations.
 
 ---
@@ -238,13 +260,16 @@ require deployment decisions.
 ```
 app/api/mock/[...slug]/route.ts            static SignJWT, direct body read
 components/dashboard/ProjectGrid.tsx       narrowed relation type
-db/schema.ts                               unique state index
+db/schema.ts                               unique state index, redundant index drop
 drizzle/0015_mock_states_unique.sql        dedupe + unique index (journaled)
+drizzle/0016_drop_redundant_indexes.sql    drop duplicate slug/FK indexes (journaled)
 drizzle/meta/0015_snapshot.json            drizzle snapshot
-drizzle/meta/_journal.json                 journal entry
+drizzle/meta/0016_snapshot.json            drizzle snapshot
+drizzle/meta/_journal.json                 journal entries
+drizzle/reference/*.sql                    reference-only SQL moved out of migrations
 lib/actions/logs.ts                        SQL-side payload trim
 lib/actions/projects.ts                    per-user cache, narrow queries
-lib/cache.ts                               split project caches, stateful caches
+lib/cache.ts                               split project caches, byte-bounded payload caches
 lib/mock-engine.ts                         compact large JSON, parse cache
 lib/mock-handler-core.ts                   static imports, bounded logs
 lib/route-matcher.ts                       WeakMap compiled matchers
@@ -258,3 +283,6 @@ next.config.ts                             lucide-react tree shaking
 test/project-resolver.test.ts              use mock project cache
 test/stateful-mock.test.ts                 new upsert/invalidation coverage
 ```
+
+**Follow-up commits:** `008e382` (byte-bounded payload caches), `6c58627`
+(drop redundant indexes), and the migration reconciliation above.
