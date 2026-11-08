@@ -21,7 +21,7 @@ import {
 import { toast } from "sonner";
 import { createProject } from "@/lib/actions/projects";
 import type { Project } from "@/db/schema";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn, slugifyPath } from "@/lib/utils";
@@ -517,7 +517,7 @@ export const DashboardSidebar = ({
                     </TooltipContent>
                   </Tooltip>
 
-                  {/* New Workspace Dialog Trigger */}
+                  {/* New Project Dialog Trigger */}
                   <Tooltip>
                     <TooltipTrigger
                       render={
@@ -525,13 +525,13 @@ export const DashboardSidebar = ({
                           type="button"
                           onClick={() => setDialogOpen(true)}
                           className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring flex size-8 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
-                          aria-label="Create Workspace"
+                          aria-label="Create Project"
                         >
                           <RiAddLine className="size-4" />
                         </button>
                       }
                     />
-                    <TooltipContent side="right">New Workspace</TooltipContent>
+                    <TooltipContent side="right">New Project</TooltipContent>
                   </Tooltip>
                 </div>
               </div>
@@ -788,7 +788,7 @@ export const DashboardSidebar = ({
         <DialogContent className="sm:max-w-106.25">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
-              <DialogTitle>New Workspace</DialogTitle>
+              <DialogTitle>New Project</DialogTitle>
               <DialogDescription>
                 Create a new isolated project namespace for your mock routes.
               </DialogDescription>
@@ -863,8 +863,8 @@ export const DashboardSidebar = ({
                 type="submit"
                 disabled={loading}
                 aria-disabled={loading}
-                title="Create Workspace"
-                aria-label="Create Workspace"
+                title="Create Project"
+                aria-label="Create Project"
               >
                 {loading ? (
                   <>
@@ -875,7 +875,7 @@ export const DashboardSidebar = ({
                     <span>Creating...</span>
                   </>
                 ) : (
-                  <span>Create Workspace</span>
+                  <span>Create Project</span>
                 )}
               </Button>
             </DialogFooter>

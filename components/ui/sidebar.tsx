@@ -200,7 +200,7 @@ function Sidebar({
           <SheetHeader className="sr-only">
             <SheetTitle>Mock providers and project navigation</SheetTitle>
             <SheetDescription>
-              Browse workspace mock providers and projects.
+              Browse mock providers and projects.
             </SheetDescription>
           </SheetHeader>
           <aside

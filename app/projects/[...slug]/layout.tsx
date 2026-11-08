@@ -3,10 +3,10 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { AuthProvider } from "@/components/auth/AuthProvider";
-import { CommandMenu } from "@/components/command-menu";
+import { CommandMenu } from "@/components/CommandMenu";
 import { getProjectBySlug, getProjects } from "@/lib/actions/projects";
 import { getProjectUrl, parseProjectPath } from "@/lib/utils/project-slug";
-import { ProjectProvider } from "@/components/project/ProjectContext";
+import { ProjectProvider } from "@/components/project/ProjectProvider";
 import { Separator } from "@/components/ui/separator";
 import { DashboardBreadcrumbs } from "@/components/dashboard/DashboardBreadcrumbs";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
@@ -111,7 +111,7 @@ export default async function ProjectLayout({
               {/* Main Content Area */}
               <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
                 <header
-                  aria-label="Workspace top navigation"
+                  aria-label="Project top navigation"
                   className="border-border/60 bg-background/60 flex h-14 shrink-0 items-center justify-between gap-2 border-b px-3 backdrop-blur-md sm:gap-3 sm:px-4 md:px-6"
                 >
                   <div className="flex min-w-0 items-center gap-2 sm:gap-3">

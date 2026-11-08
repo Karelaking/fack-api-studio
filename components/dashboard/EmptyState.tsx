@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
  * The dashboard's single empty-state pattern: a quiet dashed panel with an
  * icon, a plain-spoken title, and — when there is somewhere to go — one
  * primary action. Used by the secondary surfaces so they read as siblings of
- * the workspaces grid rather than as four separate designs.
+ * the projects grid rather than as four separate designs.
  */
 export function EmptyState({
   icon,

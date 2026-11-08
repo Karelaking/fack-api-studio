@@ -47,7 +47,7 @@ function getProjectTabHref(slug: string, tab: string | undefined): Route {
 
 /**
  * Client breadcrumb navigation component with project switching dropdown and top-bar sub-navigation.
- * Parses the active router pathname, enables project switching, and hosts workspace page tabs.
+ * Parses the active router pathname, enables project switching, and hosts project page tabs.
  */
 export function DashboardBreadcrumbs({
   projects = [],
@@ -61,16 +61,16 @@ export function DashboardBreadcrumbs({
   if (segments.length === 0) {
     return (
       <div className="text-muted-foreground flex items-center gap-1.5 text-sm font-medium select-none">
-        <span>Workspaces</span>
+        <span>Projects</span>
       </div>
     );
   }
 
   const breadcrumbs: BreadcrumbItem[] = [];
 
-  // Base "Workspaces" breadcrumb
+  // Base "Projects" breadcrumb
   breadcrumbs.push({
-    label: "Workspaces",
+    label: "Projects",
     href: "/",
     isProject: false,
   });

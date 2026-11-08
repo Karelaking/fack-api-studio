@@ -498,12 +498,12 @@ const cacheManager = CacheManager.getInstance();
 
 export function getCachedProjectsList(userId?: string): Project[] | undefined {
   cacheTrace.traceCall("getCachedProjectsList");
-  const res = cacheManager.getProjectsList(userId);
+  const cachedProjects = cacheManager.getProjectsList(userId);
   cacheTrace.traceSuccess(
     "getCachedProjectsList",
-    res ? `${res.length} projects` : "undefined",
+    cachedProjects ? `${cachedProjects.length} projects` : "undefined",
   );
-  return res;
+  return cachedProjects;
 }
 
 export function setCachedProjectsList(
@@ -525,12 +525,12 @@ export function setCachedMockProject(slug: string, project: Project): void {
 
 export function getCachedProjectBySlug(slug: string): Project | undefined {
   cacheTrace.traceCall("getCachedProjectBySlug", slug);
-  const res = cacheManager.getProjectBySlug(slug);
+  const cachedProject = cacheManager.getProjectBySlug(slug);
   cacheTrace.traceSuccess(
     "getCachedProjectBySlug",
-    res ? res.name : "undefined",
+    cachedProject ? cachedProject.name : "undefined",
   );
-  return res;
+  return cachedProject;
 }
 
 export function setCachedProjectBySlug(slug: string, project: Project): void {
@@ -543,12 +543,12 @@ export function getCachedProjectRoutes(
   projectId: string,
 ): (Route & { endpoint: Endpoint })[] | undefined {
   cacheTrace.traceCall("getCachedProjectRoutes", projectId);
-  const res = cacheManager.getProjectRoutes(projectId);
+  const cachedRoutes = cacheManager.getProjectRoutes(projectId);
   cacheTrace.traceSuccess(
     "getCachedProjectRoutes",
-    res ? `${res.length} routes` : "undefined",
+    cachedRoutes ? `${cachedRoutes.length} routes` : "undefined",
   );
-  return res;
+  return cachedRoutes;
 }
 
 export function setCachedProjectRoutes(
@@ -566,12 +566,12 @@ export function setCachedProjectRoutes(
 
 export function getCachedRoutes(projectId: string): CachedRoute[] | undefined {
   cacheTrace.traceCall("getCachedRoutes", projectId);
-  const res = cacheManager.getRoutes(projectId);
+  const cachedRoutes = cacheManager.getRoutes(projectId);
   cacheTrace.traceSuccess(
     "getCachedRoutes",
-    res ? `${res.length} routes` : "undefined",
+    cachedRoutes ? `${cachedRoutes.length} routes` : "undefined",
   );
-  return res;
+  return cachedRoutes;
 }
 
 export function setCachedRoutes(
@@ -647,33 +647,40 @@ export function setCachedCanvasState(projectId: string, state: unknown): void {
 
 export function getCachedMockData(routeId: string): unknown[] | undefined {
   cacheTrace.traceCall("getCachedMockData", routeId);
-  const res = cacheManager.getMockData(routeId);
+  const cachedMockData = cacheManager.getMockData(routeId);
   cacheTrace.traceSuccess(
     "getCachedMockData",
-    res ? `${res.length} objects` : "undefined",
+    cachedMockData ? `${cachedMockData.length} objects` : "undefined",
   );
-  return res;
+  return cachedMockData;
 }
 
-export function setCachedMockData(routeId: string, data: unknown[]): void {
-  cacheTrace.traceCall("setCachedMockData", routeId, `${data.length} objects`);
-  cacheManager.setMockData(routeId, data);
+export function setCachedMockData(routeId: string, payload: unknown[]): void {
+  cacheTrace.traceCall(
+    "setCachedMockData",
+    routeId,
+    `${payload.length} objects`,
+  );
+  cacheManager.setMockData(routeId, payload);
   cacheTrace.traceSuccess("setCachedMockData", "void");
 }
 
 export function getCachedSingleMockData(routeId: string): unknown {
   cacheTrace.traceCall("getCachedSingleMockData", routeId);
-  const res = cacheManager.getSingleMockData(routeId);
+  const cachedSingleMockData = cacheManager.getSingleMockData(routeId);
   cacheTrace.traceSuccess(
     "getCachedSingleMockData",
-    res ? "object" : "undefined",
+    cachedSingleMockData ? "object" : "undefined",
   );
-  return res;
+  return cachedSingleMockData;
 }
 
-export function setCachedSingleMockData(routeId: string, data: unknown): void {
+export function setCachedSingleMockData(
+  routeId: string,
+  payload: unknown,
+): void {
   cacheTrace.traceCall("setCachedSingleMockData", routeId);
-  cacheManager.setSingleMockData(routeId, data);
+  cacheManager.setSingleMockData(routeId, payload);
   cacheTrace.traceSuccess("setCachedSingleMockData", "void");
 }
 
@@ -688,12 +695,12 @@ export function getCachedPageData(
     `page: ${page}`,
     `limit: ${limit}`,
   );
-  const res = cacheManager.getPageData(routeId, page, limit);
+  const cachedPage = cacheManager.getPageData(routeId, page, limit);
   cacheTrace.traceSuccess(
     "getCachedPageData",
-    res ? `hit (${res.length} items)` : "miss",
+    cachedPage ? `hit (${cachedPage.length} items)` : "miss",
   );
-  return res;
+  return cachedPage;
 }
 
 export function setCachedPageData(

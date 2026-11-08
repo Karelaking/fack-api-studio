@@ -917,12 +917,11 @@ export function ProjectSettings({
                   <div className="text-destructive flex items-center gap-2">
                     <RiAlertLine className="h-5 w-5" />
                     <CardTitle className="text-base font-semibold">
-                      Delete Workspace
+                      Delete Project
                     </CardTitle>
                   </div>
                   <CardDescription>
-                    Irreversibly delete this project workspace and all
-                    endpoints.
+                    Irreversibly delete this project and all endpoints.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -939,7 +938,7 @@ export function ProjectSettings({
                     className="h-8 gap-1.5 text-xs font-medium"
                   >
                     <RiDeleteBin6Line className="h-4 w-4" />
-                    <span>Delete Workspace</span>
+                    <span>Delete Project</span>
                   </Button>
 
                   <Dialog

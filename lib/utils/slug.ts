@@ -33,7 +33,7 @@ export function slugify(text: string): string {
 
 /**
  * Sanitizes input string to form a valid multi-segment project namespace path.
- * Retains slashes to support nested workspaces (e.g. "api/v1/auth").
+ * Retains slashes to support nested project slugs (e.g. "api/v1/auth").
  *
  * @param input - The raw text input
  * @returns Sanitized namespace path slug

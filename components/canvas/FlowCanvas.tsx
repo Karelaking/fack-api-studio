@@ -40,7 +40,7 @@ import { EndpointGroupNode } from "./EndpointGroupNode";
 import { AddRouteDialog } from "./AddRouteDialog";
 import type { Endpoint, Route } from "@/db/schema";
 import { RiGitBranchLine, RiLoader2Line } from "@remixicon/react";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
 
 // Custom Node Types registered on React Flow canvas

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
  * The shared frame for every dashboard surface.
  *
  * Dashboard pages previously each invented their own padding and max width,
- * which made the workspace grid feel inset and the secondary pages feel
+ * which made the project grid feel inset and the secondary pages feel
  * cramped. One frame keeps the page rhythm identical everywhere: the content
  * column stays readable on ultra-wide displays and the horizontal padding
  * scales with the viewport.

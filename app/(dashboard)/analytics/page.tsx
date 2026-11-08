@@ -12,7 +12,7 @@ export const metadata = {
 };
 
 /**
- * Cross-workspace analytics.
+ * Cross-project analytics.
  *
  * The numbers are derived from request logs, so an empty install has nothing
  * truthful to chart. Showing a zeroed metric row here only taught people that
@@ -23,20 +23,20 @@ export default function AnalyticsPage(): React.JSX.Element {
     <PageShell>
       <PageHeading
         title="Analytics"
-        description="Traffic, bandwidth, and latency across every workspace, rolled up from the request logs."
+        description="Traffic, bandwidth, and latency across every project, rolled up from the request logs."
       />
 
       <EmptyState
         icon={<RiBarChartBoxLine />}
         title="No traffic to chart yet"
-        description="Serve a few requests from a workspace endpoint and the trends for the last 24 hours will appear here."
+        description="Serve a few requests from a project endpoint and the trends for the last 24 hours will appear here."
         action={
           <Button
             variant="outline"
             nativeButton={false}
             render={<Link href="/dashboard" />}
           >
-            Browse workspaces
+            Browse projects
           </Button>
         }
       />

@@ -3,7 +3,7 @@ import { RiFolder3Line, RiArrowLeftLine } from "@remixicon/react";
 import { buttonVariants } from "@/components/ui/button";
 
 /**
- * Shown when a project slug doesn't match any workspace in the database.
+ * Shown when a project slug doesn't match any project in the database.
  */
 export default function ProjectNotFound() {
   return (
@@ -13,10 +13,10 @@ export default function ProjectNotFound() {
       </div>
       <div className="text-center">
         <h2 className="text-foreground text-xl font-semibold">
-          Workspace not found
+          Project not found
         </h2>
         <p className="text-muted-foreground mt-2 max-w-sm text-sm">
-          The workspace you&apos;re looking for doesn&apos;t exist or may have
+          The project you&apos;re looking for doesn&apos;t exist or may have
           been deleted.
         </p>
       </div>
@@ -25,7 +25,7 @@ export default function ProjectNotFound() {
         className={buttonVariants({ variant: "outline", size: "sm" })}
       >
         <RiArrowLeftLine className="mr-2 h-4 w-4" />
-        Back to Workspaces
+        Back to Projects
       </Link>
     </div>
   );

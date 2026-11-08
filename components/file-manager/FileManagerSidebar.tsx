@@ -18,7 +18,7 @@ import {
 import { toast } from "sonner";
 
 import { BrandLogo } from "@/components/brand/BrandLogo";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getProjectUrl } from "@/lib/utils/project-slug";
@@ -38,7 +38,7 @@ import {
 import type {
   OpenProjectSummary,
   RecentFileEntry,
-} from "@/lib/file-manager/file-manager.type";
+} from "@/lib/file-manager/types";
 
 interface FileManagerSidebarProps {
   workspaceName: string;
@@ -65,11 +65,11 @@ export function FileManagerSidebar({
   // Fetch status on mount
   const refreshStatus = React.useCallback(async () => {
     try {
-      const res = await fetch("/api/file-manager");
-      if (res.ok) {
-        const data = await res.json();
-        setOpenProjects(data.openProjects ?? []);
-        setRecents(data.recents ?? []);
+      const response = await fetch("/api/file-manager");
+      if (response.ok) {
+        const payload = await response.json();
+        setOpenProjects(payload.openProjects ?? []);
+        setRecents(payload.recents ?? []);
       }
     } catch {
       // Ignore initial fetch errors
@@ -89,7 +89,7 @@ export function FileManagerSidebar({
       const dirty = openProjects.filter((p) => p.isDirty);
       for (const project of dirty) {
         try {
-          const res = await fetch("/api/file-manager", {
+          const response = await fetch("/api/file-manager", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -97,7 +97,7 @@ export function FileManagerSidebar({
               projectId: project.projectId,
             }),
           });
-          if (res.ok) {
+          if (response.ok) {
             setOpenProjects((prev) =>
               prev.map((p) =>
                 p.projectId === project.projectId
@@ -125,17 +125,17 @@ export function FileManagerSidebar({
     e?.preventDefault();
     setSavingProjectId(projectId);
     try {
-      const res = await fetch("/api/file-manager", {
+      const response = await fetch("/api/file-manager", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "save", projectId }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Save failed");
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || "Save failed");
       }
       toast.success("Project saved to file", {
-        description: data.filePath,
+        description: payload.filePath,
       });
       setOpenProjects((prev) =>
         prev.map((p) =>
@@ -143,8 +143,8 @@ export function FileManagerSidebar({
             ? {
                 ...p,
                 isDirty: false,
-                lastSavedAt: data.savedAt,
-                filePath: data.filePath,
+                lastSavedAt: payload.savedAt,
+                filePath: payload.filePath,
               }
             : p,
         ),
@@ -170,19 +170,19 @@ export function FileManagerSidebar({
       const text = await file.text();
       const parsedData = JSON.parse(text);
 
-      const res = await fetch("/api/file-manager", {
+      const response = await fetch("/api/file-manager", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "import-json", data: parsedData }),
       });
-      const result = await res.json();
-      if (!res.ok) {
-        throw new Error(result.error || "Failed to load project file");
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to load project file");
       }
 
-      toast.success(`Project "${result.project.name}" opened successfully`);
+      toast.success(`Project "${payload.project.name}" opened successfully`);
       await refreshStatus();
-      router.push(getProjectUrl(result.project.slug, "canvas"));
+      router.push(getProjectUrl(payload.project.slug, "canvas"));
       router.refresh();
     } catch (err) {
       toast.error(

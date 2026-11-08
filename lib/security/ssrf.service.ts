@@ -45,11 +45,11 @@ const RESTRICTED_IP_RANGES = new Set([
  * Inspects whether an IP address belongs to a reserved, loopback, or private range using `ipaddr.js`.
  */
 function inspectIpAddress(ipString: string): {
-  restricted: boolean;
+  isRestricted: boolean;
   isLoopback: boolean;
 } {
   if (!ipaddr.isValid(ipString)) {
-    return { restricted: true, isLoopback: false };
+    return { isRestricted: true, isLoopback: false };
   }
 
   const parsed = ipaddr.parse(ipString);
@@ -62,7 +62,7 @@ function inspectIpAddress(ipString: string): {
   const isLoopback = range === "loopback";
 
   return {
-    restricted: RESTRICTED_IP_RANGES.has(range),
+    isRestricted: RESTRICTED_IP_RANGES.has(range),
     isLoopback,
   };
 }
@@ -127,8 +127,8 @@ export function validateWebhookUrl(
 
   // 4. IP Range validation if hostname is a direct IP address
   if (ipaddr.isValid(hostname)) {
-    const { restricted, isLoopback } = inspectIpAddress(hostname);
-    if (restricted) {
+    const { isRestricted, isLoopback } = inspectIpAddress(hostname);
+    if (isRestricted) {
       if (isLocalTier && isLoopback) {
         return { safe: true };
       }

@@ -18,7 +18,7 @@ import {
   CommandItem,
   CommandShortcut,
 } from "@/components/ui/command";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/ThemeProvider";
 
 export function CommandMenu() {
   const [open, setOpen] = React.useState(false);

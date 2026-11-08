@@ -17,7 +17,7 @@ export default function DomainsPage(): React.JSX.Element {
     <PageShell>
       <PageHeading
         title="Custom Domains"
-        description="Serve a workspace from a hostname of your own instead of this deployment's address."
+        description="Serve a project from a hostname of your own instead of this deployment's address."
         actions={<Badge variant="outline">Not available yet</Badge>}
       />
 
@@ -28,9 +28,9 @@ export default function DomainsPage(): React.JSX.Element {
           <>
             Mocks are served from this deployment&apos;s host — under{" "}
             <code className="bg-muted text-caption rounded-sm px-1 py-0.5 font-mono">
-              /&lt;workspace-slug&gt;/
+              /&lt;project-slug&gt;/
             </code>{" "}
-            or a workspace subdomain when subdomain routing is configured.
+            or a project subdomain when subdomain routing is configured.
           </>
         }
         action={
@@ -39,7 +39,7 @@ export default function DomainsPage(): React.JSX.Element {
             nativeButton={false}
             render={<Link href="/dashboard" />}
           >
-            Browse workspaces
+            Browse projects
           </Button>
         }
       />

@@ -33,7 +33,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // RFC 8628 Section 3.5: Rate limit polling frequency
   const pollRate = rateLimiter.check(`poll:${body.deviceCode}`, 1, 2);
-  if (!pollRate.allowed) {
+  if (!pollRate.isAllowed) {
     return NextResponse.json(
       {
         status: "slow_down",

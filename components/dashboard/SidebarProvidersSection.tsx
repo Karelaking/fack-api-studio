@@ -282,7 +282,7 @@ export function SidebarProvidersSection({
                       <ProviderChip
                         key={provider.value}
                         provider={provider}
-                        routeSelected={!!effectiveRouteId}
+                        isRouteSelected={!!effectiveRouteId}
                         onKeyboardAdd={handleKeyboardAdd}
                       />
                     ))}

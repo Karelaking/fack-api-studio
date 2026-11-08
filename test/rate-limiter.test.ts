@@ -8,15 +8,15 @@ describe("rate-limiter.service", () => {
 
   it("should allow requests within limit and decrement remaining", () => {
     const first = rateLimiter.check("user_1", 3, 60);
-    expect(first.allowed).toBe(true);
+    expect(first.isAllowed).toBe(true);
     expect(first.remaining).toBe(2);
 
     const second = rateLimiter.check("user_1", 3, 60);
-    expect(second.allowed).toBe(true);
+    expect(second.isAllowed).toBe(true);
     expect(second.remaining).toBe(1);
 
     const third = rateLimiter.check("user_1", 3, 60);
-    expect(third.allowed).toBe(true);
+    expect(third.isAllowed).toBe(true);
     expect(third.remaining).toBe(0);
   });
 
@@ -25,15 +25,15 @@ describe("rate-limiter.service", () => {
     rateLimiter.check("user_blocked", 2, 60);
 
     const fourth = rateLimiter.check("user_blocked", 2, 60);
-    expect(fourth.allowed).toBe(false);
+    expect(fourth.isAllowed).toBe(false);
     expect(fourth.remaining).toBe(0);
     expect(fourth.resetInSeconds).toBeGreaterThan(0);
   });
 
   it("should isolate limits across different keys", () => {
     rateLimiter.check("user_a", 1, 60);
-    expect(rateLimiter.check("user_a", 1, 60).allowed).toBe(false);
+    expect(rateLimiter.check("user_a", 1, 60).isAllowed).toBe(false);
 
-    expect(rateLimiter.check("user_b", 1, 60).allowed).toBe(true);
+    expect(rateLimiter.check("user_b", 1, 60).isAllowed).toBe(true);
   });
 });

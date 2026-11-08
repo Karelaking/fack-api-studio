@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { RiMoonLine, RiSunLine, RiComputerLine } from "@remixicon/react";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

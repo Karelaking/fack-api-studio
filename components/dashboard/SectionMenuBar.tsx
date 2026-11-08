@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { OPEN_AGENT_COMPOSER_EVENT } from "@/lib/ai/agent-events";
-import { useOptionalProject } from "@/components/project/ProjectContext";
+import { useOptionalProject } from "@/components/project/ProjectProvider";
 
 interface SectionMenuBarProps {
   projectSlug: string;

@@ -58,6 +58,6 @@ export interface WhoamiCommandOptions extends CliGlobalOptions {
 }
 
 export interface ServerRouteMatch {
-  route: import("../../lib/bundle/bundle.type").FackRuntimeRoute;
+  route: import("../../lib/bundle/types").FackRuntimeRoute;
   params: Record<string, string>;
 }

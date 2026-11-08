@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { CustomSignIn } from "@/components/auth/CustomSignIn";
 import { CustomSignUp } from "@/components/auth/CustomSignUp";

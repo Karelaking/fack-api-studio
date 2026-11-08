@@ -68,21 +68,21 @@ const extendedFaker = Object.assign({}, faker, {
 /**
  * Recursively maps any "x-faker" properties in a JSON Schema to "faker".
  */
-function mapXFakerToFaker(obj: unknown): unknown {
-  if (typeof obj !== "object" || obj === null) {
-    return obj;
+function mapXFakerToFaker(value: unknown): unknown {
+  if (typeof value !== "object" || value === null) {
+    return value;
   }
 
-  if (Array.isArray(obj)) {
-    return obj.map(mapXFakerToFaker);
+  if (Array.isArray(value)) {
+    return value.map(mapXFakerToFaker);
   }
 
   const mappedSchema: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+  for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
     if (key === "x-faker") {
-      mappedSchema["faker"] = value;
+      mappedSchema["faker"] = entry;
     } else {
-      mappedSchema[key] = mapXFakerToFaker(value);
+      mappedSchema[key] = mapXFakerToFaker(entry);
     }
   }
   return mappedSchema;

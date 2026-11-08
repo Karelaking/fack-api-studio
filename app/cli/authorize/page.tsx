@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 
 import { AuthorizeDeviceForm } from "@/components/cli/AuthorizeDeviceForm";
 import { BrandLogo } from "@/components/brand/BrandLogo";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { storageConnection } from "@/db";
 
 export const dynamic = "force-dynamic";

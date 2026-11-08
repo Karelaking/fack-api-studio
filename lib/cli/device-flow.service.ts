@@ -53,7 +53,7 @@ export interface DeviceRequestView {
   status: DeviceRequestStatus;
   createdAt: Date;
   expiresAt: Date;
-  expired: boolean;
+  isExpired: boolean;
 }
 
 export type DeviceExchangeResult =
@@ -115,7 +115,7 @@ function toView(request: CliAuthRequest): DeviceRequestView {
     status: request.status,
     createdAt: request.createdAt,
     expiresAt: request.expiresAt,
-    expired: isRequestExpired(request),
+    isExpired: isRequestExpired(request),
   };
 }
 

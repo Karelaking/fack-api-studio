@@ -76,11 +76,11 @@ export async function createBackup(userId?: string): Promise<BackupFile> {
 }
 
 /** Shape validation for an uploaded backup payload. */
-export function parseBackup(data: unknown): BackupFile {
-  if (!data || typeof data !== "object" || Array.isArray(data)) {
+export function parseBackup(raw: unknown): BackupFile {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new Error("Backup payload must be a JSON object");
   }
-  const candidate = data as Partial<BackupFile>;
+  const candidate = raw as Partial<BackupFile>;
   if (candidate.version !== BACKUP_VERSION) {
     throw new Error(`Unsupported backup version (expected ${BACKUP_VERSION})`);
   }

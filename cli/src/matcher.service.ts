@@ -5,7 +5,7 @@
  * OpenAPI {param} and :param support, and parameter extraction.
  */
 
-import type { FackRuntimeRoute } from "../../lib/bundle/bundle.type";
+import type { FackRuntimeRoute } from "../../lib/bundle/types";
 import type { ServerRouteMatch } from "./cli.type";
 
 interface CompiledRoute {

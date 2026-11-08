@@ -5,7 +5,7 @@
  */
 
 import crypto from "node:crypto";
-import type { FackRuntimeMockState } from "../../lib/bundle/bundle.type";
+import type { FackRuntimeMockState } from "../../lib/bundle/types";
 
 export class MockStore {
   private collections: Map<string, Map<string, Record<string, unknown>>> =

@@ -62,7 +62,7 @@ async function handleMockRequest(
       return buildResponse(
         {
           error: true,
-          message: `Workspace namespace matching path "/${fullPath}" not found`,
+          message: `Project namespace matching path "/${fullPath}" not found`,
           hint: "Check that your namespace slug and endpoint paths are correctly configured.",
         },
         404,
@@ -74,7 +74,7 @@ async function handleMockRequest(
     // ── System Auth Endpoint Interception ──────────────────────────────
     if (requestPath === "/_auth/token" && request.method === "POST") {
       const authLimit = rateLimiter.check(`mock_auth:${clientIp}`, 60, 60);
-      if (!authLimit.allowed) {
+      if (!authLimit.isAllowed) {
         return buildResponse(
           {
             error: true,
@@ -124,7 +124,7 @@ async function handleMockRequest(
 
     // ── General Mock Request Rate Limiting ────────────────────────────
     const requestLimit = rateLimiter.check(`mock_req:${clientIp}`, 1200, 60);
-    if (!requestLimit.allowed) {
+    if (!requestLimit.isAllowed) {
       return buildResponse(
         {
           error: true,

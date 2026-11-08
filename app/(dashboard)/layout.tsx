@@ -2,7 +2,7 @@ import * as React from "react";
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
 import { AuthProvider } from "@/components/auth/AuthProvider";
-import { CommandMenu } from "@/components/command-menu";
+import { CommandMenu } from "@/components/CommandMenu";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { RootSidebar } from "@/components/dashboard/RootSidebar";
 import { FileManagerSidebar } from "@/components/file-manager/FileManagerSidebar";

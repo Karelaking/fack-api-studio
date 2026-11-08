@@ -10,7 +10,7 @@ import http from "node:http";
 import type {
   FackRuntimeBundle,
   FackRuntimeRoute,
-} from "../../lib/bundle/bundle.type";
+} from "../../lib/bundle/types";
 import { RouteMatcher } from "./matcher.service";
 import { MockStore } from "./mock-store.service";
 import { generatePayload, processQueryParameters } from "../../lib/mock-engine";

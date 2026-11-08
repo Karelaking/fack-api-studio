@@ -14,7 +14,7 @@ import {
 interface ProviderChipProps {
   provider: FakerProvider;
   /** Whether a route is currently selected (enables keyboard shortcut adding). */
-  routeSelected: boolean;
+  isRouteSelected: boolean;
   /** Called when chip is activated via keyboard when a route is selected. */
   onKeyboardAdd: (providerValue: string) => void;
 }
@@ -30,7 +30,7 @@ interface ProviderChipProps {
 export const ProviderChip = React.memo(
   ({
     provider,
-    routeSelected,
+    isRouteSelected,
     onKeyboardAdd,
   }: ProviderChipProps): React.JSX.Element => {
     const { attributes, listeners, setNodeRef, transform, isDragging } =
@@ -50,7 +50,7 @@ export const ProviderChip = React.memo(
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-      if ((e.key === " " || e.key === "Enter") && routeSelected) {
+      if ((e.key === " " || e.key === "Enter") && isRouteSelected) {
         e.preventDefault();
         e.stopPropagation();
         onKeyboardAdd(provider.value);
@@ -64,7 +64,7 @@ export const ProviderChip = React.memo(
     };
 
     const handleClick = () => {
-      if (routeSelected) {
+      if (isRouteSelected) {
         onKeyboardAdd(provider.value);
       }
     };
@@ -82,16 +82,16 @@ export const ProviderChip = React.memo(
                 "group bg-card border-border/70 hover:border-primary/50 hover:bg-primary/5 active:scale-[0.98] relative flex min-h-11 w-full cursor-grab touch-action-none flex-col justify-between rounded-lg border p-2 text-left transition-[border-color,background-color,box-shadow,transform] duration-150 active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 isDragging &&
                   "border-primary/60 bg-primary/8 shadow-primary/10 shadow-lg scale-95",
-                routeSelected &&
+                isRouteSelected &&
                   "hover:ring-primary/20 hover:ring-1 cursor-pointer",
               )}
               aria-label={
-                routeSelected
+                isRouteSelected
                   ? `Add ${provider.label} to selected route`
                   : `${provider.label} provider, drag to add`
               }
               title={
-                routeSelected
+                isRouteSelected
                   ? `Click or press Space/Enter to add ${provider.label}`
                   : `Drag to add ${provider.label}`
               }
@@ -114,7 +114,7 @@ export const ProviderChip = React.memo(
           </span>
 
           {/* Shortcut hint badge when route selected */}
-          {routeSelected && (
+          {isRouteSelected && (
             <span
               aria-hidden="true"
               className="bg-primary/15 text-primary absolute top-1.5 right-1.5 translate-x-1 rounded px-1 py-0.5 text-[9px] font-bold tracking-wider uppercase opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100"

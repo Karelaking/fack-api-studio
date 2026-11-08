@@ -62,7 +62,7 @@ function statusFromRequest(request: DeviceRequestSummary): {
   if (request.status === "denied") {
     return { phase: "denied" };
   }
-  if (request.expired) {
+  if (request.isExpired) {
     return {
       phase: "idle",
       error:

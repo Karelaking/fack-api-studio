@@ -16,20 +16,20 @@ export default function ActivityLogsPage(): React.JSX.Element {
     <PageShell>
       <PageHeading
         title="Activity Logs"
-        description="Every request your mock APIs serve, captured per workspace with its method, path, status, and latency."
+        description="Every request your mock APIs serve, captured per project with its method, path, status, and latency."
       />
 
       <EmptyState
         icon={<RiFileList3Line />}
         title="No requests recorded yet"
-        description="Request logs live inside each workspace. Open one and switch to Logs to watch traffic arrive as it happens."
+        description="Request logs live inside each project. Open one and switch to Logs to watch traffic arrive as it happens."
         action={
           <Button
             variant="outline"
             nativeButton={false}
             render={<Link href="/dashboard" />}
           >
-            Browse workspaces
+            Browse projects
           </Button>
         }
       />

@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { OPEN_AGENT_COMPOSER_EVENT } from "@/lib/ai/agent-events";
-import { useOptionalProject } from "@/components/project/ProjectContext";
+import { useOptionalProject } from "@/components/project/ProjectProvider";
 
 export function HeaderNewProjectButton(): React.JSX.Element | null {
   const pathname = usePathname();

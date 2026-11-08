@@ -13,7 +13,7 @@ interface RateLimitBucket {
 }
 
 export interface RateLimitResult {
-  allowed: boolean;
+  isAllowed: boolean;
   remaining: number;
   resetInSeconds: number;
 }
@@ -42,7 +42,7 @@ class InMemoryRateLimiter {
       const resetAt = now + windowSeconds * 1000;
       this.cache.set(key, { count: 1, resetAt }, { ttl: windowSeconds * 1000 });
       return {
-        allowed: true,
+        isAllowed: true,
         remaining: limit - 1,
         resetInSeconds: windowSeconds,
       };
@@ -51,7 +51,7 @@ class InMemoryRateLimiter {
     if (bucket.count >= limit) {
       const resetInSeconds = Math.ceil((bucket.resetAt - now) / 1000);
       return {
-        allowed: false,
+        isAllowed: false,
         remaining: 0,
         resetInSeconds: Math.max(resetInSeconds, 1),
       };
@@ -63,7 +63,7 @@ class InMemoryRateLimiter {
     });
     const resetInSeconds = Math.ceil((bucket.resetAt - now) / 1000);
     return {
-      allowed: true,
+      isAllowed: true,
       remaining: limit - bucket.count,
       resetInSeconds: Math.max(resetInSeconds, 1),
     };

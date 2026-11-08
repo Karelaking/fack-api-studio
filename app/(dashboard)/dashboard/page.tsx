@@ -7,12 +7,12 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Dashboard | Fack API",
   description:
-    "Manage your mock API workspaces, endpoints, routes, and request logs.",
+    "Manage your mock API projects, endpoints, routes, and request logs.",
 };
 
 /**
  * Dashboard Page.
- * Fetches workspace projects list on the server and mounts ProjectGrid.
+ * Fetches the project list on the server and mounts ProjectGrid.
  */
 export default async function DashboardPage() {
   const projects = await getProjects();

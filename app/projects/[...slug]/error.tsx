@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button";
 
 /**
- * Error boundary for the project workspace.
+ * Error boundary for the project page.
  * Catches runtime errors (DB failures, action errors, etc.) and provides
  * a retry mechanism without navigating away.
  */
@@ -32,7 +32,7 @@ export default function ProjectError({
           Something went wrong
         </h2>
         <p className="text-muted-foreground mt-2 max-w-md text-sm">
-          An unexpected error occurred while loading this workspace. This is
+          An unexpected error occurred while loading this project. This is
           usually temporary — try again or head back to the dashboard.
         </p>
         {error.digest && (
@@ -51,7 +51,7 @@ export default function ProjectError({
           className={buttonVariants({ variant: "outline", size: "sm" })}
         >
           <RiArrowLeftLine className="mr-2 h-4 w-4" />
-          Back to Workspaces
+          Back to Projects
         </Link>
       </div>
     </div>
