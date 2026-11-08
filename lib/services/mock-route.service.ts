@@ -6,6 +6,13 @@ import {
   setCachedRoutes,
   type CachedRoute,
 } from "@/lib/cache";
+import {
+  getSharedValue,
+  setSharedValue,
+  sharedKeys,
+} from "@/lib/cache/shared-store";
+import { recordCacheHit, recordCacheMiss } from "@/lib/metrics";
+import { singleFlight } from "@/lib/utils/single-flight";
 import { findMatchingRoute, type RouteMatchResult } from "@/lib/route-matcher";
 import { LoggerRegistry } from "@/lib/logger-registry";
 
@@ -43,28 +50,47 @@ export async function getProjectMockRoutes(
     return cachedRoutes;
   }
 
-  const projectEndpoints = await db.query.endpoints.findMany({
-    where: eq(endpoints.projectId, projectId),
-    with: {
-      routes: {
-        with: { webhooks: true },
+  const sharedRoutes = await getSharedValue<CachedRoute[]>(
+    sharedKeys.mockRoutes(projectId),
+  );
+  if (sharedRoutes) {
+    recordCacheHit("shared:mock-routes");
+    setCachedRoutes(projectId, sharedRoutes);
+    return sharedRoutes;
+  }
+  recordCacheMiss("shared:mock-routes");
+
+  const routes = await singleFlight(`mock-routes:${projectId}`, async () => {
+    const projectEndpoints = await db.query.endpoints.findMany({
+      where: eq(endpoints.projectId, projectId),
+      with: {
+        routes: {
+          with: { webhooks: true },
+        },
       },
-    },
+    });
+
+    const builtRoutes = projectEndpoints.flatMap((endpoint) =>
+      endpoint.routes.map((route) => ({
+        ...route,
+        endpoint: {
+          id: endpoint.id,
+          basePath: endpoint.basePath,
+          name: endpoint.name,
+        },
+        path: normalizePath(endpoint.basePath + route.path),
+      })),
+    );
+
+    setCachedRoutes(projectId, builtRoutes);
+    await setSharedValue(
+      sharedKeys.mockRoutes(projectId),
+      builtRoutes,
+      10 * 60,
+    );
+    return builtRoutes;
   });
 
-  const routes = projectEndpoints.flatMap((endpoint) =>
-    endpoint.routes.map((route) => ({
-      ...route,
-      endpoint: {
-        id: endpoint.id,
-        basePath: endpoint.basePath,
-        name: endpoint.name,
-      },
-      path: normalizePath(endpoint.basePath + route.path),
-    })),
-  );
-
-  setCachedRoutes(projectId, routes);
   return routes;
 }
 

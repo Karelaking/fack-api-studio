@@ -230,37 +230,70 @@ require deployment decisions.
   were moved to `drizzle/reference/` so they can no longer be mistaken for
   pending migrations. The SQLite PRAGMAs they describe are applied at connection
   time in `db/index.ts`.
+- **Shared caches and distributed rate limits** — `lib/cache/shared-store.ts`
+  adds an opt-in Redis layer (Upstash REST or `REDIS_URL`/ioredis) used by the
+  project, route, stateful-mock, negative-slug, and rate-limit paths. Without
+  Redis everything stays process-local, so single-instance installs are
+  unaffected. Values are `v8`-serialized so `Date` columns survive the
+  round-trip, and Redis failures are fail-open behind a 30s circuit breaker.
+- **Trusted-proxy client IPs** — `lib/security/client-ip.ts` ignores
+  `X-Forwarded-For` unless `TRUSTED_PROXY` explicitly names the deployment
+  (`vercel`, `cloudflare`, `any`, or a CIDR/address list). Docker Compose sets
+  the private ranges so the bundled nginx hop is trusted.
+- **Cache-stampede coalescing** — `lib/utils/single-flight.ts` shares one
+  in-flight promise per key across concurrent dashboard, resolver, route, and
+  stateful-mock reads.
+- **Hot-path metrics** — `lib/metrics.ts` records cache hit/miss counters and
+  request latency (average, max, p95) and logs a snapshot every 100 mock
+  requests.
 
-| Priority | Finding                                                                | Why it matters                                                                                                                                                                          | Recommendation                                                                                                                                                            |
-| -------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P0       | All caches are per-process (`LRUCache` on `globalThis`)                | In multi-instance/serverless deployments, invalidation only clears the instance that handled the write. Other instances serve stale projects/routes/state for up to the TTL (5–10 min). | Mount a shared driver through `unstorage` (Redis/Upstash) or publish cross-instance invalidation events. Until then, treat TTLs as the correctness window.                |
-| P0       | Rate limiter is per-process and `getClientIp` trusts `X-Forwarded-For` | Each instance allows the full limit, and a client can spoof a new IP per request to bypass it entirely.                                                                                 | Only trust `X-Forwarded-For` behind a configured trusted proxy (or use the platform header: Vercel/Cloudflare), then use a shared counter (Redis) for distributed limits. |
-| P1       | `request_logs` writes are SQLite writes                                | Local SQLite is single-writer. Enabling logging on a busy SQLite install serializes the `after()` batches.                                                                              | Keep logging disabled for SQLite unless needed, or make the Postgres log DB the default for high traffic. Batch size is already bounded.                                  |
-| P2       | Slug rename/delete staleness across instances                          | The studio project and mock project caches are keyed by slug with a 10-minute TTL; a rename only evicts the local instance.                                                             | Version snapshot keys by `project.updatedAt`/`version`, or shorten the slug TTL and rely on the resolver's batched lookup.                                                |
-| P2       | Dashboard cache stampede                                               | Any project mutation clears the whole per-user list cache. With many active users this can cause repeated list queries.                                                                 | Use stale-while-revalidate or per-project invalidation once the list is keyed more precisely.                                                                             |
-| P2       | `getProjectBySlug` return type erases relations                        | The action's declared return type is the base `Project` even though it used to include relations.                                                                                       | Now aligned with the narrowed query; keep relation-bearing reads in dedicated actions.                                                                                    |
-| P2       | No distributed negative-cache                                          | The 30s negative slug cache is also per-instance.                                                                                                                                       | Fine at current scale; share it if scans become a database load problem.                                                                                                  |
+| Priority | Finding                                                                | Status   | Resolution                                                                                                                                                         |
+| -------- | ---------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| P0       | All caches are per-process (`LRUCache` on `globalThis`)                | Resolved | Optional shared Redis store with explicit invalidation (`invalidateSharedProject`, state keys). TTLs remain the fallback correctness window when Redis is unset.   |
+| P0       | Rate limiter is per-process and `getClientIp` trusts `X-Forwarded-For` | Resolved | `getClientIp` denies forwarding headers by default and only trusts `TRUSTED_PROXY`; the limiter uses a shared `INCR`+`EXPIRE` Lua script when Redis is configured. |
+| P1       | `request_logs` writes are SQLite writes                                | Open     | Keep logging disabled for SQLite unless needed, or make the Postgres log DB the default for high traffic. Batch size is already bounded.                           |
+| P2       | Slug rename/delete staleness across instances                          | Resolved | Shared slug keys and negative cache are dropped by `invalidateSharedProject` on rename/delete; TTLs shortened by the shared layer.                                 |
+| P2       | Dashboard cache stampede                                               | Resolved | `singleFlight` coalesces concurrent list/slug/route/state reads; the shared cache adds a second layer in front of the database.                                    |
+| P2       | `getProjectBySlug` return type erases relations                        | Resolved | Now aligned with the narrowed query; keep relation-bearing reads in dedicated actions.                                                                             |
+| P2       | No distributed negative-cache                                          | Resolved | Negative slug entries are written to Redis for 30s and read in one `MGET` with the candidate prefixes.                                                             |
 
 ---
 
 ## 4. Suggested next steps (highest leverage)
 
-1. **Decide the deployment model.** If multiple instances are expected, move
-   project/route/state caches and rate limits to a shared store. This is the
-   single largest remaining scalability constraint.
-2. **Harden client identity.** Add explicit trusted-proxy configuration, then
-   key rate limits on an authenticated user or trusted client IP.
-3. **Instrument the hot path** (query count per mock request, cache hit ratio,
-   p95 latency, log rows/day) before making further micro-optimizations.
+Completed:
+
+1. **Deployment model decided and implemented.** `lib/cache/shared-store.ts`
+   supports Upstash REST (Vercel) and self-hosted Redis (Docker Compose). Set
+   `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`, or `REDIS_URL`.
+2. **Client identity hardened.** `TRUSTED_PROXY` is required before forwarding
+   headers are read; rate limits are keyed on the resolved client IP and shared
+   across instances.
+3. **Hot path instrumented.** `lib/metrics.ts` tracks cache hit ratio and
+   request latency and logs a snapshot every 100 mock requests.
+
+Remaining:
+
+4. **Request-log storage.** Keep `request_logs` on SQLite only for low-traffic
+   installs, or point `LOGS_POSTGRES_URL` at Postgres before enabling logging
+   at scale.
+5. **Metrics export.** The in-process snapshot is diagnostic only; add a
+   protected `/api/metrics` route or an OpenTelemetry exporter if you need
+   dashboards and alerting.
 
 ---
 
 ## 5. Changed files
 
 ```
-app/api/mock/[...slug]/route.ts            static SignJWT, direct body read
+app/api/cli/auth/device/route.ts           await shared rate limit
+app/api/cli/auth/token/route.ts            await shared rate limit
+app/api/mock/[...slug]/route.ts            static SignJWT, direct body read, latency metrics
+app/cli/authorize/actions.ts               await shared rate limit
 components/dashboard/ProjectGrid.tsx       narrowed relation type
 db/schema.ts                               unique state index, redundant index drop
+docker-compose.yml                         redis:7-alpine service, REDIS_URL, TRUSTED_PROXY
+.env.example                               shared Redis + trusted-proxy documentation
 drizzle/0015_mock_states_unique.sql        dedupe + unique index (journaled)
 drizzle/0016_drop_redundant_indexes.sql    drop duplicate slug/FK indexes (journaled)
 drizzle/meta/0015_snapshot.json            drizzle snapshot
@@ -268,19 +301,28 @@ drizzle/meta/0016_snapshot.json            drizzle snapshot
 drizzle/meta/_journal.json                 journal entries
 drizzle/reference/*.sql                    reference-only SQL moved out of migrations
 lib/actions/logs.ts                        SQL-side payload trim
-lib/actions/projects.ts                    per-user cache, narrow queries
-lib/cache.ts                               split project caches, byte-bounded payload caches
+lib/actions/projects.ts                    per-user cache, narrow queries, shared read-through
+lib/cache.ts                               split project caches, byte-bounded payload caches, metrics, shared invalidation
+lib/cache/shared-store.ts                  new Upstash/ioredis shared store, v8 serialization, fail-open
+lib/metrics.ts                             new cache hit/miss + request latency counters
 lib/mock-engine.ts                         compact large JSON, parse cache
 lib/mock-handler-core.ts                   static imports, bounded logs
 lib/route-matcher.ts                       WeakMap compiled matchers
+lib/security/client-ip.ts                  new trusted-proxy IP resolution
+lib/security/rate-limiter.service.ts       async shared/local sliding window
 lib/services/canvas.service.ts             Map-based node reconciliation
 lib/services/mock-request-input.service.ts parse cache
-lib/services/mock-route.service.ts         cached enabled route subset
-lib/services/project-resolver.service.ts   bounded candidates, flat cache
-lib/stateful-mock.ts                       read cache + atomic upsert
+lib/services/mock-route.service.ts         cached enabled route subset, shared read-through
+lib/services/project-resolver.service.ts   bounded candidates, shared positive/negative cache
+lib/stateful-mock.ts                       read cache + atomic upsert, shared read-through
 lib/utils/json-parse-cache.ts              new bounded parse cache
+lib/utils/single-flight.ts                 new stampede coalescing
 next.config.ts                             lucide-react tree shaking
+test/client-ip.test.ts                     new trusted-proxy coverage
 test/project-resolver.test.ts              use mock project cache
+test/rate-limiter.test.ts                  async shared/local limiter
+test/setup.ts                              clear Redis/proxy env for isolation
+test/single-flight.test.ts                 new coalescing coverage
 test/stateful-mock.test.ts                 new upsert/invalidation coverage
 ```
 

@@ -14,6 +14,13 @@ for (const suffix of ["", "-journal", "-wal", "-shm"]) {
 process.env.DATABASE_URL = `file:${testDatabasePath}`;
 delete process.env.DATABASE_AUTH_TOKEN;
 
+// Tests must never talk to a real Redis. Clearing these keeps the shared store
+// and rate limiter on their in-process fallbacks.
+delete process.env.REDIS_URL;
+delete process.env.UPSTASH_REDIS_REST_URL;
+delete process.env.UPSTASH_REDIS_REST_TOKEN;
+delete process.env.TRUSTED_PROXY;
+
 vi.mock("@clerk/nextjs/server", () => ({
   auth: Object.assign(
     vi.fn(async () => ({ userId: "user_test_owner" })),

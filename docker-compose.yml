@@ -40,9 +40,29 @@ services:
       - DATABASE_URL=file:/data/fack.db
       - FACK_DATA_DIR=/data
       - LOGS_POSTGRES_URL=postgresql://fack_user:fack_password@postgres:5432/fack_logs
+      - REDIS_URL=redis://redis:6379
+      # nginx is the only hop in front of the app; trust Docker's private ranges
+      # so IP rate limits see the real client address from X-Forwarded-For.
+      - TRUSTED_PROXY=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: fack-redis
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      # Bind to loopback only: the app reaches Redis over the Compose network.
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     restart: unless-stopped
 
   nginx:

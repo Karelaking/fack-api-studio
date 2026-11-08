@@ -10,11 +10,22 @@ import {
   invalidateMockCollection,
   invalidateMockItem,
 } from "@/lib/cache";
+import {
+  getSharedValue,
+  setSharedValue,
+  sharedKeys,
+} from "@/lib/cache/shared-store";
+import { recordCacheHit, recordCacheMiss } from "@/lib/metrics";
+import { singleFlight } from "@/lib/utils/single-flight";
 
 export interface MockStateItem {
   id: string; // The primary key (from the payload, or generated)
   [key: string]: unknown;
 }
+
+/** Stateful reads are invalidated on write, so the TTL is only a safety net. */
+const COLLECTION_TTL_SECONDS = 60;
+const ITEM_TTL_SECONDS = 5 * 60;
 
 /**
  * Persist a new item into the stateful mock storage.
@@ -58,6 +69,11 @@ export async function saveMockItem(
   // The collection listing changes; the individual item is now known.
   invalidateMockCollection(projectId, collection);
   setCachedMockItem(projectId, collection, finalKey, finalPayload);
+  await setSharedValue(
+    sharedKeys.mockItem(projectId, collection, finalKey),
+    finalPayload,
+    ITEM_TTL_SECONDS,
+  );
 
   return finalPayload;
 }
@@ -75,6 +91,16 @@ export async function getMockItem(
     return cached as MockStateItem;
   }
 
+  const sharedItem = await getSharedValue<MockStateItem>(
+    sharedKeys.mockItem(projectId, collection, itemKey),
+  );
+  if (sharedItem) {
+    recordCacheHit("shared:mock-item");
+    setCachedMockItem(projectId, collection, itemKey, sharedItem);
+    return sharedItem;
+  }
+  recordCacheMiss("shared:mock-item");
+
   // Avoid a DB round-trip when the collection listing is already cached.
   const cachedCollection = getCachedMockCollection(projectId, collection);
   if (cachedCollection) {
@@ -90,23 +116,36 @@ export async function getMockItem(
     }
   }
 
-  const row = await db.query.mockStates.findFirst({
-    where: and(
-      eq(mockStates.projectId, projectId),
-      eq(mockStates.collection, collection),
-      eq(mockStates.itemKey, itemKey),
-    ),
-  });
+  const parsed = await singleFlight(
+    `mock-item:${projectId}:${collection}:${itemKey}`,
+    async () => {
+      const row = await db.query.mockStates.findFirst({
+        where: and(
+          eq(mockStates.projectId, projectId),
+          eq(mockStates.collection, collection),
+          eq(mockStates.itemKey, itemKey),
+        ),
+      });
 
-  if (!row) return null;
+      if (!row) return null;
 
-  try {
-    const parsed = JSON.parse(row.data) as MockStateItem;
-    setCachedMockItem(projectId, collection, itemKey, parsed);
-    return parsed;
-  } catch {
-    return null;
-  }
+      try {
+        return JSON.parse(row.data) as MockStateItem;
+      } catch {
+        return null;
+      }
+    },
+  );
+
+  if (!parsed) return null;
+
+  setCachedMockItem(projectId, collection, itemKey, parsed);
+  await setSharedValue(
+    sharedKeys.mockItem(projectId, collection, itemKey),
+    parsed,
+    ITEM_TTL_SECONDS,
+  );
+  return parsed;
 }
 
 /**
@@ -121,25 +160,45 @@ export async function getMockCollection(
     return cached as MockStateItem[];
   }
 
-  const rows = await db.query.mockStates.findMany({
-    where: and(
-      eq(mockStates.projectId, projectId),
-      eq(mockStates.collection, collection),
-    ),
-    orderBy: (states, { desc }) => [desc(states.createdAt)],
-  });
+  const sharedCollection = await getSharedValue<MockStateItem[]>(
+    sharedKeys.mockCollection(projectId, collection),
+  );
+  if (sharedCollection) {
+    recordCacheHit("shared:mock-collection");
+    setCachedMockCollection(projectId, collection, sharedCollection);
+    return sharedCollection;
+  }
+  recordCacheMiss("shared:mock-collection");
 
-  const items = rows
-    .map((r) => {
-      try {
-        return JSON.parse(r.data) as MockStateItem;
-      } catch {
-        return null;
-      }
-    })
-    .filter(Boolean) as MockStateItem[];
+  const items = await singleFlight(
+    `mock-collection:${projectId}:${collection}`,
+    async () => {
+      const rows = await db.query.mockStates.findMany({
+        where: and(
+          eq(mockStates.projectId, projectId),
+          eq(mockStates.collection, collection),
+        ),
+        orderBy: (states, { desc }) => [desc(states.createdAt)],
+      });
+
+      return rows
+        .map((r) => {
+          try {
+            return JSON.parse(r.data) as MockStateItem;
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean) as MockStateItem[];
+    },
+  );
 
   setCachedMockCollection(projectId, collection, items);
+  await setSharedValue(
+    sharedKeys.mockCollection(projectId, collection),
+    items,
+    COLLECTION_TTL_SECONDS,
+  );
   return items;
 }
 

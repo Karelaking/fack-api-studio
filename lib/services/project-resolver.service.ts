@@ -7,6 +7,13 @@ import {
   isNegativeSlug,
   setNegativeSlug,
 } from "@/lib/cache";
+import {
+  getSharedValues,
+  setSharedValue,
+  sharedKeys,
+} from "@/lib/cache/shared-store";
+import { recordCacheHit, recordCacheMiss } from "@/lib/metrics";
+import { singleFlight } from "@/lib/utils/single-flight";
 import { LoggerRegistry } from "@/lib/logger-registry";
 
 export interface ProjectResolution {
@@ -62,7 +69,7 @@ export async function resolveProjectFromSlug(
   const sanitizedSegments = slugSegments.filter(Boolean);
   const candidates = getCandidateSlugs(sanitizedSegments);
 
-  // Check positive cache first
+  // Check the process-local cache first
   for (const candidate of candidates) {
     const cachedProject = getCachedMockProject(candidate);
     if (cachedProject) {
@@ -73,20 +80,58 @@ export async function resolveProjectFromSlug(
     }
   }
 
-  // Filter out candidates already verified as non-existent (Negative Caching / Penetration Defense)
-  const activeCandidates = candidates.filter(
+  // Then the shared cache, in one MGET for every candidate prefix.
+  const sharedProjects = await getSharedValues<Project>(
+    candidates.map((candidate) => sharedKeys.mockProjectBySlug(candidate)),
+  );
+
+  for (let index = 0; index < candidates.length; index += 1) {
+    const project = sharedProjects[index];
+    if (project) {
+      recordCacheHit("shared:mock-project");
+      setCachedMockProject(candidates[index], project);
+      projectResolverLogger.debug(
+        `Resolved project slug from shared cache: ${candidates[index]}`,
+      );
+      return createResolution(project, candidates[index], sanitizedSegments);
+    }
+  }
+  recordCacheMiss("shared:mock-project");
+
+  // Filter out candidates already verified as non-existent (Negative Caching /
+  // Penetration Defense), locally and across instances.
+  const locallyActive = candidates.filter(
     (candidate) => !isNegativeSlug(candidate),
+  );
+
+  if (locallyActive.length === 0) {
+    return null;
+  }
+
+  const sharedNegatives = await getSharedValues<boolean>(
+    locallyActive.map((candidate) => sharedKeys.negativeSlug(candidate)),
+  );
+
+  const activeCandidates = locallyActive.filter(
+    (_candidate, index) => sharedNegatives[index] !== true,
   );
 
   if (activeCandidates.length === 0) {
     return null;
   }
 
-  const foundProjects = await db.query.projects.findMany({
-    where: inArray(projects.slug, activeCandidates),
-  });
-
-  const foundProjectSlugs = new Set(foundProjects.map((p) => p.slug));
+  const { foundProjects, foundProjectSlugs } = await singleFlight(
+    `resolve-slug:${activeCandidates.join("|")}`,
+    async () => {
+      const rows = await db.query.projects.findMany({
+        where: inArray(projects.slug, activeCandidates),
+      });
+      return {
+        foundProjects: rows,
+        foundProjectSlugs: new Set(rows.map((project) => project.slug)),
+      };
+    },
+  );
 
   for (const candidate of activeCandidates) {
     const project = foundProjects.find(
@@ -97,14 +142,21 @@ export async function resolveProjectFromSlug(
         `Resolved project slug (DB batch): ${project.slug}`,
       );
       setCachedMockProject(candidate, project);
+      await setSharedValue(
+        sharedKeys.mockProjectBySlug(candidate),
+        project,
+        10 * 60,
+      );
       return createResolution(project, candidate, sanitizedSegments);
     }
   }
 
-  // Record verified misses in negative slug cache to protect DB under sustained scanner load
+  // Record verified misses in both negative caches to protect the database
+  // under sustained scanner load.
   for (const candidate of activeCandidates) {
     if (!foundProjectSlugs.has(candidate)) {
       setNegativeSlug(candidate);
+      await setSharedValue(sharedKeys.negativeSlug(candidate), true, 30);
     }
   }
 

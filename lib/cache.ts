@@ -13,6 +13,13 @@ import { LRUCache } from "lru-cache";
 import type { Project, Route, Webhook, Scenario, Endpoint } from "@/db/schema";
 import { LoggerRegistry } from "@/lib/logger-registry";
 import { clearMatcherCache } from "@/lib/route-matcher";
+import {
+  clearSharedCache,
+  deleteSharedKeys,
+  invalidateSharedProject,
+  sharedKeys,
+} from "@/lib/cache/shared-store";
+import { recordCacheHit, recordCacheMiss } from "@/lib/metrics";
 
 const cacheTrace = LoggerRegistry.getTrace("cache");
 
@@ -496,9 +503,24 @@ export class CacheManager {
 
 const cacheManager = CacheManager.getInstance();
 
+function recordLookup<T>(
+  cacheName: string,
+  value: T | undefined,
+): T | undefined {
+  if (value === undefined) {
+    recordCacheMiss(cacheName);
+  } else {
+    recordCacheHit(cacheName);
+  }
+  return value;
+}
+
 export function getCachedProjectsList(userId?: string): Project[] | undefined {
   cacheTrace.traceCall("getCachedProjectsList");
-  const cachedProjects = cacheManager.getProjectsList(userId);
+  const cachedProjects = recordLookup(
+    "projects-list",
+    cacheManager.getProjectsList(userId),
+  );
   cacheTrace.traceSuccess(
     "getCachedProjectsList",
     cachedProjects ? `${cachedProjects.length} projects` : "undefined",
@@ -516,7 +538,7 @@ export function setCachedProjectsList(
 }
 
 export function getCachedMockProject(slug: string): Project | undefined {
-  return cacheManager.getMockProjectBySlug(slug);
+  return recordLookup("mock-project", cacheManager.getMockProjectBySlug(slug));
 }
 
 export function setCachedMockProject(slug: string, project: Project): void {
@@ -525,7 +547,10 @@ export function setCachedMockProject(slug: string, project: Project): void {
 
 export function getCachedProjectBySlug(slug: string): Project | undefined {
   cacheTrace.traceCall("getCachedProjectBySlug", slug);
-  const cachedProject = cacheManager.getProjectBySlug(slug);
+  const cachedProject = recordLookup(
+    "project-by-slug",
+    cacheManager.getProjectBySlug(slug),
+  );
   cacheTrace.traceSuccess(
     "getCachedProjectBySlug",
     cachedProject ? cachedProject.name : "undefined",
@@ -543,7 +568,10 @@ export function getCachedProjectRoutes(
   projectId: string,
 ): (Route & { endpoint: Endpoint })[] | undefined {
   cacheTrace.traceCall("getCachedProjectRoutes", projectId);
-  const cachedRoutes = cacheManager.getProjectRoutes(projectId);
+  const cachedRoutes = recordLookup(
+    "project-routes",
+    cacheManager.getProjectRoutes(projectId),
+  );
   cacheTrace.traceSuccess(
     "getCachedProjectRoutes",
     cachedRoutes ? `${cachedRoutes.length} routes` : "undefined",
@@ -566,7 +594,10 @@ export function setCachedProjectRoutes(
 
 export function getCachedRoutes(projectId: string): CachedRoute[] | undefined {
   cacheTrace.traceCall("getCachedRoutes", projectId);
-  const cachedRoutes = cacheManager.getRoutes(projectId);
+  const cachedRoutes = recordLookup(
+    "mock-routes",
+    cacheManager.getRoutes(projectId),
+  );
   cacheTrace.traceSuccess(
     "getCachedRoutes",
     cachedRoutes ? `${cachedRoutes.length} routes` : "undefined",
@@ -608,12 +639,15 @@ export function setNegativeSlug(slug: string): void {
 
 export function getCachedEndpoints(projectId: string): unknown[] | undefined {
   cacheTrace.traceCall("getCachedEndpoints", projectId);
-  const res = cacheManager.getEndpoints(projectId);
+  const cachedEndpoints = recordLookup(
+    "endpoints",
+    cacheManager.getEndpoints(projectId),
+  );
   cacheTrace.traceSuccess(
     "getCachedEndpoints",
-    res ? `${res.length} endpoints` : "undefined",
+    cachedEndpoints ? `${cachedEndpoints.length} endpoints` : "undefined",
   );
-  return res;
+  return cachedEndpoints;
 }
 
 export function setCachedEndpoints(
@@ -631,12 +665,15 @@ export function setCachedEndpoints(
 
 export function getCachedCanvasState(projectId: string): unknown {
   cacheTrace.traceCall("getCachedCanvasState", projectId);
-  const res = cacheManager.getCanvasState(projectId);
+  const cachedCanvasState = recordLookup(
+    "canvas-state",
+    cacheManager.getCanvasState(projectId),
+  );
   cacheTrace.traceSuccess(
     "getCachedCanvasState",
-    res ? "cached state" : "undefined",
+    cachedCanvasState ? "cached state" : "undefined",
   );
-  return res;
+  return cachedCanvasState;
 }
 
 export function setCachedCanvasState(projectId: string, state: unknown): void {
@@ -647,7 +684,10 @@ export function setCachedCanvasState(projectId: string, state: unknown): void {
 
 export function getCachedMockData(routeId: string): unknown[] | undefined {
   cacheTrace.traceCall("getCachedMockData", routeId);
-  const cachedMockData = cacheManager.getMockData(routeId);
+  const cachedMockData = recordLookup(
+    "mock-data",
+    cacheManager.getMockData(routeId),
+  );
   cacheTrace.traceSuccess(
     "getCachedMockData",
     cachedMockData ? `${cachedMockData.length} objects` : "undefined",
@@ -667,7 +707,10 @@ export function setCachedMockData(routeId: string, payload: unknown[]): void {
 
 export function getCachedSingleMockData(routeId: string): unknown {
   cacheTrace.traceCall("getCachedSingleMockData", routeId);
-  const cachedSingleMockData = cacheManager.getSingleMockData(routeId);
+  const cachedSingleMockData = recordLookup(
+    "single-mock-data",
+    cacheManager.getSingleMockData(routeId),
+  );
   cacheTrace.traceSuccess(
     "getCachedSingleMockData",
     cachedSingleMockData ? "object" : "undefined",
@@ -695,7 +738,10 @@ export function getCachedPageData(
     `page: ${page}`,
     `limit: ${limit}`,
   );
-  const cachedPage = cacheManager.getPageData(routeId, page, limit);
+  const cachedPage = recordLookup(
+    "page-data",
+    cacheManager.getPageData(routeId, page, limit),
+  );
   cacheTrace.traceSuccess(
     "getCachedPageData",
     cachedPage ? `hit (${cachedPage.length} items)` : "miss",
@@ -735,9 +781,29 @@ export function prunePageCache(
   cacheTrace.traceSuccess("prunePageCache", "void");
 }
 
+function scheduleSharedInvalidation(task: () => Promise<void>): void {
+  const safeTask = async (): Promise<void> => {
+    try {
+      await task();
+    } catch (error) {
+      cacheTrace.traceError("shared cache invalidation", error);
+    }
+  };
+
+  void (async () => {
+    try {
+      const { after } = await import("next/server");
+      after(safeTask);
+    } catch {
+      await safeTask();
+    }
+  })();
+}
+
 export function clearCache(): void {
   cacheTrace.traceCall("clearCache");
   cacheManager.clearAll();
+  scheduleSharedInvalidation(clearSharedCache);
   cacheTrace.traceSuccess("clearCache", "void");
 }
 
@@ -747,6 +813,9 @@ export function clearProjectCache(
 ): void {
   cacheTrace.traceCall("clearProjectCache", projectId ?? "all");
   cacheManager.invalidateProject(projectId, projectSlug);
+  scheduleSharedInvalidation(() =>
+    invalidateSharedProject(projectId, projectSlug),
+  );
   cacheTrace.traceSuccess("clearProjectCache", "void");
 }
 
@@ -762,7 +831,10 @@ export function getCachedMockCollection(
   projectId: string,
   collection: string,
 ): unknown[] | undefined {
-  return cacheManager.getMockCollection(projectId, collection);
+  return recordLookup(
+    "mock-collection",
+    cacheManager.getMockCollection(projectId, collection),
+  );
 }
 
 export function setCachedMockCollection(
@@ -778,7 +850,10 @@ export function getCachedMockItem(
   collection: string,
   itemKey: string,
 ): unknown {
-  return cacheManager.getMockItem(projectId, collection, itemKey);
+  return recordLookup(
+    "mock-item",
+    cacheManager.getMockItem(projectId, collection, itemKey),
+  );
 }
 
 export function setCachedMockItem(
@@ -795,6 +870,9 @@ export function invalidateMockCollection(
   collection: string,
 ): void {
   cacheManager.invalidateMockCollection(projectId, collection);
+  scheduleSharedInvalidation(() =>
+    deleteSharedKeys(sharedKeys.mockCollection(projectId, collection)),
+  );
 }
 
 export function invalidateMockItem(
@@ -803,4 +881,7 @@ export function invalidateMockItem(
   itemKey: string,
 ): void {
   cacheManager.invalidateMockItem(projectId, collection, itemKey);
+  scheduleSharedInvalidation(() =>
+    deleteSharedKeys(sharedKeys.mockItem(projectId, collection, itemKey)),
+  );
 }

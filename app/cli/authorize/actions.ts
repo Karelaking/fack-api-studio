@@ -49,7 +49,7 @@ export async function inspectDeviceCode(
 ): Promise<AuthorizeResult> {
   const userId = await requireUserId();
 
-  const rate = rateLimiter.check(`inspect_code:${userId}`, 20, 300);
+  const rate = await rateLimiter.check(`inspect_code:${userId}`, 20, 300);
   if (!rate.isAllowed) {
     return {
       ok: false,

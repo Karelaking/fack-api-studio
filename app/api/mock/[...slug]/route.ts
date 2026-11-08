@@ -7,6 +7,7 @@ import { LoggerRegistry } from "@/lib/logger-registry";
 import { getMockJwtSecret } from "@/lib/mock-jwt";
 import { toStr } from "@/lib/utils/coerce";
 import { getClientIp, rateLimiter } from "@/lib/security/rate-limiter.service";
+import { maybeLogMetrics, recordRequestDuration } from "@/lib/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -21,9 +22,15 @@ const mockTrace = LoggerRegistry.getTrace("mock");
 function createHandler(method: string) {
   return async function (request: NextRequest, context: RouteContext) {
     mockTrace.traceCall(method, request.nextUrl.pathname);
-    const response = await handleMockRequest(request, context);
-    mockTrace.traceSuccess(method, `Status: ${response.status}`);
-    return response;
+    const startedAt = performance.now();
+    try {
+      const response = await handleMockRequest(request, context);
+      mockTrace.traceSuccess(method, `Status: ${response.status}`);
+      return response;
+    } finally {
+      recordRequestDuration(performance.now() - startedAt);
+      maybeLogMetrics();
+    }
   };
 }
 
@@ -73,7 +80,11 @@ async function handleMockRequest(
 
     // ── System Auth Endpoint Interception ──────────────────────────────
     if (requestPath === "/_auth/token" && request.method === "POST") {
-      const authLimit = rateLimiter.check(`mock_auth:${clientIp}`, 60, 60);
+      const authLimit = await rateLimiter.check(
+        `mock_auth:${clientIp}`,
+        60,
+        60,
+      );
       if (!authLimit.isAllowed) {
         return buildResponse(
           {
@@ -123,7 +134,11 @@ async function handleMockRequest(
     }
 
     // ── General Mock Request Rate Limiting ────────────────────────────
-    const requestLimit = rateLimiter.check(`mock_req:${clientIp}`, 1200, 60);
+    const requestLimit = await rateLimiter.check(
+      `mock_req:${clientIp}`,
+      1200,
+      60,
+    );
     if (!requestLimit.isAllowed) {
       return buildResponse(
         {
