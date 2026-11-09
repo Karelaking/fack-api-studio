@@ -383,7 +383,7 @@ function CardFrame({
   children: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <div className="w-full max-w-[440px]">
+    <div className="w-full max-w-110">
       <div className="bg-card text-card-foreground ring-foreground/10 rounded-xl px-6 py-6 shadow-sm ring-1 sm:px-7 sm:py-7">
         {children}
       </div>

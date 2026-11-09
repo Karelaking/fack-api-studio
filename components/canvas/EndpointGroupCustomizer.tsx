@@ -68,112 +68,99 @@ const PRESET_COLORS: readonly {
   },
 ];
 
-const CURATED_CATEGORIES = {
-  common: [
-    "Folder01Icon",
-    "Folder02Icon",
-    "FolderLibraryIcon",
-    "FolderCodeIcon",
-    "DatabaseIcon",
-    "Server01Icon",
-    "GlobeIcon",
-    "CloudIcon",
-    "UserIcon",
-    "UserGroupIcon",
-    "Shield01Icon",
-    "LockIcon",
-    "Key01Icon",
-    "ShoppingBag01Icon",
-    "CreditCardIcon",
-    "ChartLineData01Icon",
-    "CodeIcon",
-    "TerminalIcon",
-    "Notification01Icon",
-    "Mail01Icon",
-    "Settings01Icon",
-    "CpuIcon",
-    "Layers01Icon",
-    "FileCodeIcon",
-  ],
-  auth: [
-    "UserIcon",
-    "UserGroupIcon",
-    "UserCheck01Icon",
-    "UserSharingIcon",
-    "LockIcon",
-    "LockPasswordIcon",
-    "Key01Icon",
-    "Shield01Icon",
-    "ShieldSecurityIcon",
-    "PassportIcon",
-    "FingerprintIcon",
-    "Security01Icon",
-    "FaceIdIcon",
-    "AiSecurityIcon",
-    "IdCardIcon",
-    "AccessIcon",
-  ],
-  commerce: [
-    "ShoppingBag01Icon",
-    "ShoppingCart01Icon",
-    "CreditCardIcon",
-    "InvoiceIcon",
-    "Coins01Icon",
-    "ReceiptIcon",
-    "Wallet01Icon",
-    "BankIcon",
-    "Tag01Icon",
-    "Discount01Icon",
-    "DollarCircleIcon",
-    "PackageIcon",
-    "DeliveryBox01Icon",
-    "Store01Icon",
-    "BarcodeIcon",
-    "Cash01Icon",
-  ],
-  data: [
-    "DatabaseIcon",
-    "DatabaseSyncIcon",
-    "DatabaseRestoreIcon",
-    "Server01Icon",
-    "ServerStack01Icon",
-    "HardDriveIcon",
-    "CloudIcon",
-    "CloudSyncIcon",
-    "Layers01Icon",
-    "Archive01Icon",
-    "File01Icon",
-    "TableIcon",
-    "ChartLineData01Icon",
-    "ChartBarLineIcon",
-    "ChartPieIcon",
-    "FilterIcon",
-  ],
-  dev: [
-    "CodeIcon",
-    "CodeSquareIcon",
-    "FileCodeIcon",
-    "TerminalIcon",
-    "GitBranchIcon",
-    "GitCommitIcon",
-    "GitPullRequestIcon",
-    "CpuIcon",
-    "MicroscopeIcon",
-    "Bug01Icon",
-    "Rocket01Icon",
-    "Plug01Icon",
-    "Sliders01Icon",
-    "Wrench01Icon",
-    "Settings01Icon",
-    "ApiIcon",
-  ],
-} as const;
-
-// Cache all icon keys ending in "Icon" for fast searching
-const ALL_ICON_KEYS: string[] = Object.keys(CoreIcons).filter(
+// All icon keys ending in "Icon" from @hugeicons/core-free-icons (6,791 unique icons)
+const ALL_ICON_KEYS: readonly string[] = Object.keys(CoreIcons).filter(
   (k) => k.endsWith("Icon") && !k.includes("FreeIcons"),
 );
 
+interface CategoryConfig {
+  id: string;
+  label: string;
+  match?: (k: string) => boolean;
+}
+
+const CATEGORIES: readonly CategoryConfig[] = [
+  { id: "all", label: "All (6,791)" },
+  {
+    id: "tech",
+    label: "Code & APIs",
+    match: (k: string) =>
+      /(code|web|browser|server|cloud|database|terminal|api|cpu|git|file|folder|network|link|domain|wifi|data|bug|app|system|docker|bot|ai|robot|binary|chip)/i.test(
+        k,
+      ),
+  },
+  {
+    id: "auth",
+    label: "Users & Security",
+    match: (k: string) =>
+      /(user|profile|account|group|team|person|avatar|people|member|contact|admin|lock|shield|key|protect|security|safe|guard|password|auth|fingerprint|face|privacy|firewall|badge|cert|passport)/i.test(
+        k,
+      ),
+  },
+  {
+    id: "commerce",
+    label: "Commerce & Pay",
+    match: (k: string) =>
+      /(shop|cart|bag|pay|card|money|cash|coin|wallet|bank|invoice|receipt|discount|tag|price|sale|store|dollar|crypto|currency|bill|finance|payment)/i.test(
+        k,
+      ),
+  },
+  {
+    id: "data",
+    label: "Data & Storage",
+    match: (k: string) =>
+      /(data|database|server|table|chart|graph|analytics|pie|bar|line|trend|metric|archive|storage|harddrive|sync|restore|backup|filter)/i.test(
+        k,
+      ),
+  },
+  {
+    id: "comm",
+    label: "Messages & Social",
+    match: (k: string) =>
+      /(mail|chat|message|notification|bell|phone|send|comment|share|inbox|email|call|bubble|sms)/i.test(
+        k,
+      ),
+  },
+  {
+    id: "media",
+    label: "Media & Design",
+    match: (k: string) =>
+      /(image|video|music|camera|audio|play|movie|sound|photo|gallery|film|speaker|mic|media|palette|brush|color|pen|vector|layer|crop|canvas)/i.test(
+        k,
+      ),
+  },
+  {
+    id: "tools",
+    label: "Tools & System",
+    match: (k: string) =>
+      /(settings|gear|sliders|wrench|tool|config|switch|toggle|power|refresh|clock|time|calendar|flag|pin|location|globe|compass|satellite)/i.test(
+        k,
+      ),
+  },
+];
+
+const CATEGORY_ICONS: Record<string, readonly string[]> = {
+  all: ALL_ICON_KEYS,
+  tech: ALL_ICON_KEYS.filter(CATEGORIES[1].match!),
+  auth: ALL_ICON_KEYS.filter(CATEGORIES[2].match!),
+  commerce: ALL_ICON_KEYS.filter(CATEGORIES[3].match!),
+  data: ALL_ICON_KEYS.filter(CATEGORIES[4].match!),
+  comm: ALL_ICON_KEYS.filter(CATEGORIES[5].match!),
+  media: ALL_ICON_KEYS.filter(CATEGORIES[6].match!),
+  tools: ALL_ICON_KEYS.filter(CATEGORIES[7].match!),
+};
+
+const PAGE_SIZE = 96;
+
+/**
+ * Endpoint Group Customization Modal Dialog.
+ *
+ * Allows configuring:
+ * - Group Name and Base Path
+ * - Accent Color token from preset swatches
+ * - Full browsing and search across ALL 6,791 Hugeicons with pagination and category filtering
+ * - Group deletion with cascade route count notice
+ */
 export function EndpointGroupCustomizer({
   endpoint,
   open,
@@ -186,13 +173,14 @@ export function EndpointGroupCustomizer({
   const [color, setColor] = React.useState(endpoint.color || "var(--primary)");
   const [icon, setIcon] = React.useState(endpoint.icon || "Folder01Icon");
 
-  const [activeCategoryTab, setActiveCategoryTab] = React.useState<
-    keyof typeof CURATED_CATEGORIES | "all"
-  >("common");
+  const [activeCategoryTab, setActiveCategoryTab] =
+    React.useState<string>("all");
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
   const [loading, setLoading] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
 
+  // Sync state when endpoint prop changes without useEffect
   const [prevEndpoint, setPrevEndpoint] = React.useState(endpoint);
   if (endpoint !== prevEndpoint) {
     setPrevEndpoint(endpoint);
@@ -201,24 +189,33 @@ export function EndpointGroupCustomizer({
     setColor(endpoint.color || "var(--primary)");
     setIcon(endpoint.icon || "Folder01Icon");
     setConfirmDelete(false);
+    setVisibleCount(PAGE_SIZE);
   }
 
-  // Compute displayed icons based on search query or active category
-  const displayedIcons = React.useMemo(() => {
+  // Filter full catalog based on active search or active category
+  const filteredIcons = React.useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (query) {
-      return ALL_ICON_KEYS.filter((k) => k.toLowerCase().includes(query)).slice(
-        0,
-        72,
-      );
+      return ALL_ICON_KEYS.filter((k) => k.toLowerCase().includes(query));
     }
-    if (activeCategoryTab in CURATED_CATEGORIES) {
-      return CURATED_CATEGORIES[
-        activeCategoryTab as keyof typeof CURATED_CATEGORIES
-      ];
-    }
-    return ALL_ICON_KEYS.slice(0, 72);
+    return CATEGORY_ICONS[activeCategoryTab] || ALL_ICON_KEYS;
   }, [searchQuery, activeCategoryTab]);
+
+  // Keep pagination bounded to filtered result count
+  const displayedIcons = React.useMemo(() => {
+    return filteredIcons.slice(0, visibleCount);
+  }, [filteredIcons, visibleCount]);
+
+  const hasMore = visibleCount < filteredIcons.length;
+
+  const handleLoadMore = (): void => {
+    setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredIcons.length));
+  };
+
+  const handleTabChange = (tabId: string): void => {
+    setActiveCategoryTab(tabId);
+    setVisibleCount(PAGE_SIZE);
+  };
 
   const handleSave = async (): Promise<void> => {
     if (!name.trim()) {
@@ -269,28 +266,28 @@ export function EndpointGroupCustomizer({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] max-w-xl flex-col gap-0 overflow-hidden p-0">
-        {/* Header */}
+      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col gap-0 p-0">
+        {/* Header with live Icon + Color preview badge */}
         <DialogHeader className="border-border/60 bg-muted/20 shrink-0 border-b p-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               <div
-                className="flex size-9 items-center justify-center rounded-lg border shadow-xs transition-colors"
+                className="flex size-11 shrink-0 items-center justify-center rounded-xl border shadow-xs transition-all"
                 style={{
                   backgroundColor: `color-mix(in oklch, ${color} 15%, transparent)`,
                   borderColor: `color-mix(in oklch, ${color} 30%, transparent)`,
                   color: color,
                 }}
               >
-                <HugeiconRenderer name={icon} size={20} />
+                <HugeiconRenderer name={icon} size={22} />
               </div>
               <div>
                 <DialogTitle className="text-base font-bold">
                   Customize Route Group
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground mt-0.5 text-xs">
-                  Assign an icon and theme color to visually distinguish this
-                  group on canvas.
+                  Pick an accent color and choose from 6,700+ Hugeicons to
+                  distinguish this group on canvas.
                 </DialogDescription>
               </div>
             </div>
@@ -366,7 +363,7 @@ export function EndpointGroupCustomizer({
             </div>
           </div>
 
-          {/* Section 3: Hugeicons Icon Library */}
+          {/* Section 3: Hugeicons Icon Library (All 6,791 Icons) */}
           <div className="border-border/40 space-y-2.5 border-t pt-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
@@ -375,11 +372,13 @@ export function EndpointGroupCustomizer({
                   aria-hidden="true"
                 />
                 <Label className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
-                  Hugeicons Library (6,700+ Icons)
+                  Hugeicons Catalog ({ALL_ICON_KEYS.length.toLocaleString()}{" "}
+                  Icons)
                 </Label>
               </div>
               <span className="text-mini text-muted-foreground font-mono">
-                Selected: {icon}
+                Selected:{" "}
+                <span className="text-foreground font-semibold">{icon}</span>
               </span>
             </div>
 
@@ -388,14 +387,20 @@ export function EndpointGroupCustomizer({
               <RiSearchLine className="text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
               <Input
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search thousands of icons (e.g. user, lock, cloud, db, payment, cart)..."
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setVisibleCount(PAGE_SIZE);
+                }}
+                placeholder="Search across all 6,700+ icons (e.g. user, database, lock, credit, cloud, apple, git)..."
                 className="h-8.5 pr-8 pl-8 text-xs"
               />
               {searchQuery && (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => {
+                    setSearchQuery("");
+                    setVisibleCount(PAGE_SIZE);
+                  }}
                   className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2"
                 >
                   <RiCloseLine className="size-3.5" />
@@ -403,42 +408,52 @@ export function EndpointGroupCustomizer({
               )}
             </div>
 
-            {/* Curated Category Filter Pills */}
+            {/* Category Filter Pills */}
             {!searchQuery && (
               <div className="flex flex-wrap gap-1">
-                {(
-                  [
-                    { id: "common", label: "Common" },
-                    { id: "auth", label: "Users & Auth" },
-                    { id: "commerce", label: "Commerce & Pay" },
-                    { id: "data", label: "Data & Storage" },
-                    { id: "dev", label: "Developer & System" },
-                  ] as const
-                ).map((tab) => (
+                {CATEGORIES.map((cat) => (
                   <button
-                    key={tab.id}
+                    key={cat.id}
                     type="button"
-                    onClick={() => setActiveCategoryTab(tab.id)}
+                    onClick={() => handleTabChange(cat.id)}
                     className={cn(
-                      "px-2 py-0.5 rounded text-mini font-medium transition-colors",
-                      activeCategoryTab === tab.id
-                        ? "bg-primary text-primary-foreground font-semibold"
+                      "px-2.5 py-1 rounded-md text-mini font-medium transition-colors",
+                      activeCategoryTab === cat.id
+                        ? "bg-primary text-primary-foreground font-semibold shadow-xs"
                         : "bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted",
                     )}
                   >
-                    {tab.label}
+                    {cat.label}
                   </button>
                 ))}
               </div>
             )}
 
+            {/* Counter info */}
+            <div className="text-micro text-muted-foreground flex items-center justify-between px-0.5 font-mono">
+              <span>
+                {searchQuery
+                  ? `Found ${filteredIcons.length.toLocaleString()} icons for "${searchQuery}"`
+                  : `Browsing ${filteredIcons.length.toLocaleString()} icons`}
+              </span>
+              <span>
+                Showing 1–{displayedIcons.length} of{" "}
+                {filteredIcons.length.toLocaleString()}
+              </span>
+            </div>
+
             {/* Icon Grid */}
-            <div className="border-border/60 bg-muted/15 scrollbar-subtle max-h-48 overflow-y-auto rounded-lg border p-2.5">
+            <div className="border-border/60 bg-muted/15 scrollbar-subtle max-h-60 space-y-3 overflow-y-auto rounded-lg border p-2.5">
               {displayedIcons.length === 0 ? (
-                <div className="text-muted-foreground py-6 text-center text-xs">
-                  No icons matched &quot;{searchQuery}&quot;. Try a broader
-                  keyword like &quot;file&quot;, &quot;shield&quot;, or
-                  &quot;circle&quot;.
+                <div className="text-muted-foreground space-y-1 py-8 text-center text-xs">
+                  <p className="font-semibold">
+                    No icons matched &quot;{searchQuery}&quot;
+                  </p>
+                  <p className="text-micro text-muted-foreground/80">
+                    Try another keyword like &quot;folder&quot;,
+                    &quot;chart&quot;, &quot;user&quot;, or click
+                    &quot;All&quot;.
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8 md:grid-cols-9">
@@ -451,10 +466,10 @@ export function EndpointGroupCustomizer({
                         onClick={() => setIcon(iconName)}
                         title={iconName}
                         className={cn(
-                          "size-9 rounded-md flex items-center justify-center transition-all cursor-pointer",
+                          "size-9 rounded-md flex items-center justify-center transition-all cursor-pointer relative",
                           "border border-transparent hover:border-border hover:bg-muted/80",
                           isSelected
-                            ? "bg-primary/15 text-primary border-primary ring-1 ring-primary shadow-xs"
+                            ? "bg-primary/20 text-primary border-primary ring-2 ring-primary ring-offset-1 ring-offset-background shadow-xs font-bold"
                             : "text-muted-foreground hover:text-foreground",
                         )}
                       >
@@ -462,6 +477,21 @@ export function EndpointGroupCustomizer({
                       </button>
                     );
                   })}
+                </div>
+              )}
+
+              {/* Load More Button */}
+              {hasMore && (
+                <div className="pt-2 text-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="xs"
+                    onClick={handleLoadMore}
+                    className="hover:bg-muted h-7 px-4 text-xs"
+                  >
+                    Load More ({filteredIcons.length - visibleCount} remaining)
+                  </Button>
                 </div>
               )}
             </div>
