@@ -1,8 +1,9 @@
 /**
  * Fack CLI — terminal presentation helpers.
  *
- * Built with picocolors and @clack/prompts for an award-winning developer experience.
- * Automatically respects NO_COLOR and non-TTY environments for clean CI output.
+ * Built on the shared NestJS-style logger and @clack/prompts. Every helper
+ * respects NO_COLOR, non-TTY output, and FACK_LOG_FORMAT so command output and
+ * live request logs share one visual system.
  */
 
 import pc from "picocolors";
@@ -17,6 +18,8 @@ import {
   confirm,
   text,
 } from "@clack/prompts";
+import { logger } from "../logger";
+import { stripAnsi } from "../logger/logger.utils";
 
 export {
   intro,
@@ -30,6 +33,25 @@ export {
   text,
   pc,
 };
+export {
+  Logger,
+  RequestLogger,
+  configureLogger,
+  createLogger,
+  logger,
+} from "../logger";
+export type {
+  LoggerOptions,
+  LoggerService,
+  LogFormat,
+  LogLevel,
+  LogMetadata,
+  LogRecord,
+  LogThreshold,
+  RequestLogEntry,
+} from "../logger";
+
+export { stripAnsi };
 
 export const t = {
   bold: pc.bold,
@@ -45,36 +67,60 @@ export const t = {
   gray: pc.gray,
 };
 
+/**
+ * Backwards-compatible command feedback API.
+ *
+ * New code should import `Logger`/`createLogger` and give each module its own
+ * context. These helpers keep the existing `[fack]` context and route through
+ * the same formatter, level filter, and redaction pipeline.
+ */
 export const log = {
   info(message: string): void {
-    console.log(`${t.cyan("[fack]")} ${message}`);
+    logger.log(message);
   },
   success(message: string): void {
-    console.log(`${t.green("✔")} ${message}`);
+    logger.success(message);
   },
   warn(message: string): void {
-    console.log(`${t.yellow("!")} ${message}`);
+    logger.warn(message);
   },
-  error(message: string): void {
-    console.error(`${t.red("[fack]")} ${message}`);
+  error(message: string | Error): void {
+    logger.error(message);
   },
   muted(message: string): void {
-    console.log(t.dim(message));
+    logger.note(message);
+  },
+  debug(message: string): void {
+    logger.debug(message);
   },
   blank(): void {
-    console.log("");
+    logger.blank();
+  },
+  raw(line: string): void {
+    logger.raw(line);
   },
 };
 
 export function banner(title: string, subtitle?: string): void {
-  console.log("");
-  console.log(`${t.cyan(t.bold("⚡"))} ${t.bold(title)}`);
-  if (subtitle) console.log(t.dim(subtitle));
-  console.log("");
+  logger.banner(title, subtitle);
 }
 
 export function printCommand(command: string): void {
-  console.log(`  ${t.green("$")} ${t.bold(command)}`);
+  logger.raw(`  ${t.green("$")} ${t.bold(command)}`);
+}
+
+export function printFields(
+  fields: Array<[label: string, value: string]>,
+  options: { indent?: number; labelWidth?: number } = {},
+): void {
+  const indent = " ".repeat(options.indent ?? 2);
+  const labelWidth =
+    options.labelWidth ??
+    fields.reduce((width, [label]) => Math.max(width, label.length), 0);
+
+  for (const [label, value] of fields) {
+    logger.raw(`${indent}${t.dim(label.padEnd(labelWidth))}${value}`);
+  }
 }
 
 export function printTable(headers: string[], rows: string[][]): void {
@@ -96,15 +142,24 @@ export function printTable(headers: string[], rows: string[][]): void {
       .join("  ")
       .trimEnd();
 
-  console.log(t.dim(format(headers)));
+  logger.raw(t.dim(format(headers)));
   for (const row of rows) {
-    console.log(format(row));
+    logger.raw(format(row));
   }
 }
 
-function stripAnsi(value: string): string {
-  // eslint-disable-next-line no-control-regex
-  return value.replace(/\x1b\[[0-9;]*m/g, "");
+/** One endpoint row in the `fack dev` and `fack inspect` summaries. */
+export function printRoute(route: {
+  method: string;
+  fullPath: string;
+  statusCode: number;
+  isAuthRequired?: boolean;
+}): void {
+  const method = logger.theme.method(route.method);
+  const auth = route.isAuthRequired ? `${t.yellow("[Auth]")} ` : "";
+  logger.raw(
+    `  ${method} ${auth}${route.fullPath} ${t.dim(`-> ${route.statusCode}`)}`,
+  );
 }
 
 /** Sleeps without pulling in a dependency. */

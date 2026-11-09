@@ -12,10 +12,10 @@ import {
   isUnauthorized,
 } from "../services/api-client.service";
 import { resolveCliSession } from "../services/session.service";
-import { log, t } from "../ui/terminal";
+import { log, logger, t } from "../ui/terminal";
 
 function row(label: string, value: string): void {
-  console.log(`  ${t.dim(label.padEnd(8))}${value}`);
+  logger.raw(`  ${t.dim(label.padEnd(8))}${value}`);
 }
 
 export async function runWhoami(options: WhoamiCommandOptions): Promise<void> {
@@ -25,7 +25,7 @@ export async function runWhoami(options: WhoamiCommandOptions): Promise<void> {
   try {
     const me = await client.fetchMe();
 
-    console.log("");
+    log.blank();
     row("Studio", t.bold(session.studioUrl));
     row(
       "Mode",
@@ -44,7 +44,7 @@ export async function runWhoami(options: WhoamiCommandOptions): Promise<void> {
     } else {
       row("Device", "This terminal");
     }
-    console.log("");
+    log.blank();
   } catch (error: unknown) {
     if (isUnauthorized(error)) {
       log.error("This terminal is not authorized.");
