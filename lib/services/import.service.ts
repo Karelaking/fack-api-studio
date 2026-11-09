@@ -1,4 +1,3 @@
-/* oxlint-disable @typescript-eslint/no-explicit-any */
 import type {
   GeneratedApi,
   GeneratedEndpoint,
@@ -9,31 +8,125 @@ import type { HttpMethod } from "@/db/schema";
 import { toProfessionalApiName } from "@/lib/ai/fallback-synthesizer";
 
 /**
+ * OpenAPI 3.0 / 3.1 Schema Object representation.
+ */
+export interface OpenApiSchemaObject {
+  type?: string;
+  nullable?: boolean;
+  properties?: Record<string, OpenApiSchemaObject>;
+  items?: OpenApiSchemaObject;
+  [key: string]: unknown;
+}
+
+/**
+ * OpenAPI Media Type Object representation (e.g. application/json).
+ */
+export interface OpenApiMediaTypeObject {
+  schema?: OpenApiSchemaObject;
+  [key: string]: unknown;
+}
+
+/**
+ * OpenAPI Response Object representation.
+ */
+export interface OpenApiResponseObject {
+  description?: string;
+  content?: Record<string, OpenApiMediaTypeObject>;
+  [key: string]: unknown;
+}
+
+/**
+ * OpenAPI Operation Object representation.
+ */
+export interface OpenApiOperationObject {
+  summary?: string;
+  description?: string;
+  responses?: Record<string, OpenApiResponseObject>;
+  [key: string]: unknown;
+}
+
+/**
+ * OpenAPI Path Item Object representation.
+ */
+export type OpenApiPathItemObject = {
+  [
+    method in "get" | "post" | "put" | "patch" | "delete"
+  ]?: OpenApiOperationObject;
+} & Record<string, unknown>;
+
+/**
+ * OpenAPI Top-Level Document representation.
+ */
+export interface OpenApiDocument {
+  openapi?: string;
+  swagger?: string;
+  info?: {
+    title?: string;
+    description?: string;
+    version?: string;
+  };
+  paths?: Record<string, OpenApiPathItemObject>;
+  [key: string]: unknown;
+}
+
+type ArrayItemType = NonNullable<GeneratedProperty["arrayItemType"]>;
+
+const VALID_SCHEMA_TYPES = new Set<JsonSchemaPropertyType>([
+  "string",
+  "number",
+  "integer",
+  "boolean",
+  "object",
+  "array",
+]);
+
+const VALID_ARRAY_ITEM_TYPES = new Set<ArrayItemType>([
+  "string",
+  "number",
+  "integer",
+  "boolean",
+  "object",
+]);
+
+function isJsonSchemaPropertyType(
+  value: string,
+): value is JsonSchemaPropertyType {
+  return VALID_SCHEMA_TYPES.has(value as JsonSchemaPropertyType);
+}
+
+function isArrayItemType(value: string): value is ArrayItemType {
+  return VALID_ARRAY_ITEM_TYPES.has(value as ArrayItemType);
+}
+
+/**
  * Maps OpenAPI schema properties to our recursive GeneratedProperty format.
  */
-
-function parseOpenApiSchemaProperties(schema: any): GeneratedProperty[] {
+function parseOpenApiSchemaProperties(
+  schema: OpenApiSchemaObject | undefined,
+): GeneratedProperty[] {
   if (!schema || typeof schema !== "object") return [];
 
   const properties: GeneratedProperty[] = [];
 
   // Handle direct properties
   if (schema.properties) {
-    for (const [key, propSchema] of Object.entries<any>(schema.properties)) {
-      const typeStr = (propSchema.type || "string").toLowerCase();
-      let mappedType: JsonSchemaPropertyType = "string";
-      if (
-        ["string", "number", "integer", "boolean", "object", "array"].includes(
-          typeStr,
-        )
-      ) {
-        mappedType = typeStr as JsonSchemaPropertyType;
-      }
+    for (const [key, propSchema] of Object.entries(schema.properties)) {
+      if (!propSchema || typeof propSchema !== "object") continue;
+
+      const rawType =
+        typeof propSchema.type === "string"
+          ? propSchema.type.toLowerCase()
+          : "string";
+      const mappedType: JsonSchemaPropertyType = isJsonSchemaPropertyType(
+        rawType,
+      )
+        ? rawType
+        : "string";
 
       const prop: GeneratedProperty = {
         name: key,
         type: mappedType,
-        nullable: propSchema.nullable || false,
+        nullable: Boolean(propSchema.nullable),
       };
 
       // Best effort faker provider mapping based on name
@@ -91,13 +184,13 @@ function parseOpenApiSchemaProperties(schema: any): GeneratedProperty[] {
       if (mappedType === "object" && propSchema.properties) {
         prop.children = parseOpenApiSchemaProperties(propSchema);
       } else if (mappedType === "array" && propSchema.items) {
-        const itemType = (propSchema.items.type || "string").toLowerCase();
-        if (
-          ["string", "number", "integer", "boolean", "object"].includes(
-            itemType,
-          )
-        ) {
-          prop.arrayItemType = itemType as any;
+        const itemType = (
+          typeof propSchema.items.type === "string"
+            ? propSchema.items.type
+            : "string"
+        ).toLowerCase();
+        if (isArrayItemType(itemType)) {
+          prop.arrayItemType = itemType;
           if (itemType === "object" && propSchema.items.properties) {
             prop.arrayItemChildren = parseOpenApiSchemaProperties(
               propSchema.items,
@@ -114,16 +207,16 @@ function parseOpenApiSchemaProperties(schema: any): GeneratedProperty[] {
 
   // Handle arrays at the root of the schema
   if (schema.type === "array" && schema.items) {
-    const itemType = (schema.items.type || "string").toLowerCase();
+    const itemType = (
+      typeof schema.items.type === "string" ? schema.items.type : "string"
+    ).toLowerCase();
     const prop: GeneratedProperty = {
       name: "items",
       type: "array",
       nullable: false,
     };
-    if (
-      ["string", "number", "integer", "boolean", "object"].includes(itemType)
-    ) {
-      prop.arrayItemType = itemType as any;
+    if (isArrayItemType(itemType)) {
+      prop.arrayItemType = itemType;
       if (itemType === "object" && schema.items.properties) {
         prop.arrayItemChildren = parseOpenApiSchemaProperties(schema.items);
       }
@@ -137,15 +230,16 @@ function parseOpenApiSchemaProperties(schema: any): GeneratedProperty[] {
 /**
  * Parses an OpenAPI Document object into a GeneratedApi.
  */
-
-export function parseOpenApiDocument(doc: any): GeneratedApi {
+export function parseOpenApiDocument(doc: OpenApiDocument): GeneratedApi {
   if (!doc || !doc.paths) {
     throw new Error("Invalid OpenAPI document: missing paths object.");
   }
 
   const endpointsMap = new Map<string, GeneratedEndpoint>();
 
-  for (const [pathStr, pathObj] of Object.entries<any>(doc.paths)) {
+  for (const [pathStr, pathObj] of Object.entries(doc.paths)) {
+    if (!pathObj || typeof pathObj !== "object") continue;
+
     // Determine a base path by looking at the first segment
     const segments = pathStr.split("/").filter(Boolean);
     const baseSegment = segments.length > 0 ? `/${segments[0]}` : "/api";
@@ -171,7 +265,13 @@ export function parseOpenApiDocument(doc: any): GeneratedApi {
       ? relativePath
       : `/${relativePath}`;
 
-    const supportedMethods = ["get", "post", "put", "patch", "delete"];
+    const supportedMethods: readonly (
+      | "get"
+      | "post"
+      | "put"
+      | "patch"
+      | "delete"
+    )[] = ["get", "post", "put", "patch", "delete"];
     for (const method of supportedMethods) {
       const operation = pathObj[method];
       if (operation) {
@@ -181,10 +281,11 @@ export function parseOpenApiDocument(doc: any): GeneratedApi {
         // Try to extract response schema
         if (operation.responses) {
           const successCodes = ["200", "201", "202", "default"];
-          let successResponse = null;
+          let successResponse: OpenApiResponseObject | undefined = undefined;
           for (const code of successCodes) {
-            if (operation.responses[code]) {
-              successResponse = operation.responses[code];
+            const candidate = operation.responses[code];
+            if (candidate) {
+              successResponse = candidate;
               if (code !== "default") statusCode = parseInt(code, 10);
               break;
             }

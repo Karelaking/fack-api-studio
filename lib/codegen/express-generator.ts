@@ -114,7 +114,7 @@ app.listen(port, () => {
       // Express dynamic params use :param instead of {param}
       const expressPath = route.path.replace(/\{([^}]+)\}/g, ":$1");
 
-      let handlerBody = `  // TODO: Implement actual logic\n`;
+      let handlerBody = `  // Fack API mock response handler\n`;
       const statusCode = route.statusCode || 200;
 
       let mockDataStr = "{}";

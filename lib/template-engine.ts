@@ -1,10 +1,48 @@
-/* oxlint-disable @typescript-eslint/no-explicit-any */
-/* oxlint-disable @typescript-eslint/no-unused-vars */
-/* oxlint-disable @typescript-eslint/no-unsafe-function-type */
 import { faker } from "@faker-js/faker";
 
-function getPathValue(source: any, path: string): any {
-  return path.split(".").reduce((acc, part) => acc && acc[part], source);
+/**
+ * Request context available for template interpolation.
+ */
+export interface TemplateRequestContext {
+  request: {
+    body?: unknown;
+    query?: Record<string, unknown>;
+    params?: Record<string, unknown>;
+  };
+}
+
+const FORBIDDEN_PROPERTIES = new Set(["__proto__", "prototype", "constructor"]);
+
+/**
+ * Safely resolves a nested property path from an object or source.
+ * Prevents prototype pollution and unsafe reflection.
+ */
+function getPathValue(source: unknown, path: string): unknown {
+  const parts = path.split(".");
+  let current: unknown = source;
+
+  for (const part of parts) {
+    if (FORBIDDEN_PROPERTIES.has(part)) {
+      return undefined;
+    }
+
+    if (
+      current === null ||
+      current === undefined ||
+      typeof current !== "object"
+    ) {
+      return undefined;
+    }
+
+    const record = current as Record<string, unknown>;
+    if (part in record) {
+      current = record[part];
+    } else {
+      return undefined;
+    }
+  }
+
+  return current;
 }
 
 /**
@@ -17,31 +55,31 @@ function getPathValue(source: any, path: string): any {
  */
 export function renderTemplate(
   template: string,
-  context: {
-    request: {
-      body: any;
-      query: Record<string, any>;
-      params: Record<string, any>;
-    };
-  },
-): any {
+  context: TemplateRequestContext,
+): unknown {
   // First, do a pass to evaluate all string interpolations.
   const rendered = template.replace(/{{([\w.]+)}}/g, (match, path) => {
     if (path.startsWith("faker.")) {
       try {
         const fakerPath = path.replace("faker.", "");
-        const fakerFn = getPathValue(faker, fakerPath) as Function;
+        const fakerFn = getPathValue(faker, fakerPath);
         if (typeof fakerFn === "function") {
-          return fakerFn().toString();
+          return String((fakerFn as () => unknown)());
         }
-      } catch (e) {
+      } catch {
         return match;
       }
     }
 
     if (path.startsWith("request.")) {
       const resolvedValue = getPathValue(context, path);
-      return resolvedValue !== undefined ? String(resolvedValue) : match;
+      if (resolvedValue !== undefined) {
+        if (typeof resolvedValue === "object" && resolvedValue !== null) {
+          return JSON.stringify(resolvedValue);
+        }
+        return String(resolvedValue as string | number | boolean);
+      }
+      return match;
     }
 
     return match;
@@ -49,10 +87,11 @@ export function renderTemplate(
 
   // Try to parse the rendered string as JSON if it looks like an object/array
   try {
-    if (rendered.trim().startsWith("{") || rendered.trim().startsWith("[")) {
-      return JSON.parse(rendered);
+    const trimmed = rendered.trim();
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      return JSON.parse(rendered) as unknown;
     }
-  } catch (e) {
+  } catch {
     // If it fails to parse, return the string.
   }
 
