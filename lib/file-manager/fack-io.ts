@@ -6,7 +6,7 @@ import type { InValue } from "@libsql/client";
 
 import { db } from "@/db";
 import * as schema from "@/db/schema";
-import { type FackProjectFile, FACK_FILE_VERSION } from "./file-manager.type";
+import { type FackProjectFile, FACK_FILE_VERSION } from "./types";
 
 const DATE_FIELDS = new Set(["createdAt", "updatedAt"]);
 const BATCH_SIZE = 100;
@@ -165,12 +165,12 @@ export async function serializeProject(
 /**
  * Validates and parses raw JSON or an object into a FackProjectFile.
  */
-export function parseFackFile(data: unknown): FackProjectFile {
-  if (!data || typeof data !== "object") {
+export function parseFackFile(raw: unknown): FackProjectFile {
+  if (!raw || typeof raw !== "object") {
     throw new Error("Invalid .fack file: must be a JSON object.");
   }
 
-  const candidate = data as Partial<FackProjectFile>;
+  const candidate = raw as Partial<FackProjectFile>;
 
   if (candidate.format !== "fack-project") {
     throw new Error('Invalid file format: format must be "fack-project".');

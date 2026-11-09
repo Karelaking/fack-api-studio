@@ -113,7 +113,7 @@ export default async function CliAccessPage(): Promise<React.JSX.Element> {
                 className="border-border/60 bg-muted/20 rounded-lg border p-3"
               >
                 <div className="flex items-start gap-3">
-                  <span className="bg-primary/10 text-primary flex size-5 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-semibold">
+                  <span className="bg-primary/10 text-primary text-mini flex size-5 shrink-0 items-center justify-center rounded-full font-mono font-semibold">
                     {index + 1}
                   </span>
                   <div className="min-w-0 flex-1">

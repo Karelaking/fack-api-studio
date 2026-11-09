@@ -6,6 +6,7 @@ import {
   RiAddLine,
   RiMoonLine,
   RiSunLine,
+  RiComputerLine,
   RiHomeLine,
   RiFolderLine,
 } from "@remixicon/react";
@@ -18,7 +19,7 @@ import {
   CommandItem,
   CommandShortcut,
 } from "@/components/ui/command";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/ThemeProvider";
 
 export function CommandMenu() {
   const [open, setOpen] = React.useState(false);
@@ -95,6 +96,10 @@ export function CommandMenu() {
             <RiMoonLine className="mr-2 h-4 w-4" />
             <span>Dark Theme</span>
             <CommandShortcut>⌘D</CommandShortcut>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => setTheme("system"))}>
+            <RiComputerLine className="mr-2 h-4 w-4" />
+            <span>System Theme (Auto)</span>
           </CommandItem>
         </CommandGroup>
       </CommandList>

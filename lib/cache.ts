@@ -10,23 +10,48 @@
  */
 
 import { LRUCache } from "lru-cache";
-import { createStorage } from "unstorage";
-import type { Project, Route, Webhook } from "@/db/schema";
+import type { Project, Route, Webhook, Scenario, Endpoint } from "@/db/schema";
 import { LoggerRegistry } from "@/lib/logger-registry";
 import { clearMatcherCache } from "@/lib/route-matcher";
+import {
+  clearSharedCache,
+  deleteSharedKeys,
+  invalidateSharedProject,
+  sharedKeys,
+} from "@/lib/cache/shared-store";
+import { recordCacheHit, recordCacheMiss } from "@/lib/metrics";
 
 const cacheTrace = LoggerRegistry.getTrace("cache");
-
-/**
- * Unified storage engine powered by unstorage.
- * Enables mounting remote drivers (Redis, Upstash, Vercel KV) for distributed caching.
- */
-export const storage = createStorage();
 
 export interface PageCacheEntry {
   page: number;
   limit: number;
   items: unknown[];
+}
+
+export type CachedRoute = Route & {
+  endpoint?: { id: string; basePath: string; name: string };
+  webhooks?: Webhook[];
+};
+
+const MIB = 1024 * 1024;
+
+/**
+ * Approximate in-memory size of a cached value.
+ *
+ * Generated mock payloads are plain JSON, so the serialized length is a good
+ * proxy. It is doubled because JavaScript strings are UTF-16 in memory. This
+ * runs only on cache misses, and keeps the payload caches bounded by bytes as
+ * well as entries — two thousand arrays of 100+ objects can otherwise reach
+ * hundreds of MB.
+ */
+function payloadSize(value: unknown): number {
+  try {
+    const json = JSON.stringify(value);
+    return json ? json.length * 2 : 1;
+  } catch {
+    return 1;
+  }
 }
 
 /**
@@ -47,12 +72,21 @@ type GlobalWithCacheManager = typeof globalThis & {
 export class CacheManager {
   private projectListCache: LRUCache<string, Project[]>;
   private projectBySlugCache: LRUCache<string, Project>;
-  private projectRoutesCache: LRUCache<string, Route[]>;
+  private mockProjectBySlugCache: LRUCache<string, Project>;
+  private projectRoutesCache: LRUCache<
+    string,
+    (Route & { endpoint: Endpoint })[]
+  >;
+  private mockRoutesCache: LRUCache<string, CachedRoute[]>;
+  private scenarioCache: LRUCache<string, Scenario>;
+  private negativeSlugCache: LRUCache<string, boolean>;
   private projectEndpointsCache: LRUCache<string, unknown[]>;
   private canvasStateCache: LRUCache<string, NonNullable<unknown>>;
   private routeMockDataCache: LRUCache<string, unknown[]>;
   private routeSingleMockDataCache: LRUCache<string, NonNullable<unknown>>;
   private routePageCache: LRUCache<string, PageCacheEntry[]>;
+  private mockCollectionCache: LRUCache<string, unknown[]>;
+  private mockItemCache: LRUCache<string, NonNullable<unknown>>;
 
   private constructor() {
     // Projects list cache: 10 minute TTL, max 50 entries
@@ -67,10 +101,41 @@ export class CacheManager {
       ttl: 10 * 60 * 1000,
     });
 
-    // Routes by project cache: 5 minute TTL, max 1,000 entries
-    this.projectRoutesCache = new LRUCache<string, Route[]>({
+    // Mock-engine project cache: deliberately separate from projectBySlugCache.
+    // The studio caches a project *with* nested endpoints/routes, while the mock
+    // resolver caches the flat row for a namespace. Sharing one key meant the
+    // first writer's shape won, so the studio could receive a project without
+    // relations (broken canvas) or the resolver could serve a stale nested blob.
+    this.mockProjectBySlugCache = new LRUCache<string, Project>({
+      max: 500,
+      ttl: 10 * 60 * 1000,
+    });
+
+    // Studio project routes cache (raw DB entities): 5 minute TTL, max 1,000 entries
+    this.projectRoutesCache = new LRUCache<
+      string,
+      (Route & { endpoint: Endpoint })[]
+    >({
       max: 1000,
       ttl: 5 * 60 * 1000,
+    });
+
+    // Mock engine compiled routes cache (normalized paths): 5 minute TTL, max 1,000 entries
+    this.mockRoutesCache = new LRUCache<string, CachedRoute[]>({
+      max: 1000,
+      ttl: 5 * 60 * 1000,
+    });
+
+    // Active scenarios cache: 5 minute TTL, max 500 entries
+    this.scenarioCache = new LRUCache<string, Scenario>({
+      max: 500,
+      ttl: 5 * 60 * 1000,
+    });
+
+    // Negative slug cache (cache penetration defense): 30 second TTL, max 1,000 entries
+    this.negativeSlugCache = new LRUCache<string, boolean>({
+      max: 1000,
+      ttl: 30 * 1000,
     });
 
     // Project endpoints cache: 5 minute TTL, max 500 entries
@@ -85,22 +150,43 @@ export class CacheManager {
       ttl: 5 * 60 * 1000,
     });
 
-    // Route mock data array cache: 5 minute TTL, max 2,000 entries
+    // Route mock data array cache: 5 minute TTL, max 2,000 entries / 32 MiB
     this.routeMockDataCache = new LRUCache<string, unknown[]>({
       max: 2000,
+      maxSize: 32 * MIB,
+      sizeCalculation: payloadSize,
       ttl: 5 * 60 * 1000,
     });
 
-    // Single route mock object cache: 5 minute TTL, max 2,000 entries
+    // Single route mock object cache: 5 minute TTL, max 2,000 entries / 8 MiB
     this.routeSingleMockDataCache = new LRUCache<string, NonNullable<unknown>>({
       max: 2000,
+      maxSize: 8 * MIB,
+      sizeCalculation: payloadSize,
       ttl: 5 * 60 * 1000,
     });
 
-    // Paged route cache: 5 minute TTL, max 2,000 entries
+    // Paged route cache: 5 minute TTL, max 2,000 entries / 32 MiB
     this.routePageCache = new LRUCache<string, PageCacheEntry[]>({
       max: 2000,
+      maxSize: 32 * MIB,
+      sizeCalculation: payloadSize,
       ttl: 5 * 60 * 1000,
+    });
+
+    // Stateful mock reads: short TTL. Writes invalidate explicitly; the TTL is a
+    // safety net for multi-process deployments where another instance wrote.
+    this.mockCollectionCache = new LRUCache<string, unknown[]>({
+      max: 500,
+      maxSize: 16 * MIB,
+      sizeCalculation: payloadSize,
+      ttl: 30 * 1000,
+    });
+    this.mockItemCache = new LRUCache<string, NonNullable<unknown>>({
+      max: 2_000,
+      maxSize: 8 * MIB,
+      sizeCalculation: payloadSize,
+      ttl: 30 * 1000,
     });
   }
 
@@ -120,12 +206,12 @@ export class CacheManager {
 
   // ── Projects List ────────────────────────────────────────────────────────
 
-  public getProjectsList(): Project[] | undefined {
-    return this.projectListCache.get("all_projects");
+  public getProjectsList(userId = "__all__"): Project[] | undefined {
+    return this.projectListCache.get(`projects:${userId}`);
   }
 
-  public setProjectsList(projects: Project[]): void {
-    this.projectListCache.set("all_projects", projects);
+  public setProjectsList(projects: Project[], userId = "__all__"): void {
+    this.projectListCache.set(`projects:${userId}`, projects);
   }
 
   // ── Project by Slug ──────────────────────────────────────────────────────
@@ -138,14 +224,63 @@ export class CacheManager {
     this.projectBySlugCache.set(slug, project);
   }
 
-  // ── Project Routes ───────────────────────────────────────────────────────
+  // ── Project by Slug (Mock Engine, flat row) ──────────────────────────────
 
-  public getRoutes(projectId: string): Route[] | undefined {
+  public getMockProjectBySlug(slug: string): Project | undefined {
+    return this.mockProjectBySlugCache.get(slug);
+  }
+
+  public setMockProjectBySlug(slug: string, project: Project): void {
+    this.mockProjectBySlugCache.set(slug, project);
+  }
+
+  // ── Project Routes (Raw DB entities for Studio & Canvas) ──────────────────
+
+  public getProjectRoutes(
+    projectId: string,
+  ): (Route & { endpoint: Endpoint })[] | undefined {
     return this.projectRoutesCache.get(projectId);
   }
 
-  public setRoutes(projectId: string, routes: Route[]): void {
+  public setProjectRoutes(
+    projectId: string,
+    routes: (Route & { endpoint: Endpoint })[],
+  ): void {
     this.projectRoutesCache.set(projectId, routes);
+  }
+
+  // ── Mock Routes (Compiled & Normalized for Mock Engine) ───────────────────
+
+  public getRoutes(projectId: string): CachedRoute[] | undefined {
+    return this.mockRoutesCache.get(projectId);
+  }
+
+  public setRoutes(projectId: string, routes: CachedRoute[]): void {
+    this.mockRoutesCache.set(projectId, routes);
+  }
+
+  // ── Scenarios ────────────────────────────────────────────────────────────
+
+  public getScenario(scenarioId: string): Scenario | undefined {
+    return this.scenarioCache.get(scenarioId);
+  }
+
+  public setScenario(scenarioId: string, scenario: Scenario): void {
+    this.scenarioCache.set(scenarioId, scenario);
+  }
+
+  public invalidateScenario(scenarioId: string): void {
+    this.scenarioCache.delete(scenarioId);
+  }
+
+  // ── Negative Slug Cache (Cache Penetration Defense) ──────────────────────
+
+  public isNegativeSlug(slug: string): boolean {
+    return this.negativeSlugCache.get(slug) === true;
+  }
+
+  public setNegativeSlug(slug: string): void {
+    this.negativeSlugCache.set(slug, true);
   }
 
   // ── Project Endpoints ─────────────────────────────────────────────────────
@@ -233,6 +368,80 @@ export class CacheManager {
     this.routePageCache.set(routeId, pruned);
   }
 
+  // ── Stateful Mock Collections ─────────────────────────────────────────────
+
+  private collectionKey(projectId: string, collection: string): string {
+    return `${projectId}:${collection}`;
+  }
+
+  public getMockCollection(
+    projectId: string,
+    collection: string,
+  ): unknown[] | undefined {
+    return this.mockCollectionCache.get(
+      this.collectionKey(projectId, collection),
+    );
+  }
+
+  public setMockCollection(
+    projectId: string,
+    collection: string,
+    items: unknown[],
+  ): void {
+    const key = this.collectionKey(projectId, collection);
+    this.mockCollectionCache.set(key, items);
+    for (const item of items) {
+      if (item && typeof item === "object" && "id" in item) {
+        const id = String((item as { id: unknown }).id);
+        this.mockItemCache.set(`${key}:${id}`, item);
+      }
+    }
+  }
+
+  public getMockItem(
+    projectId: string,
+    collection: string,
+    itemKey: string,
+  ): unknown {
+    return this.mockItemCache.get(
+      `${this.collectionKey(projectId, collection)}:${itemKey}`,
+    );
+  }
+
+  public setMockItem(
+    projectId: string,
+    collection: string,
+    itemKey: string,
+    item: unknown,
+  ): void {
+    this.mockItemCache.set(
+      `${this.collectionKey(projectId, collection)}:${itemKey}`,
+      item as NonNullable<unknown>,
+    );
+  }
+
+  public invalidateMockCollection(projectId: string, collection: string): void {
+    this.mockCollectionCache.delete(this.collectionKey(projectId, collection));
+  }
+
+  public invalidateMockItem(
+    projectId: string,
+    collection: string,
+    itemKey: string,
+  ): void {
+    this.mockItemCache.delete(
+      `${this.collectionKey(projectId, collection)}:${itemKey}`,
+    );
+  }
+
+  public invalidateMockState(projectId: string): void {
+    // Bounded caches (≤500 collections, ≤2,000 items); clearing on project-level
+    // mutations is cheaper than prefix-walking keys.
+    this.mockCollectionCache.clear();
+    this.mockItemCache.clear();
+    void projectId;
+  }
+
   // ── Invalidation ─────────────────────────────────────────────────────────
 
   /**
@@ -241,13 +450,20 @@ export class CacheManager {
   public invalidateProject(projectId?: string, projectSlug?: string): void {
     if (projectId) {
       this.projectRoutesCache.delete(projectId);
+      this.mockRoutesCache.delete(projectId);
       this.projectEndpointsCache.delete(projectId);
       this.canvasStateCache.delete(projectId);
+      this.invalidateMockState(projectId);
     }
     clearMatcherCache();
-    this.projectListCache.delete("all_projects");
+    // The list cache is keyed per user; a project change can affect any user's
+    // view (ownership transfers, shared workspace), so drop it wholesale. It is
+    // bounded at 50 entries and repopulates on the next dashboard load.
+    this.projectListCache.clear();
     if (projectSlug) {
       this.projectBySlugCache.delete(projectSlug);
+      this.mockProjectBySlugCache.delete(projectSlug);
+      this.negativeSlugCache.delete(projectSlug);
     }
   }
 
@@ -267,12 +483,18 @@ export class CacheManager {
   public clearAll(): void {
     this.projectListCache.clear();
     this.projectBySlugCache.clear();
+    this.mockProjectBySlugCache.clear();
     this.projectRoutesCache.clear();
+    this.mockRoutesCache.clear();
+    this.scenarioCache.clear();
+    this.negativeSlugCache.clear();
     this.projectEndpointsCache.clear();
     this.canvasStateCache.clear();
     this.routeMockDataCache.clear();
     this.routeSingleMockDataCache.clear();
     this.routePageCache.clear();
+    this.mockCollectionCache.clear();
+    this.mockItemCache.clear();
     clearMatcherCache();
   }
 }
@@ -281,30 +503,59 @@ export class CacheManager {
 
 const cacheManager = CacheManager.getInstance();
 
-export function getCachedProjectsList(): Project[] | undefined {
-  cacheTrace.traceCall("getCachedProjectsList");
-  const res = cacheManager.getProjectsList();
-  cacheTrace.traceSuccess(
-    "getCachedProjectsList",
-    res ? `${res.length} projects` : "undefined",
-  );
-  return res;
+function recordLookup<T>(
+  cacheName: string,
+  value: T | undefined,
+): T | undefined {
+  if (value === undefined) {
+    recordCacheMiss(cacheName);
+  } else {
+    recordCacheHit(cacheName);
+  }
+  return value;
 }
 
-export function setCachedProjectsList(projects: Project[]): void {
+export function getCachedProjectsList(userId?: string): Project[] | undefined {
+  cacheTrace.traceCall("getCachedProjectsList");
+  const cachedProjects = recordLookup(
+    "projects-list",
+    cacheManager.getProjectsList(userId),
+  );
+  cacheTrace.traceSuccess(
+    "getCachedProjectsList",
+    cachedProjects ? `${cachedProjects.length} projects` : "undefined",
+  );
+  return cachedProjects;
+}
+
+export function setCachedProjectsList(
+  projects: Project[],
+  userId?: string,
+): void {
   cacheTrace.traceCall("setCachedProjectsList", `${projects.length} projects`);
-  cacheManager.setProjectsList(projects);
+  cacheManager.setProjectsList(projects, userId);
   cacheTrace.traceSuccess("setCachedProjectsList", "void");
+}
+
+export function getCachedMockProject(slug: string): Project | undefined {
+  return recordLookup("mock-project", cacheManager.getMockProjectBySlug(slug));
+}
+
+export function setCachedMockProject(slug: string, project: Project): void {
+  cacheManager.setMockProjectBySlug(slug, project);
 }
 
 export function getCachedProjectBySlug(slug: string): Project | undefined {
   cacheTrace.traceCall("getCachedProjectBySlug", slug);
-  const res = cacheManager.getProjectBySlug(slug);
+  const cachedProject = recordLookup(
+    "project-by-slug",
+    cacheManager.getProjectBySlug(slug),
+  );
   cacheTrace.traceSuccess(
     "getCachedProjectBySlug",
-    res ? res.name : "undefined",
+    cachedProject ? cachedProject.name : "undefined",
   );
-  return res;
+  return cachedProject;
 }
 
 export function setCachedProjectBySlug(slug: string, project: Project): void {
@@ -313,19 +564,45 @@ export function setCachedProjectBySlug(slug: string, project: Project): void {
   cacheTrace.traceSuccess("setCachedProjectBySlug", "void");
 }
 
-export type CachedRoute = Route & {
-  endpoint?: { id: string; basePath: string; name: string };
-  webhooks?: Webhook[];
-};
+export function getCachedProjectRoutes(
+  projectId: string,
+): (Route & { endpoint: Endpoint })[] | undefined {
+  cacheTrace.traceCall("getCachedProjectRoutes", projectId);
+  const cachedRoutes = recordLookup(
+    "project-routes",
+    cacheManager.getProjectRoutes(projectId),
+  );
+  cacheTrace.traceSuccess(
+    "getCachedProjectRoutes",
+    cachedRoutes ? `${cachedRoutes.length} routes` : "undefined",
+  );
+  return cachedRoutes;
+}
+
+export function setCachedProjectRoutes(
+  projectId: string,
+  routes: (Route & { endpoint: Endpoint })[],
+): void {
+  cacheTrace.traceCall(
+    "setCachedProjectRoutes",
+    projectId,
+    `${routes.length} routes`,
+  );
+  cacheManager.setProjectRoutes(projectId, routes);
+  cacheTrace.traceSuccess("setCachedProjectRoutes", "void");
+}
 
 export function getCachedRoutes(projectId: string): CachedRoute[] | undefined {
   cacheTrace.traceCall("getCachedRoutes", projectId);
-  const res = cacheManager.getRoutes(projectId) as CachedRoute[] | undefined;
+  const cachedRoutes = recordLookup(
+    "mock-routes",
+    cacheManager.getRoutes(projectId),
+  );
   cacheTrace.traceSuccess(
     "getCachedRoutes",
-    res ? `${res.length} routes` : "undefined",
+    cachedRoutes ? `${cachedRoutes.length} routes` : "undefined",
   );
-  return res;
+  return cachedRoutes;
 }
 
 export function setCachedRoutes(
@@ -333,18 +610,44 @@ export function setCachedRoutes(
   routes: CachedRoute[],
 ): void {
   cacheTrace.traceCall("setCachedRoutes", projectId, `${routes.length} routes`);
-  cacheManager.setRoutes(projectId, routes as Route[]);
+  cacheManager.setRoutes(projectId, routes);
   cacheTrace.traceSuccess("setCachedRoutes", "void");
+}
+
+export function getCachedScenario(scenarioId: string): Scenario | undefined {
+  return cacheManager.getScenario(scenarioId);
+}
+
+export function setCachedScenario(
+  scenarioId: string,
+  scenario: Scenario,
+): void {
+  cacheManager.setScenario(scenarioId, scenario);
+}
+
+export function invalidateCachedScenario(scenarioId: string): void {
+  cacheManager.invalidateScenario(scenarioId);
+}
+
+export function isNegativeSlug(slug: string): boolean {
+  return cacheManager.isNegativeSlug(slug);
+}
+
+export function setNegativeSlug(slug: string): void {
+  cacheManager.setNegativeSlug(slug);
 }
 
 export function getCachedEndpoints(projectId: string): unknown[] | undefined {
   cacheTrace.traceCall("getCachedEndpoints", projectId);
-  const res = cacheManager.getEndpoints(projectId);
+  const cachedEndpoints = recordLookup(
+    "endpoints",
+    cacheManager.getEndpoints(projectId),
+  );
   cacheTrace.traceSuccess(
     "getCachedEndpoints",
-    res ? `${res.length} endpoints` : "undefined",
+    cachedEndpoints ? `${cachedEndpoints.length} endpoints` : "undefined",
   );
-  return res;
+  return cachedEndpoints;
 }
 
 export function setCachedEndpoints(
@@ -362,12 +665,15 @@ export function setCachedEndpoints(
 
 export function getCachedCanvasState(projectId: string): unknown {
   cacheTrace.traceCall("getCachedCanvasState", projectId);
-  const res = cacheManager.getCanvasState(projectId);
+  const cachedCanvasState = recordLookup(
+    "canvas-state",
+    cacheManager.getCanvasState(projectId),
+  );
   cacheTrace.traceSuccess(
     "getCachedCanvasState",
-    res ? "cached state" : "undefined",
+    cachedCanvasState ? "cached state" : "undefined",
   );
-  return res;
+  return cachedCanvasState;
 }
 
 export function setCachedCanvasState(projectId: string, state: unknown): void {
@@ -378,33 +684,46 @@ export function setCachedCanvasState(projectId: string, state: unknown): void {
 
 export function getCachedMockData(routeId: string): unknown[] | undefined {
   cacheTrace.traceCall("getCachedMockData", routeId);
-  const res = cacheManager.getMockData(routeId);
+  const cachedMockData = recordLookup(
+    "mock-data",
+    cacheManager.getMockData(routeId),
+  );
   cacheTrace.traceSuccess(
     "getCachedMockData",
-    res ? `${res.length} objects` : "undefined",
+    cachedMockData ? `${cachedMockData.length} objects` : "undefined",
   );
-  return res;
+  return cachedMockData;
 }
 
-export function setCachedMockData(routeId: string, data: unknown[]): void {
-  cacheTrace.traceCall("setCachedMockData", routeId, `${data.length} objects`);
-  cacheManager.setMockData(routeId, data);
+export function setCachedMockData(routeId: string, payload: unknown[]): void {
+  cacheTrace.traceCall(
+    "setCachedMockData",
+    routeId,
+    `${payload.length} objects`,
+  );
+  cacheManager.setMockData(routeId, payload);
   cacheTrace.traceSuccess("setCachedMockData", "void");
 }
 
 export function getCachedSingleMockData(routeId: string): unknown {
   cacheTrace.traceCall("getCachedSingleMockData", routeId);
-  const res = cacheManager.getSingleMockData(routeId);
+  const cachedSingleMockData = recordLookup(
+    "single-mock-data",
+    cacheManager.getSingleMockData(routeId),
+  );
   cacheTrace.traceSuccess(
     "getCachedSingleMockData",
-    res ? "object" : "undefined",
+    cachedSingleMockData ? "object" : "undefined",
   );
-  return res;
+  return cachedSingleMockData;
 }
 
-export function setCachedSingleMockData(routeId: string, data: unknown): void {
+export function setCachedSingleMockData(
+  routeId: string,
+  payload: unknown,
+): void {
   cacheTrace.traceCall("setCachedSingleMockData", routeId);
-  cacheManager.setSingleMockData(routeId, data);
+  cacheManager.setSingleMockData(routeId, payload);
   cacheTrace.traceSuccess("setCachedSingleMockData", "void");
 }
 
@@ -419,12 +738,15 @@ export function getCachedPageData(
     `page: ${page}`,
     `limit: ${limit}`,
   );
-  const res = cacheManager.getPageData(routeId, page, limit);
+  const cachedPage = recordLookup(
+    "page-data",
+    cacheManager.getPageData(routeId, page, limit),
+  );
   cacheTrace.traceSuccess(
     "getCachedPageData",
-    res ? `hit (${res.length} items)` : "miss",
+    cachedPage ? `hit (${cachedPage.length} items)` : "miss",
   );
-  return res;
+  return cachedPage;
 }
 
 export function setCachedPageData(
@@ -459,9 +781,29 @@ export function prunePageCache(
   cacheTrace.traceSuccess("prunePageCache", "void");
 }
 
+function scheduleSharedInvalidation(task: () => Promise<void>): void {
+  const safeTask = async (): Promise<void> => {
+    try {
+      await task();
+    } catch (error) {
+      cacheTrace.traceError("shared cache invalidation", error);
+    }
+  };
+
+  void (async () => {
+    try {
+      const { after } = await import("next/server");
+      after(safeTask);
+    } catch {
+      await safeTask();
+    }
+  })();
+}
+
 export function clearCache(): void {
   cacheTrace.traceCall("clearCache");
   cacheManager.clearAll();
+  scheduleSharedInvalidation(clearSharedCache);
   cacheTrace.traceSuccess("clearCache", "void");
 }
 
@@ -471,6 +813,9 @@ export function clearProjectCache(
 ): void {
   cacheTrace.traceCall("clearProjectCache", projectId ?? "all");
   cacheManager.invalidateProject(projectId, projectSlug);
+  scheduleSharedInvalidation(() =>
+    invalidateSharedProject(projectId, projectSlug),
+  );
   cacheTrace.traceSuccess("clearProjectCache", "void");
 }
 
@@ -478,4 +823,65 @@ export function clearRouteCache(routeId: string): void {
   cacheTrace.traceCall("clearRouteCache", routeId);
   cacheManager.invalidateRoute(routeId);
   cacheTrace.traceSuccess("clearRouteCache", "void");
+}
+
+// ── Stateful Mock Collections ───────────────────────────────────────────────
+
+export function getCachedMockCollection(
+  projectId: string,
+  collection: string,
+): unknown[] | undefined {
+  return recordLookup(
+    "mock-collection",
+    cacheManager.getMockCollection(projectId, collection),
+  );
+}
+
+export function setCachedMockCollection(
+  projectId: string,
+  collection: string,
+  items: unknown[],
+): void {
+  cacheManager.setMockCollection(projectId, collection, items);
+}
+
+export function getCachedMockItem(
+  projectId: string,
+  collection: string,
+  itemKey: string,
+): unknown {
+  return recordLookup(
+    "mock-item",
+    cacheManager.getMockItem(projectId, collection, itemKey),
+  );
+}
+
+export function setCachedMockItem(
+  projectId: string,
+  collection: string,
+  itemKey: string,
+  item: unknown,
+): void {
+  cacheManager.setMockItem(projectId, collection, itemKey, item);
+}
+
+export function invalidateMockCollection(
+  projectId: string,
+  collection: string,
+): void {
+  cacheManager.invalidateMockCollection(projectId, collection);
+  scheduleSharedInvalidation(() =>
+    deleteSharedKeys(sharedKeys.mockCollection(projectId, collection)),
+  );
+}
+
+export function invalidateMockItem(
+  projectId: string,
+  collection: string,
+  itemKey: string,
+): void {
+  cacheManager.invalidateMockItem(projectId, collection, itemKey);
+  scheduleSharedInvalidation(() =>
+    deleteSharedKeys(sharedKeys.mockItem(projectId, collection, itemKey)),
+  );
 }

@@ -1,7 +1,5 @@
 import type { CachedRoute } from "@/lib/cache";
-import { LoggerRegistry } from "@/lib/logger-registry";
-
-const inputLogger = LoggerRegistry.get("mock-core");
+import { parseJsonCached } from "@/lib/utils/json-parse-cache";
 
 export interface PaginationInput {
   pageParam: string | null;
@@ -12,30 +10,27 @@ export interface PaginationInput {
 }
 
 export function parseRouteSchema(route: CachedRoute): Record<string, unknown> {
-  try {
-    const parsed: unknown = JSON.parse(route.responseSchema ?? "{}");
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : {};
-  } catch {
-    inputLogger.warn(`Invalid JSON schema for route ${route.id}`);
-    return {};
-  }
+  const parsed = parseJsonCached<unknown>(route.responseSchema, {});
+  return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+    ? (parsed as Record<string, unknown>)
+    : {};
 }
 
 export function parseRouteHeaders(route: CachedRoute): Record<string, string> {
-  try {
-    const parsed: unknown = JSON.parse(route.customHeaders ?? "{}");
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return {};
-    }
-    return Object.fromEntries(
-      Object.entries(parsed).filter(([, value]) => typeof value === "string"),
-    );
-  } catch {
-    inputLogger.warn(`Invalid custom headers for route ${route.id}`);
+  const parsed = parseJsonCached<unknown>(route.customHeaders, {});
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     return {};
   }
+
+  // Headers are copied so the response builder can spread them safely without
+  // mutating the cached parse result.
+  const headers: Record<string, string> = {};
+  for (const [key, value] of Object.entries(parsed)) {
+    if (typeof value === "string") {
+      headers[key] = value;
+    }
+  }
+  return headers;
 }
 
 export function parsePagination(

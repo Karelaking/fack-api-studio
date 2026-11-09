@@ -18,7 +18,7 @@ import {
   isProjectDirty,
   markProjectClean,
 } from "./dirty-tracker";
-import type { FackProjectFile, OpenProjectSummary } from "./file-manager.type";
+import type { FackProjectFile, OpenProjectSummary } from "./types";
 
 /**
  * Returns a recommended default directory on this machine for saving `.fack` files.

@@ -9,9 +9,8 @@ import { generateId } from "@/lib/utils";
 import {
   clearProjectCache,
   clearRouteCache,
-  getCachedRoutes,
-  setCachedRoutes,
-  type CachedRoute,
+  getCachedProjectRoutes,
+  setCachedProjectRoutes,
 } from "@/lib/cache";
 import {
   requireEndpointAccess,
@@ -84,13 +83,13 @@ export const getRoutesByProjectId = cache(async function getRoutesByProjectId(
   routesTrace.traceCall("getRoutesByProjectId", projectId);
   await requireProjectAccess(projectId);
 
-  const cached = getCachedRoutes(projectId);
+  const cached = getCachedProjectRoutes(projectId);
   if (cached) {
     routesTrace.traceSuccess(
       "getRoutesByProjectId (LRU cache hit)",
       `${cached.length} routes`,
     );
-    return cached as (Route & { endpoint: Endpoint })[];
+    return cached;
   }
 
   try {
@@ -116,7 +115,10 @@ export const getRoutesByProjectId = cache(async function getRoutesByProjectId(
       orderBy: (routes, { asc }) => [asc(routes.path)],
     });
 
-    setCachedRoutes(projectId, list as CachedRoute[]);
+    setCachedProjectRoutes(
+      projectId,
+      list as (Route & { endpoint: Endpoint })[],
+    );
     routesTrace.traceSuccess(
       "getRoutesByProjectId (DB fetched)",
       `${list.length} routes`,

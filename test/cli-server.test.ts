@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vite-plus/test";
 import { MockServer } from "@/cli/src/server.service";
-import type { FackRuntimeBundle } from "@/lib/bundle/bundle.type";
+import type { FackRuntimeBundle } from "@/lib/bundle/types";
 
 const testBundle: FackRuntimeBundle = {
   magic: "FACK",

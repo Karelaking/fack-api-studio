@@ -131,9 +131,9 @@ export async function runPull(options: PullCommandOptions): Promise<void> {
       );
     }
 
-    console.log("");
+    log.blank();
     log.muted("Run `fack dev` to serve it locally.");
-    console.log("");
+    log.blank();
   } catch (error: unknown) {
     if (isUnauthorized(error)) {
       log.error("Fack Studio rejected this terminal's credential.");

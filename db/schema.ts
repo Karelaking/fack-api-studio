@@ -4,6 +4,7 @@ import {
   integer,
   real,
   index,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 
@@ -33,7 +34,8 @@ export const projects = sqliteTable(
   },
   (table) => [
     index("projects_user_id_idx").on(table.userId),
-    index("projects_slug_idx").on(table.slug),
+    // `slug` is UNIQUE, which already creates an index; a separate
+    // `projects_slug_idx` duplicated it.
   ],
 );
 
@@ -112,7 +114,8 @@ export const routes = sqliteTable(
       .$defaultFn(() => new Date()),
   },
   (table) => [
-    index("routes_endpoint_id_idx").on(table.endpointId),
+    // `endpointId` is the leftmost column of the composite index below, so a
+    // separate `routes_endpoint_id_idx` was redundant.
     index("routes_endpoint_method_path_idx").on(
       table.endpointId,
       table.method,
@@ -281,9 +284,9 @@ export const mockStates = sqliteTable(
       .$defaultFn(() => new Date()),
   },
   (table) => [
-    // Covers get/delete by (project, collection, itemKey) and list by
-    // (project, collection) via the leftmost prefix.
-    index("mock_states_project_collection_key_idx").on(
+    // Unique so a stateful write is an atomic upsert instead of a racy
+    // select-then-insert. Also covers get/delete/list via the leftmost prefix.
+    uniqueIndex("mock_states_project_collection_key_idx").on(
       table.projectId,
       table.collection,
       table.itemKey,

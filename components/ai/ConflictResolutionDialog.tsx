@@ -24,8 +24,8 @@ export const ConflictResolutionDialog = ({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+    <div className="border-warning/30 bg-warning/10 flex flex-col gap-3 rounded-xl border p-4">
+      <div className="text-warning flex items-center gap-2">
         <RiAlertFill className="size-4 shrink-0" />
         <span className="text-xs font-semibold tracking-wider uppercase">
           {conflicts.length} Route Collision{conflicts.length > 1 ? "s" : ""}{" "}
@@ -50,7 +50,7 @@ export const ConflictResolutionDialog = ({
             >
               <div className="flex items-center gap-2">
                 <Badge variant="outline">
-                  <span className="font-mono text-[11px] font-bold">
+                  <span className="text-caption font-mono font-bold">
                     {conflict.method}
                   </span>
                 </Badge>
@@ -65,7 +65,7 @@ export const ConflictResolutionDialog = ({
                   onClick={() => onResolutionChange(key, "replace")}
                   className={`rounded-md px-2 py-1 text-xs font-medium transition-all ${
                     currentResolution === "replace"
-                      ? "bg-amber-600 text-white shadow-xs"
+                      ? "bg-warning/15 text-warning border-warning/30 border shadow-xs"
                       : "border-border hover:bg-muted text-muted-foreground border"
                   }`}
                 >
@@ -76,7 +76,7 @@ export const ConflictResolutionDialog = ({
                   onClick={() => onResolutionChange(key, "skip")}
                   className={`rounded-md px-2 py-1 text-xs font-medium transition-all ${
                     currentResolution === "skip"
-                      ? "bg-slate-700 text-white shadow-xs"
+                      ? "bg-muted text-foreground border-border border shadow-xs"
                       : "border-border hover:bg-muted text-muted-foreground border"
                   }`}
                 >
@@ -87,7 +87,7 @@ export const ConflictResolutionDialog = ({
                   onClick={() => onResolutionChange(key, "modify")}
                   className={`rounded-md px-2 py-1 text-xs font-medium transition-all ${
                     currentResolution === "modify"
-                      ? "bg-indigo-600 text-white shadow-xs"
+                      ? "bg-primary/15 text-primary border-primary/30 border shadow-xs"
                       : "border-border hover:bg-muted text-muted-foreground border"
                   }`}
                 >

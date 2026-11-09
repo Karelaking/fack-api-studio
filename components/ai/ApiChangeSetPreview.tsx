@@ -25,6 +25,7 @@ import type {
   ApiChangeSet,
 } from "@/lib/ai/types";
 import { convertPropertiesToJsonSchema } from "@/lib/services/schema.service";
+import { getMethodBadgeClass } from "@/lib/utils/method-colors";
 
 interface ApiChangeSetPreviewProps {
   api: GeneratedApi;
@@ -32,15 +33,6 @@ interface ApiChangeSetPreviewProps {
   detailedPrompt?: string;
   detailedSummary?: string;
 }
-
-const METHOD_COLOR_CLASSES: Record<string, string> = {
-  GET: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
-  POST: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
-  PUT: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
-  PATCH:
-    "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30",
-  DELETE: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30",
-};
 
 export const ApiChangeSetPreview = ({
   api,
@@ -76,17 +68,17 @@ export const ApiChangeSetPreview = ({
           {changeSet ? (
             <>
               {changeSet.routesToCreate.length > 0 && (
-                <span className="focus:ring-ring inline-flex items-center rounded-md border border-transparent bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none">
+                <span className="focus:ring-ring bg-success/15 text-success inline-flex items-center rounded-md border border-transparent px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none">
                   +{changeSet.routesToCreate.length} Routes
                 </span>
               )}
               {changeSet.routesToUpdate.length > 0 && (
-                <span className="focus:ring-ring inline-flex items-center rounded-md border border-transparent bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-600 transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none">
+                <span className="focus:ring-ring bg-warning/15 text-warning inline-flex items-center rounded-md border border-transparent px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none">
                   ~{changeSet.routesToUpdate.length} Modified
                 </span>
               )}
               {changeSet.routesToDelete.length > 0 && (
-                <span className="focus:ring-ring inline-flex items-center rounded-md border border-transparent bg-rose-500/15 px-2.5 py-0.5 text-xs font-semibold text-rose-600 transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none">
+                <span className="focus:ring-ring bg-danger/15 text-danger inline-flex items-center rounded-md border border-transparent px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none">
                   -{changeSet.routesToDelete.length} Deleted
                 </span>
               )}
@@ -168,7 +160,7 @@ const DetailedBlueprintCard = ({
               Architecture Design Specification
             </span>
             {detailedSummary && (
-              <span className="text-muted-foreground line-clamp-1 text-[11px]">
+              <span className="text-muted-foreground text-caption line-clamp-1">
                 {detailedSummary}
               </span>
             )}
@@ -177,7 +169,7 @@ const DetailedBlueprintCard = ({
         <div className="flex items-center gap-2">
           <Button type="button" variant="ghost" size="xs" onClick={handleCopy}>
             {copied ? (
-              <span className="flex items-center gap-1 text-emerald-500">
+              <span className="text-success flex items-center gap-1">
                 <RiCheckLine className="size-3.5" />
                 <span>Copied</span>
               </span>
@@ -193,7 +185,7 @@ const DetailedBlueprintCard = ({
 
       {isExpanded && (
         <div className="border-border/60 bg-muted/20 border-t p-4">
-          <pre className="text-foreground/90 font-mono text-[11px] leading-relaxed whitespace-pre-wrap">
+          <pre className="text-foreground/90 text-caption font-mono leading-relaxed whitespace-pre-wrap">
             {detailedPrompt}
           </pre>
         </div>
@@ -260,8 +252,7 @@ const RouteRow = ({
   route: GeneratedRoute;
 }): React.JSX.Element => {
   const [showSchema, setShowSchema] = React.useState(false);
-  const methodColor =
-    METHOD_COLOR_CLASSES[route.method] || "bg-muted text-foreground";
+  const methodColor = getMethodBadgeClass(route.method);
   const fullPath = `${basePath}${route.path}`;
 
   const jsonSchemaDoc = React.useMemo(() => {
@@ -273,18 +264,18 @@ const RouteRow = ({
       <div className="flex flex-wrap items-center justify-between gap-2 p-2.5">
         <div className="flex items-center gap-2 font-mono text-xs">
           <span
-            className={`rounded border px-1.5 py-0.5 text-[10px] font-bold tracking-wide ${methodColor}`}
+            className={`text-mini rounded border px-1.5 py-0.5 font-bold tracking-wide ${methodColor}`}
           >
             {route.method}
           </span>
           <span className="text-foreground font-semibold">{fullPath}</span>
-          <span className="text-muted-foreground/80 text-[11px]">
+          <span className="text-muted-foreground/80 text-caption">
             &rarr; {route.statusCode}
           </span>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <div className="text-muted-foreground flex items-center gap-1 text-[11px]">
+          <div className="text-muted-foreground text-caption flex items-center gap-1">
             <RiTimeLine className="size-3" />
             <span>
               {route.latency.min}–{route.latency.max}ms
@@ -292,7 +283,7 @@ const RouteRow = ({
           </div>
 
           {route.errorRate > 0 && (
-            <div className="flex items-center gap-1 text-[11px] text-amber-500">
+            <div className="text-caption text-warning flex items-center gap-1">
               <RiAlertLine className="size-3" />
               <span>{route.errorRate}% error</span>
             </div>
@@ -301,7 +292,7 @@ const RouteRow = ({
           <button
             type="button"
             onClick={() => setShowSchema(!showSchema)}
-            className="border-border hover:bg-card text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-1 rounded border px-2 py-0.5 text-[11px] transition-colors"
+            className="border-border hover:bg-card text-muted-foreground hover:text-foreground text-caption flex cursor-pointer items-center gap-1 rounded border px-2 py-0.5 transition-colors"
           >
             <RiCodeSSlashLine className="size-3" />
             <span>{showSchema ? "Hide Schema" : "Schema"}</span>
@@ -313,7 +304,7 @@ const RouteRow = ({
       {showSchema && (
         <div className="border-border/40 bg-card/90 border-t p-3">
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between text-[11px]">
+            <div className="text-caption flex items-center justify-between">
               <span className="text-muted-foreground font-semibold tracking-wider uppercase">
                 Response Schema Properties:
               </span>
@@ -334,13 +325,13 @@ const RouteRow = ({
                       <span className="text-foreground font-mono font-medium">
                         {p.name}
                       </span>
-                      <span className="text-muted-foreground/70 text-[10px]">
+                      <span className="text-muted-foreground/70 text-mini">
                         ({p.type})
                       </span>
                     </div>
                     {p.fakerProvider && (
                       <Badge variant="secondary">
-                        <span className="font-mono text-[10px]">
+                        <span className="text-mini font-mono">
                           {p.fakerProvider}
                         </span>
                       </Badge>
@@ -355,10 +346,10 @@ const RouteRow = ({
             )}
 
             <details className="pt-1">
-              <summary className="text-muted-foreground hover:text-foreground cursor-pointer text-[11px]">
+              <summary className="text-muted-foreground hover:text-foreground text-caption cursor-pointer">
                 View Generated JSON Schema
               </summary>
-              <pre className="bg-muted/80 text-foreground mt-1 max-h-48 overflow-auto rounded p-2 font-mono text-[10px]">
+              <pre className="bg-muted/80 text-foreground scrollbar-subtle text-mini mt-1 max-h-48 overflow-auto rounded p-2 font-mono">
                 {JSON.stringify(jsonSchemaDoc, null, 2)}
               </pre>
             </details>

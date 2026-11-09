@@ -16,7 +16,7 @@ import {
   type FackRuntimeRoute,
   type FackRuntimeScenario,
   type FackRuntimeMockState,
-} from "./bundle.type";
+} from "./types";
 
 function safeJsonParse<T>(
   value: string | undefined | null,

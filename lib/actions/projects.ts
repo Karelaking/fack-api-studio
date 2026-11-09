@@ -22,6 +22,13 @@ import {
   clearProjectCache,
 } from "@/lib/cache";
 import {
+  getSharedValue,
+  setSharedValue,
+  sharedKeys,
+} from "@/lib/cache/shared-store";
+import { recordCacheHit, recordCacheMiss } from "@/lib/metrics";
+import { singleFlight } from "@/lib/utils/single-flight";
+import {
   createProjectSchema,
   updateProjectSchema,
   type CreateProjectInput,
@@ -43,7 +50,7 @@ export const getProjects = cache(async function getProjects(): Promise<
     return [];
   }
 
-  const cached = getCachedProjectsList();
+  const cached = getCachedProjectsList(userId);
   if (cached) {
     projectsTrace.traceSuccess(
       "getProjects (LRU cache hit)",
@@ -52,20 +59,44 @@ export const getProjects = cache(async function getProjects(): Promise<
     return cached;
   }
 
+  const shared = await getSharedValue<(typeof projects.$inferSelect)[]>(
+    sharedKeys.projectList(userId),
+  );
+  if (shared) {
+    recordCacheHit("shared:projects-list");
+    setCachedProjectsList(shared, userId);
+    projectsTrace.traceSuccess(
+      "getProjects (shared cache hit)",
+      `${shared.length} projects`,
+    );
+    return shared;
+  }
+  recordCacheMiss("shared:projects-list");
+
   try {
-    const list = await db.query.projects.findMany({
-      where: userId === "system" ? undefined : eq(projects.userId, userId),
-      orderBy: (projects, { desc }) => [desc(projects.updatedAt)],
-      with: {
-        endpoints: {
-          with: {
-            routes: true,
+    // The dashboard only needs counts and HTTP-method breakdowns. Selecting full
+    // route rows pulled every `response_schema` blob (often several KB per route)
+    // for every project on every dashboard load. Narrow projections keep the
+    // same shape while shipping a fraction of the bytes.
+    const list = await singleFlight(`projects:${userId}`, () =>
+      db.query.projects.findMany({
+        where: userId === "system" ? undefined : eq(projects.userId, userId),
+        orderBy: (projects, { desc }) => [desc(projects.updatedAt)],
+        with: {
+          endpoints: {
+            columns: { id: true },
+            with: {
+              routes: {
+                columns: { method: true },
+              },
+            },
           },
         },
-      },
-    });
+      }),
+    );
 
-    setCachedProjectsList(list);
+    setCachedProjectsList(list, userId);
+    await setSharedValue(sharedKeys.projectList(userId), list, 10 * 60);
     projectsTrace.traceSuccess(
       "getProjects (DB fetched)",
       `${list.length} projects`,
@@ -102,24 +133,40 @@ export const getProjectBySlug = cache(async function getProjectBySlug(
 
   if (!project) {
     cacheHit = false;
-    try {
-      project = await db.query.projects.findFirst({
-        where: eq(projects.slug, slug),
-        with: {
-          endpoints: {
-            with: {
-              routes: true,
-            },
-          },
-        },
-      });
+    project = await getSharedValue<typeof projects.$inferSelect>(
+      sharedKeys.projectBySlug(slug),
+    );
 
-      if (project) {
-        setCachedProjectBySlug(slug, project);
+    if (project) {
+      recordCacheHit("shared:project-by-slug");
+      setCachedProjectBySlug(slug, project);
+    } else {
+      recordCacheMiss("shared:project-by-slug");
+      try {
+        // Callers only need the project row itself (name/slug/auth checks) and
+        // fetch endpoints separately. Joining the whole endpoint/route graph here
+        // loaded every `response_schema` blob on each first page view.
+        project = await singleFlight(`project-slug:${slug}`, async () => {
+          const row = await db.query.projects.findFirst({
+            where: eq(projects.slug, slug),
+          });
+          if (row) {
+            setCachedProjectBySlug(slug, row);
+          }
+          return row;
+        });
+
+        if (project) {
+          await setSharedValue(
+            sharedKeys.projectBySlug(slug),
+            project,
+            10 * 60,
+          );
+        }
+      } catch (error) {
+        projectsTrace.traceError("getProjectBySlug", error);
+        throw error;
       }
-    } catch (error) {
-      projectsTrace.traceError("getProjectBySlug", error);
-      throw error;
     }
   }
 

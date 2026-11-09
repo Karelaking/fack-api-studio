@@ -301,7 +301,10 @@ CREATE INDEX `routes_endpoint_method_path_idx` ON `routes` (`endpoint_id`,`metho
 
 ### Phase 2: Schema Enhancements (When Convenient)
 
-**Note:** The manual migration files `0014_schema_enhancements.sql` and `0015_wal_mode_pragmas.sql` were created as reference. To implement these changes:
+**Note:** The manual reference files `drizzle/reference/0014_schema_enhancements.sql`
+and `drizzle/reference/0015_wal_mode_pragmas.sql` live outside the migrations
+folder so the migrator never mistakes them for journaled migrations. To
+implement these changes:
 
 1. Update `db/schema.ts` to add the new columns
 2. Run `npm run db:generate` to create the migration

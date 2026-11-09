@@ -19,7 +19,7 @@ import { isValidFakerProvider } from "./faker-providers.constant";
 import {
   toProfessionalApiName,
   toProfessionalEndpointName,
-} from "./fallback-synthesizer.constant";
+} from "./fallback-synthesizer";
 import type { RouteWithEndpoint } from "@/lib/services/route.service";
 import type { EndpointWithRoutes } from "@/lib/services/endpoint.service";
 

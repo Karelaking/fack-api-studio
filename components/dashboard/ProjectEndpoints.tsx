@@ -246,7 +246,7 @@ export const ProjectEndpoints = ({
                       maxLength={200}
                       disabled={loading}
                     />
-                    <span className="text-muted-foreground text-[10px] italic">
+                    <span className="text-muted-foreground text-mini italic">
                       If left blank, routes inside this group will map directly
                       to project root namespace.
                     </span>
@@ -307,7 +307,7 @@ export const ProjectEndpoints = ({
       {endpointsList.length === 0 ? (
         <Card variant="dashed">
           <div className="flex flex-col items-center justify-center p-12 text-center">
-            <RiPulseLine className="text-muted-foreground mb-4 h-10 w-10 animate-pulse stroke-1" />
+            <RiPulseLine className="text-muted-foreground mb-4 h-10 w-10 animate-pulse stroke-1 motion-reduce:animate-none" />
             <CardTitle>
               <span className="text-lg">No Endpoint Groups</span>
             </CardTitle>
@@ -375,7 +375,7 @@ export const ProjectEndpoints = ({
               <CardContent>
                 <div className="py-2">
                   <div className="text-muted-foreground flex items-center gap-2 text-xs font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    <span className="bg-success h-2 w-2 rounded-full" />
                     <span>{ep.routes.length} Active Routes</span>
                   </div>
                 </div>

@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 
 import { AuthorizeDeviceForm } from "@/components/cli/AuthorizeDeviceForm";
 import { BrandLogo } from "@/components/brand/BrandLogo";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { storageConnection } from "@/db";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +52,7 @@ export default async function CliAuthorizePage({
       </main>
 
       <footer className="px-5 pb-8 sm:px-8">
-        <p className="text-muted-foreground mx-auto max-w-sm text-center text-[11px] leading-relaxed">
+        <p className="text-muted-foreground text-caption mx-auto max-w-sm text-center leading-relaxed">
           Self-hosted, open source and MIT licensed.
         </p>
       </footer>

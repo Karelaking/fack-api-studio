@@ -3,17 +3,18 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { AuthProvider } from "@/components/auth/AuthProvider";
-import { CommandMenu } from "@/components/command-menu";
+import { CommandMenu } from "@/components/CommandMenu";
 import { getProjectBySlug, getProjects } from "@/lib/actions/projects";
 import { getProjectUrl, parseProjectPath } from "@/lib/utils/project-slug";
-import { ProjectProvider } from "@/components/project/ProjectContext";
+import { ProjectProvider } from "@/components/project/ProjectProvider";
 import { Separator } from "@/components/ui/separator";
 import { DashboardBreadcrumbs } from "@/components/dashboard/DashboardBreadcrumbs";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
-import { HeaderNewProjectButton } from "@/components/dashboard/HeaderNewProjectButton";
+import { SectionMenuBar } from "@/components/dashboard/SectionMenuBar";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ImportOpenApiDialog } from "@/components/ai/ImportOpenApiDialog";
+import { ProjectDndWrapper } from "@/components/project/ProjectDndWrapper";
 import { storageConnection } from "@/db";
 import packageJson from "@/package.json";
 
@@ -91,35 +92,49 @@ export default async function ProjectLayout({
 
   return (
     <AuthProvider>
-      <SidebarProvider>
-        <div className="bg-background flex h-dvh w-full max-w-full overflow-hidden">
-          {/* Sidebar component */}
-          <DashboardSidebar
-            initialProjects={projects}
-            appVersion={packageJson.version}
-          />
+      <ProjectDndWrapper>
+        <ProjectProvider project={project}>
+          <SidebarProvider
+            style={
+              {
+                "--sidebar-width": "26rem",
+              } as React.CSSProperties
+            }
+          >
+            <div className="bg-background flex h-dvh w-full max-w-full overflow-hidden">
+              {/* Sidebar component */}
+              <DashboardSidebar
+                initialProjects={projects}
+                appVersion={packageJson.version}
+              />
 
-          {/* Main Content Area */}
-          <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-            <header className="border-border/60 bg-background/60 flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 backdrop-blur-md sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-              <div className="flex min-w-0 items-center gap-2">
-                <SidebarTrigger className="h-9 w-9 shrink-0" />
-                <Separator orientation="vertical" className="h-4 shrink-0" />
-                <DashboardBreadcrumbs projects={projects} />
-              </div>
-              <HeaderNewProjectButton />
-            </header>
-            <div className="bg-background flex-1 overflow-auto pb-[calc(3.5rem_+_env(safe-area-inset-bottom))] md:pb-0">
-              <ProjectProvider project={project}>
-                {children}
-                <ImportOpenApiDialog projectId={project.id} />
-              </ProjectProvider>
+              {/* Main Content Area */}
+              <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
+                <header
+                  aria-label="Project top navigation"
+                  className="border-border/60 bg-background/60 flex h-14 shrink-0 items-center justify-between gap-2 border-b px-3 backdrop-blur-md sm:gap-3 sm:px-4 md:px-6"
+                >
+                  <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                    <SidebarTrigger className="size-11 shrink-0 md:size-9" />
+                    <Separator
+                      orientation="vertical"
+                      className="h-4 shrink-0"
+                    />
+                    <DashboardBreadcrumbs projects={projects} />
+                  </div>
+                  <SectionMenuBar projectSlug={projectSlug} />
+                </header>
+                <div className="bg-background flex-1 overflow-auto pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
+                  {children}
+                  <ImportOpenApiDialog projectId={project.id} />
+                </div>
+                <MobileBottomNav />
+              </main>
             </div>
-            <MobileBottomNav />
-          </main>
-        </div>
-        <CommandMenu />
-      </SidebarProvider>
+            <CommandMenu />
+          </SidebarProvider>
+        </ProjectProvider>
+      </ProjectDndWrapper>
     </AuthProvider>
   );
 }

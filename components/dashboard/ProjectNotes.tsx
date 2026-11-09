@@ -191,7 +191,7 @@ export function ProjectNotes({
           </Button>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
+        <div className="scrollbar-subtle flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
           {notes.length === 0 && (
             <div className="border-border/50 text-muted-foreground flex flex-col items-center gap-3 rounded-xl border border-dashed p-6 text-center">
               <RiStickyNoteLine className="h-6 w-6" aria-hidden="true" />

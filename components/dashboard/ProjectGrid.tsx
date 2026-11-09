@@ -26,7 +26,7 @@ import { toast } from "sonner";
 import { deleteProject, updateProject } from "@/lib/actions/projects";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { getProjectUrl } from "@/lib/utils/project-slug";
-import type { Project, Endpoint, Route } from "@/db/schema";
+import type { Project, Route } from "@/db/schema";
 import { PageShell } from "@/components/dashboard/PageShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,10 +46,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// The dashboard list query projects only the fields the overview needs
+// (`endpoint.id` and `route.method`), so the relations are modeled narrowly
+// instead of pretending every full route row is present.
 type ProjectWithRelations = Project & {
-  endpoints?: (Endpoint & {
-    routes?: Route[];
-  })[];
+  endpoints?: {
+    id: string;
+    routes?: { method: Route["method"] }[];
+  }[];
 };
 
 type SortOption = "updated" | "name";
@@ -114,7 +118,7 @@ interface ProjectGridProps {
 }
 
 /**
- * The dashboard's workspace browser.
+ * The dashboard's project browser.
  *
  * Overview widgets are derived from the same project list the grid renders, so
  * every number on this page can be traced to the database — there are no
@@ -284,7 +288,7 @@ export function ProjectGrid({
           slug: editSlug.trim(),
           description: editDescription.trim(),
         });
-        toast.success("Workspace settings updated successfully!");
+        toast.success("Project settings updated successfully!");
         setProjects((prev) =>
           prev.map((p) =>
             p.id === projectToEdit.id ? { ...p, ...updated } : p,
@@ -293,7 +297,7 @@ export function ProjectGrid({
         setProjectToEdit(null);
         router.refresh();
       } catch (err) {
-        toast.error("Failed to update workspace settings");
+        toast.error("Failed to update project settings");
         console.error(err);
       } finally {
         setEditLoading(false);
@@ -319,7 +323,7 @@ export function ProjectGrid({
         setDeleteConfirmText("");
         router.refresh();
       } catch (err) {
-        toast.error("Failed to delete workspace");
+        toast.error("Failed to delete project");
         console.error(err);
       } finally {
         setDeleteLoading(false);
@@ -341,10 +345,10 @@ export function ProjectGrid({
     <PageShell>
       <header className="space-y-1">
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          Workspaces
+          Projects
         </h1>
         <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed">
-          Every workspace is an isolated namespace with its own mock endpoints,
+          Every project is an isolated namespace with its own mock endpoints,
           routes, and request logs.
         </p>
       </header>
@@ -361,8 +365,8 @@ export function ProjectGrid({
             value={search}
             onChange={(e) => void setSearch(e.target.value)}
             onKeyDown={handleSearchKeyDown}
-            placeholder="Search workspaces..."
-            aria-label="Search workspaces"
+            placeholder="Search projects..."
+            aria-label="Search projects"
             aria-keyshortcuts="/"
             className="bg-card/30 border-border/50 h-11 pr-12 pl-9 text-base sm:h-10 sm:text-sm"
           />
@@ -398,7 +402,7 @@ export function ProjectGrid({
                   type="button"
                   variant="outline"
                   size="sm"
-                  aria-label={`Sort workspaces by ${
+                  aria-label={`Sort projects by ${
                     sortBy === "name" ? "name" : "last updated"
                   }`}
                   className="h-11 min-w-11 justify-center px-0 sm:h-10 sm:min-w-0 sm:px-3"
@@ -428,7 +432,7 @@ export function ProjectGrid({
           </DropdownMenu>
 
           <fieldset className="border-border/50 bg-card/30 flex h-11 min-w-0 items-center rounded-lg border p-0 sm:h-10 sm:p-1">
-            <legend className="sr-only">Workspace layout</legend>
+            <legend className="sr-only">Project layout</legend>
             <button
               type="button"
               aria-label="Grid view"
@@ -465,7 +469,7 @@ export function ProjectGrid({
         <div className="flex flex-col gap-6 md:flex-row md:gap-6 lg:gap-8">
           {/* Overview rail — real counts only */}
           <aside
-            aria-label="Workspace overview"
+            aria-label="Project overview"
             className="order-2 flex w-full shrink-0 flex-col gap-5 md:order-1 md:w-70 lg:w-[320px] xl:w-85 2xl:w-90"
           >
             <section aria-labelledby="overview-heading" className="space-y-3">
@@ -562,7 +566,7 @@ export function ProjectGrid({
                             <div className="flex items-center justify-between text-xs">
                               {/* M3 Tonal Assist Chip */}
                               <span
-                                className="inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[11px] font-semibold tracking-wider transition-transform group-hover:scale-[1.02]"
+                                className="text-caption inline-flex items-center rounded-md px-2 py-0.5 font-mono font-semibold tracking-wider transition-transform group-hover:scale-[1.02]"
                                 style={{
                                   backgroundColor: config.bgTint,
                                   color: config.color,
@@ -577,7 +581,7 @@ export function ProjectGrid({
                                 <span className="text-foreground text-xs font-semibold">
                                   {count}
                                 </span>
-                                <span className="text-muted-foreground/70 text-[11px]">
+                                <span className="text-muted-foreground/70 text-caption">
                                   {percent}%
                                 </span>
                               </div>
@@ -663,7 +667,7 @@ export function ProjectGrid({
                   className="w-full justify-start"
                 >
                   <RiAddLine aria-hidden="true" className="h-4 w-4" />
-                  New workspace
+                  New project
                 </Button>
                 <Button
                   type="button"
@@ -707,7 +711,7 @@ export function ProjectGrid({
                   />
                 ) : null}
                 {filteredProjects.length}{" "}
-                {filteredProjects.length === 1 ? "workspace" : "workspaces"}
+                {filteredProjects.length === 1 ? "project" : "projects"}
               </p>
             </div>
 
@@ -717,7 +721,7 @@ export function ProjectGrid({
                   <RiTerminalBoxLine aria-hidden="true" className="h-7 w-7" />
                 </div>
                 <h3 className="text-foreground text-lg font-semibold">
-                  No matching workspaces
+                  No matching projects
                 </h3>
                 <p className="text-muted-foreground mt-2 max-w-sm text-sm leading-relaxed">
                   Nothing matches “{search}”. Try a different name, slug, or
@@ -772,7 +776,7 @@ export function ProjectGrid({
                         className="absolute inset-0 z-10 rounded-xl focus-visible:outline-none"
                       >
                         <span className="sr-only">
-                          Open workspace {project.name}
+                          Open project {project.name}
                         </span>
                       </Link>
 
@@ -797,8 +801,8 @@ export function ProjectGrid({
                         <div className="relative z-20 flex shrink-0 items-center gap-1.5">
                           <button
                             type="button"
-                            aria-label={`Workspace settings for ${project.name}`}
-                            title="Workspace settings"
+                            aria-label={`Project settings for ${project.name}`}
+                            title="Project settings"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -813,8 +817,8 @@ export function ProjectGrid({
                           </button>
                           <button
                             type="button"
-                            aria-label={`Delete workspace ${project.name}`}
-                            title="Delete workspace"
+                            aria-label={`Delete project ${project.name}`}
+                            title="Delete project"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -837,7 +841,7 @@ export function ProjectGrid({
                         )}
                       >
                         {project.description ||
-                          "No description yet. Open the workspace to document what it mocks."}
+                          "No description yet. Open the project to document what it mocks."}
                       </p>
 
                       <div className="text-muted-foreground border-border/50 mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 border-t pt-3 text-xs">
@@ -880,15 +884,15 @@ export function ProjectGrid({
             <RiTerminalBoxLine aria-hidden="true" className="h-8 w-8" />
           </div>
           <h2 className="text-foreground text-xl font-semibold tracking-tight">
-            Create your first workspace
+            Create your first project
           </h2>
           <p className="text-muted-foreground mt-2 max-w-md text-sm leading-relaxed">
-            A workspace groups related mock endpoints. Create one, then draw
+            A project groups related mock endpoints. Create one, then draw
             routes on the canvas or add them by hand.
           </p>
           <Button type="button" onClick={triggerCreateProject} className="mt-6">
             <RiAddLine aria-hidden="true" className="h-4 w-4" />
-            New workspace
+            New project
           </Button>
         </div>
       )}
@@ -908,9 +912,9 @@ export function ProjectGrid({
         <DialogContent className="sm:max-w-lg">
           <form onSubmit={handleEditSubmit}>
             <DialogHeader>
-              <DialogTitle>Workspace Settings</DialogTitle>
+              <DialogTitle>Project Settings</DialogTitle>
               <DialogDescription>
-                Modify workspace metadata and namespace configurations.
+                Modify project metadata and namespace configurations.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -1007,7 +1011,7 @@ export function ProjectGrid({
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle variant="destructive">Delete Workspace</DialogTitle>
+            <DialogTitle variant="destructive">Delete Project</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete{" "}
               <strong className="text-foreground font-semibold">
@@ -1020,7 +1024,7 @@ export function ProjectGrid({
 
           <div className="space-y-3 py-2">
             <p className="text-muted-foreground text-xs">
-              To verify deletion, type the workspace name{" "}
+              To verify deletion, type the project name{" "}
               <strong className="text-foreground select-all">
                 {projectToDelete?.name}
               </strong>{" "}
@@ -1029,7 +1033,7 @@ export function ProjectGrid({
             <Input
               size="sm"
               variant="mono"
-              aria-label="Workspace name confirmation"
+              aria-label="Project name confirmation"
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder={projectToDelete?.name}

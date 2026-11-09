@@ -10,7 +10,7 @@ import {
   toKebabCase,
   toProfessionalApiName,
   toProfessionalEndpointName,
-} from "../lib/ai/fallback-synthesizer.constant";
+} from "../lib/ai/fallback-synthesizer";
 import type { GenerationProgressStep } from "../lib/ai/types";
 import { POST as generateHandler } from "../app/api/ai/generate/route";
 import { NextRequest } from "next/server";

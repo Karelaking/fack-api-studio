@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { CustomSignIn } from "@/components/auth/CustomSignIn";
 import { CustomSignUp } from "@/components/auth/CustomSignUp";
@@ -55,7 +55,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps): React.JSX.Element => {
         </main>
 
         <footer className="px-5 pb-8 sm:px-8">
-          <p className="text-muted-foreground mx-auto max-w-sm text-center text-[11px] leading-relaxed">
+          <p className="text-muted-foreground text-caption mx-auto max-w-sm text-center leading-relaxed">
             Self-hosted, open source and MIT licensed.
           </p>
         </footer>

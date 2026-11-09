@@ -166,7 +166,8 @@ function Sidebar({
 
   if (collapsible === "none") {
     return (
-      <div
+      <aside
+        aria-label={props["aria-label"] || "Sidebar"}
         data-slot="sidebar"
         className={cn(
           "bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col",
@@ -175,7 +176,7 @@ function Sidebar({
         {...props}
       >
         {children}
-      </div>
+      </aside>
     );
   }
 
@@ -197,10 +198,17 @@ function Sidebar({
           side={side}
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+            <SheetTitle>Mock providers and project navigation</SheetTitle>
+            <SheetDescription>
+              Browse mock providers and projects.
+            </SheetDescription>
           </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
+          <aside
+            aria-label={props["aria-label"] || "Sidebar"}
+            className="flex h-full w-full flex-col"
+          >
+            {children}
+          </aside>
         </SheetContent>
       </Sheet>
     );
@@ -230,6 +238,16 @@ function Sidebar({
       <div
         data-slot="sidebar-container"
         data-side={side}
+        inert={
+          state === "collapsed" && collapsible === "offcanvas"
+            ? true
+            : undefined
+        }
+        aria-hidden={
+          state === "collapsed" && collapsible === "offcanvas"
+            ? true
+            : undefined
+        }
         className={cn(
           "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:-left-(--sidebar-width) data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:-right-(--sidebar-width) md:flex",
           // Adjust the padding for floating and inset variants.
@@ -240,13 +258,14 @@ function Sidebar({
         )}
         {...props}
       >
-        <div
+        <aside
+          aria-label={props["aria-label"] || "Sidebar"}
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
           className="bg-sidebar group-data-[variant=floating]:ring-sidebar-border flex size-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1"
         >
           {children}
-        </div>
+        </aside>
       </div>
     </div>
   );
@@ -265,7 +284,10 @@ function SidebarTrigger({
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon-sm"
-      className={cn(className)}
+      className={cn(
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        className,
+      )}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();

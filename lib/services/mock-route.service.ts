@@ -6,6 +6,13 @@ import {
   setCachedRoutes,
   type CachedRoute,
 } from "@/lib/cache";
+import {
+  getSharedValue,
+  setSharedValue,
+  sharedKeys,
+} from "@/lib/cache/shared-store";
+import { recordCacheHit, recordCacheMiss } from "@/lib/metrics";
+import { singleFlight } from "@/lib/utils/single-flight";
 import { findMatchingRoute, type RouteMatchResult } from "@/lib/route-matcher";
 import { LoggerRegistry } from "@/lib/logger-registry";
 
@@ -16,6 +23,25 @@ function normalizePath(path: string): string {
   return normalized || "/";
 }
 
+/**
+ * The enabled subset for a route snapshot is derived once per snapshot.
+ *
+ * `getProjectMockRoutes` returns a stable array until the project is edited, so
+ * keying this WeakMap by that array keeps the filter out of the request path.
+ * Deriving it with `.filter()` on every request also produced a brand-new array
+ * each time, which silently defeated the compiled-matcher cache.
+ */
+const enabledRoutesCache = new WeakMap<CachedRoute[], CachedRoute[]>();
+
+function getEnabledRoutes(routes: CachedRoute[]): CachedRoute[] {
+  let enabled = enabledRoutesCache.get(routes);
+  if (!enabled) {
+    enabled = routes.filter((route) => route.isEnabled);
+    enabledRoutesCache.set(routes, enabled);
+  }
+  return enabled;
+}
+
 export async function getProjectMockRoutes(
   projectId: string,
 ): Promise<CachedRoute[]> {
@@ -24,28 +50,47 @@ export async function getProjectMockRoutes(
     return cachedRoutes;
   }
 
-  const projectEndpoints = await db.query.endpoints.findMany({
-    where: eq(endpoints.projectId, projectId),
-    with: {
-      routes: {
-        with: { webhooks: true },
+  const sharedRoutes = await getSharedValue<CachedRoute[]>(
+    sharedKeys.mockRoutes(projectId),
+  );
+  if (sharedRoutes) {
+    recordCacheHit("shared:mock-routes");
+    setCachedRoutes(projectId, sharedRoutes);
+    return sharedRoutes;
+  }
+  recordCacheMiss("shared:mock-routes");
+
+  const routes = await singleFlight(`mock-routes:${projectId}`, async () => {
+    const projectEndpoints = await db.query.endpoints.findMany({
+      where: eq(endpoints.projectId, projectId),
+      with: {
+        routes: {
+          with: { webhooks: true },
+        },
       },
-    },
+    });
+
+    const builtRoutes = projectEndpoints.flatMap((endpoint) =>
+      endpoint.routes.map((route) => ({
+        ...route,
+        endpoint: {
+          id: endpoint.id,
+          basePath: endpoint.basePath,
+          name: endpoint.name,
+        },
+        path: normalizePath(endpoint.basePath + route.path),
+      })),
+    );
+
+    setCachedRoutes(projectId, builtRoutes);
+    await setSharedValue(
+      sharedKeys.mockRoutes(projectId),
+      builtRoutes,
+      10 * 60,
+    );
+    return builtRoutes;
   });
 
-  const routes = projectEndpoints.flatMap((endpoint) =>
-    endpoint.routes.map((route) => ({
-      ...route,
-      endpoint: {
-        id: endpoint.id,
-        basePath: endpoint.basePath,
-        name: endpoint.name,
-      },
-      path: normalizePath(endpoint.basePath + route.path),
-    })),
-  );
-
-  setCachedRoutes(projectId, routes);
   return routes;
 }
 
@@ -55,8 +100,11 @@ export async function matchProjectMockRoute(
   requestPath: string,
 ): Promise<RouteMatchResult | null> {
   const routes = await getProjectMockRoutes(projectId);
-  const enabledRoutes = routes.filter((route) => route.isEnabled);
-  const match = findMatchingRoute(enabledRoutes, method, requestPath);
+  const match = findMatchingRoute(
+    getEnabledRoutes(routes),
+    method,
+    requestPath,
+  );
   routeServiceTrace.traceSuccess(
     "matchProjectMockRoute",
     match ? `${method} ${requestPath}` : "no match",

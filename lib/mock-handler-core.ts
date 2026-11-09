@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
 import { db, storageConnection } from "@/db";
 import { sqlClient } from "@/db/postgres";
 import { scenarios, type Project } from "@/db/schema";
@@ -13,6 +14,8 @@ import {
   getCachedPageData,
   setCachedPageData,
   prunePageCache,
+  getCachedScenario,
+  setCachedScenario,
   type CachedRoute,
 } from "@/lib/cache";
 import {
@@ -31,6 +34,7 @@ import {
   deleteMockItem,
 } from "@/lib/stateful-mock";
 import { matchProjectMockRoute } from "@/lib/services/mock-route.service";
+import { renderTemplate } from "@/lib/template-engine";
 import { LoggerRegistry } from "@/lib/logger-registry";
 import { MockResponseFormatterFactory } from "@/lib/mock-formatter";
 import {
@@ -77,43 +81,41 @@ async function flushLogQueue(): Promise<void> {
   if (isFlushing || logQueue.length === 0) return;
   isFlushing = true;
 
-  const batch = [...logQueue];
-  logQueue.length = 0; // clear queue
-
   try {
-    if (sqlClient) {
-      // postgres.js supports array insertion
-      await sqlClient`
-        INSERT INTO request_logs ${sqlClient(batch)}
-      `;
-    } else {
-      // @libsql/client supports batching
-      const statements = batch.map((entry) => ({
-        sql: `INSERT INTO request_logs (id, project_id, timestamp, method, path, query_params, headers, status_code, latency, is_error, response_payload) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [
-          entry.id,
-          entry.project_id,
-          entry.timestamp,
-          entry.method,
-          entry.path,
-          entry.query_params,
-          entry.headers,
-          entry.status_code,
-          entry.latency,
-          entry.is_error,
-          entry.response_payload,
-        ],
-      }));
-      await db.$client.batch(statements);
+    while (logQueue.length > 0) {
+      const batch = logQueue.splice(0, 100);
+      if (batch.length === 0) break;
+
+      if (sqlClient) {
+        // postgres.js supports array insertion
+        await sqlClient`
+          INSERT INTO request_logs ${sqlClient(batch)}
+        `;
+      } else {
+        // @libsql/client supports batching
+        const statements = batch.map((entry) => ({
+          sql: `INSERT INTO request_logs (id, project_id, timestamp, method, path, query_params, headers, status_code, latency, is_error, response_payload) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [
+            entry.id,
+            entry.project_id,
+            entry.timestamp,
+            entry.method,
+            entry.path,
+            entry.query_params,
+            entry.headers,
+            entry.status_code,
+            entry.latency,
+            entry.is_error,
+            entry.response_payload,
+          ],
+        }));
+        await db.$client.batch(statements);
+      }
     }
   } catch (error) {
     mockLogger.error("Failed to batch insert request logs:", error);
   } finally {
     isFlushing = false;
-    // If more items were added during flush, try to flush again
-    if (logQueue.length > 0) {
-      await flushLogQueue();
-    }
   }
 }
 
@@ -137,10 +139,15 @@ async function recordRequestLog(
     Object.fromEntries(request.nextUrl.searchParams),
   );
   const reqHeaders = JSON.stringify(Object.fromEntries(request.headers));
+  // Bound both object and string payloads. Templates/conditional rules can
+  // return large strings, and an unbounded row bloats `request_logs`, the
+  // dashboard query, and the flush batch.
+  const serializedPayload =
+    typeof payload === "string" ? payload : JSON.stringify(payload);
   const resPayload =
-    typeof payload === "string"
-      ? payload
-      : JSON.stringify(payload).slice(0, 5000);
+    serializedPayload.length > 5_000
+      ? serializedPayload.slice(0, 5_000)
+      : serializedPayload;
 
   if (logQueue.length >= MAX_LOG_QUEUE) {
     const dropped = logQueue.shift();
@@ -295,7 +302,6 @@ export async function processMockRequest({
 
       const token = authHeader.split(" ")[1];
       try {
-        const { jwtVerify } = await import("jose");
         const secret = getMockJwtSecret(project.id);
         await jwtVerify(token, secret);
       } catch {
@@ -335,18 +341,32 @@ export async function processMockRequest({
     // ── 3.5 Active Scenario Check ────────────────────────────────────────
     let activeScenario = null;
     if (project.activeScenarioId) {
-      activeScenario = await db.query.scenarios.findFirst({
-        where: eq(scenarios.id, project.activeScenarioId),
-      });
+      const cached = getCachedScenario(project.activeScenarioId);
+      if (cached) {
+        activeScenario = cached;
+      } else {
+        const row = await db.query.scenarios.findFirst({
+          where: eq(scenarios.id, project.activeScenarioId),
+        });
+        if (row) {
+          setCachedScenario(project.activeScenarioId, row);
+          activeScenario = row;
+        }
+      }
     }
 
     // ── 4. Simulated Error Injection (Chaos Monkey) ──────────────────────
     let finalErrorRate = route.errorRate ?? 0;
     if (activeScenario && activeScenario.forcedErrorRate > 0) {
-      // if forced error rate is 0.5, the baseline error rate increases
+      // forcedErrorRate in scenarios is stored as 0.05 for 5% or 1.0 for 100%,
+      // but may also be configured as a whole percentage (e.g. 50).
+      const forcedPercentage =
+        activeScenario.forcedErrorRate <= 1.0
+          ? activeScenario.forcedErrorRate * 100
+          : activeScenario.forcedErrorRate;
       finalErrorRate = Math.min(
-        1.0,
-        finalErrorRate + activeScenario.forcedErrorRate,
+        100,
+        Math.max(0, finalErrorRate + forcedPercentage),
       );
     }
 
@@ -380,7 +400,6 @@ export async function processMockRequest({
 
     // ── 5.5 Handlebars Templating Bypass ────────────────────────────────
     if (route.responseTemplate && route.responseTemplate.trim() !== "") {
-      const { renderTemplate } = await import("@/lib/template-engine");
       const queryRecord: Record<string, string> = {};
       for (const [k, v] of request.nextUrl.searchParams.entries()) {
         queryRecord[k] = v;
@@ -388,7 +407,7 @@ export async function processMockRequest({
 
       let requestBody: Record<string, unknown> = {};
       try {
-        requestBody = await request.clone().json();
+        requestBody = await request.json();
       } catch {}
 
       const rawPayload = renderTemplate(route.responseTemplate, {
@@ -580,7 +599,7 @@ export async function processMockRequest({
       if (method === "POST" || method === "PUT" || method === "PATCH") {
         let requestBody: Record<string, unknown> = {};
         try {
-          requestBody = await request.clone().json();
+          requestBody = await request.json();
         } catch {
           // ignore
         }

@@ -3,7 +3,7 @@ title: LRU Cache & Prefetching
 description: Bounded in-memory LRU caching architecture, predictive page N+1 prefetching, and granular invalidation.
 ---
 
-Generating rich mock payloads with hundreds of Faker.js providers and complex JSON Schema validations can add noticeable processing overhead. To deliver consistent **single-digit millisecond response times**, Fack API features an object-oriented, bounded in-memory caching architecture backed by `lru-cache` and `unstorage`.
+Generating rich mock payloads with hundreds of Faker.js providers and complex JSON Schema validations can add noticeable processing overhead. To deliver consistent **single-digit millisecond response times**, Fack API features an object-oriented, bounded in-memory caching architecture backed by `lru-cache`, with an optional shared Redis tier (Upstash REST or a self-hosted `REDIS_URL`) for multi-instance deployments.
 
 By storing compiled route lists, synthesized entity objects, and paginated slices in memory, subsequent requests bypass schema compilation and database lookups entirely.
 
@@ -101,6 +101,18 @@ Unlike naive caching systems that wipe all application state on every mutation, 
 - `clearRouteCache(routeId)`: Invalidates the mock data array, single object cache, and page cache entries associated with a specific route.
 - `clearProjectCache(projectId, projectSlug)`: Evicts the project route tree, project metadata, and slug mappings.
 - `clearCache()`: Flushes all internal LRU stores across all project domains.
+
+When Redis is configured, project-level invalidation also drops the matching
+shared keys (`projects:*`, `project:<slug>`, `mock-routes:<id>`, and
+`state:<id>:*`), so every instance observes the change instead of serving stale
+data until the TTL expires.
+
+<Callout type="info">
+  Shared caching is opt-in. Set `UPSTASH_REDIS_REST_URL` +
+  `UPSTASH_REDIS_REST_TOKEN`, or `REDIS_URL` (Docker Compose provides one). With
+  neither set, everything stays in-process and the TTLs are the correctness
+  window.
+</Callout>
 
 <Callout type="warn">
   Modifying a route's JSON Schema or changing its chaos settings automatically

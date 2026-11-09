@@ -14,9 +14,9 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const ip = getClientIp(request);
-  const rate = rateLimiter.check(`device_flow:${ip}`, 15, 60);
+  const rate = await rateLimiter.check(`device_flow:${ip}`, 15, 60);
 
-  if (!rate.allowed) {
+  if (!rate.isAllowed) {
     return NextResponse.json(
       {
         error: "Too many login attempts. Please slow down.",

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
 import { RouteMatcher } from "@/cli/src/matcher.service";
-import type { FackRuntimeRoute } from "@/lib/bundle/bundle.type";
+import type { FackRuntimeRoute } from "@/lib/bundle/types";
 
 function makeRoute(
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",

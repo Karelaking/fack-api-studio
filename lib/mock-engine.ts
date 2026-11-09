@@ -2,6 +2,7 @@ import { generate } from "json-schema-faker";
 import { faker } from "@faker-js/faker";
 import { LoggerRegistry } from "@/lib/logger-registry";
 import { toStr } from "@/lib/utils/coerce";
+import { parseJsonCached } from "@/lib/utils/json-parse-cache";
 import type { NextRequest } from "next/server";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -67,21 +68,21 @@ const extendedFaker = Object.assign({}, faker, {
 /**
  * Recursively maps any "x-faker" properties in a JSON Schema to "faker".
  */
-function mapXFakerToFaker(obj: unknown): unknown {
-  if (typeof obj !== "object" || obj === null) {
-    return obj;
+function mapXFakerToFaker(value: unknown): unknown {
+  if (typeof value !== "object" || value === null) {
+    return value;
   }
 
-  if (Array.isArray(obj)) {
-    return obj.map(mapXFakerToFaker);
+  if (Array.isArray(value)) {
+    return value.map(mapXFakerToFaker);
   }
 
   const mappedSchema: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+  for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
     if (key === "x-faker") {
-      mappedSchema["faker"] = value;
+      mappedSchema["faker"] = entry;
     } else {
-      mappedSchema[key] = mapXFakerToFaker(value);
+      mappedSchema[key] = mapXFakerToFaker(entry);
     }
   }
   return mappedSchema;
@@ -157,6 +158,26 @@ export function shouldError(errorRate: number): boolean {
 
 // ─── Response Building ───────────────────────────────────────────────────────
 
+/**
+ * Pretty-print budget for JSON responses. Indentation is a developer nicety,
+ * but it inflates large list payloads by ~2x on the wire and in `JSON.stringify`
+ * CPU. Small bodies stay human-readable; large ones ship compact.
+ */
+const PRETTY_JSON_MAX_CHARS = 8 * 1024;
+
+const QUERY_SPECIAL_KEYS = new Set([
+  "limit",
+  "_limit",
+  "count",
+  "page",
+  "_page",
+  "sort",
+  "_sort",
+  "order",
+  "_order",
+  "q",
+]);
+
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
@@ -182,7 +203,27 @@ export function buildResponse(
     ...customHeaders,
   });
 
-  const response = new Response(JSON.stringify(payload, null, 2), {
+  let bodyContent: string;
+  if (typeof payload === "string") {
+    const contentType = headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      bodyContent = payload;
+    } else {
+      try {
+        JSON.parse(payload);
+        bodyContent = payload;
+      } catch {
+        bodyContent = JSON.stringify(payload, null, 2);
+      }
+    }
+  } else {
+    bodyContent = JSON.stringify(payload);
+    if (bodyContent.length <= PRETTY_JSON_MAX_CHARS) {
+      bodyContent = JSON.stringify(payload, null, 2);
+    }
+  }
+
+  const response = new Response(bodyContent, {
     status: statusCode,
     headers,
   });
@@ -235,22 +276,9 @@ export function processQueryParameters(
 
     let filteredItems = [...items];
 
-    const specialKeys = new Set([
-      "limit",
-      "_limit",
-      "count",
-      "page",
-      "_page",
-      "sort",
-      "_sort",
-      "order",
-      "_order",
-      "q",
-    ]);
-
     // 1. Filtering
     for (const [key, value] of searchParams.entries()) {
-      if (specialKeys.has(key)) continue;
+      if (QUERY_SPECIAL_KEYS.has(key)) continue;
 
       filteredItems = filteredItems.filter((item) => {
         if (item && typeof item === "object") {
@@ -393,7 +421,7 @@ export function evaluateRules(
 ): { status: number; body: unknown } | null {
   mockTrace.traceCall("evaluateRules", request.nextUrl.pathname);
   try {
-    const rules: ConditionalRule[] = JSON.parse(conditionalRulesJson || "[]");
+    const rules = parseJsonCached<ConditionalRule[]>(conditionalRulesJson, []);
     if (!Array.isArray(rules) || rules.length === 0) {
       mockTrace.traceSuccess("evaluateRules (no rules)", null);
       return null;
@@ -426,12 +454,10 @@ export function evaluateRules(
       }
 
       if (isMatch) {
-        let parsedBody: unknown = rule.responseBody;
-        try {
-          parsedBody = JSON.parse(rule.responseBody);
-        } catch {
-          // fallback to raw string if it's not valid JSON
-        }
+        const parsedBody = parseJsonCached<unknown>(
+          rule.responseBody,
+          rule.responseBody,
+        );
         const matchResult = {
           status: rule.responseStatus || 200,
           body: parsedBody,

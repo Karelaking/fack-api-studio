@@ -10,3 +10,9 @@ export { cn } from "cn";
 export { generateId } from "./ids";
 export { formatRelativeTime } from "./date";
 export { slugify, slugifyPath } from "./slug";
+export {
+  getCategoryColor,
+  getCategoryTint,
+  CATEGORY_COLOR_PALETTE,
+  DEFAULT_CATEGORY_COLOR,
+} from "./category-colors";

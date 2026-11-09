@@ -25,6 +25,11 @@ import type { RequestLog } from "@/db/schema";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  getLatencyBadgeClass,
+  getMethodBadgeClass,
+  getStatusBadgeClass,
+} from "@/lib/utils/method-colors";
 
 interface ProjectLogsProps {
   projectId: string;
@@ -108,36 +113,6 @@ export const ProjectLogs = ({
     overscan: 5,
   });
 
-  const getMethodBadgeClass = (method: string) => {
-    switch (method.toUpperCase()) {
-      case "GET":
-        return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/10";
-      case "POST":
-        return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/10";
-      case "PUT":
-        return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/10";
-      case "DELETE":
-        return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/10";
-      case "PATCH":
-        return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/10";
-      default:
-        return "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/10";
-    }
-  };
-
-  const getStatusBadgeClass = (status: number) => {
-    if (status >= 200 && status < 300) {
-      return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/10";
-    }
-    if (status >= 300 && status < 400) {
-      return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/10";
-    }
-    if (status >= 400 && status < 500) {
-      return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/10";
-    }
-    return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/10";
-  };
-
   const formatTimestamp = (timestamp: number) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], {
@@ -169,7 +144,7 @@ export const ProjectLogs = ({
                 key={filter}
                 onClick={() => setStatusFilter(filter)}
                 className={cn(
-                  "px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase transition-all",
+                  "px-2.5 py-1 text-mini font-bold tracking-wide uppercase transition-all",
                   statusFilter === filter
                     ? "bg-background text-foreground border-border/20 border shadow-xs"
                     : "text-muted-foreground hover:text-foreground",
@@ -212,7 +187,10 @@ export const ProjectLogs = ({
       </div>
 
       {/* Main logs display grid */}
-      <div ref={parentRef} className="bg-card flex-1 overflow-y-auto border">
+      <div
+        ref={parentRef}
+        className="bg-card scrollbar-subtle flex-1 overflow-y-auto border"
+      >
         {filteredLogs.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
             <RiTerminalBoxLine className="text-muted-foreground/30 h-10 w-10" />
@@ -291,7 +269,7 @@ export const ProjectLogs = ({
                     </span>
                     <span
                       className={cn(
-                        "inline-flex items-center justify-center rounded border px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase",
+                        "inline-flex items-center justify-center rounded border px-1.5 py-0.5 text-micro font-bold tracking-wider uppercase",
                         getMethodBadgeClass(log.method),
                       )}
                     >
@@ -303,12 +281,8 @@ export const ProjectLogs = ({
                     <span className="text-muted-foreground/80 hidden items-center gap-0.5 sm:inline-flex">
                       <span
                         className={cn(
-                          "border-border/10 inline-flex items-center justify-center rounded border px-1 py-0.5 font-mono text-[10px]",
-                          log.latency > 1000
-                            ? "bg-rose-500/5 text-rose-500"
-                            : log.latency > 200
-                              ? "bg-amber-500/5 text-amber-500"
-                              : "bg-emerald-500/5 text-emerald-500",
+                          "inline-flex items-center justify-center rounded border px-1 py-0.5 font-mono text-mini",
+                          getLatencyBadgeClass(log.latency),
                         )}
                       >
                         {log.latency}ms
@@ -316,7 +290,7 @@ export const ProjectLogs = ({
                     </span>
                     <span
                       className={cn(
-                        "inline-flex items-center justify-center rounded border px-2 py-0.5 font-mono text-[10px] font-bold",
+                        "inline-flex items-center justify-center rounded border px-2 py-0.5 font-mono text-mini font-bold",
                         getStatusBadgeClass(log.statusCode),
                       )}
                     >
@@ -331,19 +305,19 @@ export const ProjectLogs = ({
 
                   {/* Expanded Detail Panel */}
                   {isExpanded && (
-                    <div className="bg-muted/10 text-foreground space-y-3 border-t px-4 py-3 font-mono text-[10px]">
+                    <div className="bg-muted/10 text-foreground text-mini space-y-3 border-t px-4 py-3 font-mono">
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         {/* Headers */}
                         <div className="space-y-1">
-                          <span className="text-muted-foreground text-[9px] font-bold tracking-wider uppercase">
+                          <span className="text-muted-foreground text-micro font-bold tracking-wider uppercase">
                             Request Headers
                           </span>
                           {Object.keys(parsedHeaders).length === 0 ? (
-                            <div className="text-muted-foreground/50 py-1 text-[9px] italic">
+                            <div className="text-muted-foreground/50 text-micro py-1 italic">
                               No request headers found
                             </div>
                           ) : (
-                            <div className="bg-card max-h-32 space-y-0.5 overflow-x-auto border p-2">
+                            <div className="bg-card scrollbar-subtle max-h-32 space-y-0.5 overflow-x-auto border p-2">
                               {Object.entries(parsedHeaders).map(
                                 ([key, value]) => (
                                   <div key={key} className="flex gap-1.5">
@@ -362,19 +336,19 @@ export const ProjectLogs = ({
 
                         {/* Query Params */}
                         <div className="space-y-1">
-                          <span className="text-muted-foreground text-[9px] font-bold tracking-wider uppercase">
+                          <span className="text-muted-foreground text-micro font-bold tracking-wider uppercase">
                             Query Parameters
                           </span>
                           {Object.keys(parsedQueryParams).length === 0 ? (
-                            <div className="text-muted-foreground/50 py-1 text-[9px] italic">
+                            <div className="text-muted-foreground/50 text-micro py-1 italic">
                               No query parameters sent
                             </div>
                           ) : (
-                            <div className="bg-card max-h-32 space-y-0.5 overflow-x-auto border p-2">
+                            <div className="bg-card scrollbar-subtle max-h-32 space-y-0.5 overflow-x-auto border p-2">
                               {Object.entries(parsedQueryParams).map(
                                 ([key, value]) => (
                                   <div key={key} className="flex gap-1.5">
-                                    <span className="shrink-0 font-semibold text-violet-500">
+                                    <span className="text-info shrink-0 font-semibold">
                                       {key}:
                                     </span>
                                     <span className="text-muted-foreground break-all">
@@ -390,10 +364,10 @@ export const ProjectLogs = ({
 
                       {/* Response Payload */}
                       <div className="space-y-1">
-                        <span className="text-muted-foreground text-[9px] font-bold tracking-wider uppercase">
+                        <span className="text-muted-foreground text-micro font-bold tracking-wider uppercase">
                           Response Payload
                         </span>
-                        <div className="bg-muted max-h-60 overflow-y-auto border p-2">
+                        <div className="bg-muted scrollbar-subtle max-h-60 overflow-y-auto border p-2">
                           <pre className="text-xs leading-normal whitespace-pre-wrap select-all">
                             {formattedBody || "Empty Response"}
                           </pre>

@@ -10,7 +10,7 @@ import {
   BUNDLE_MAGIC_HEADER,
   BUNDLE_SPEC_VERSION,
   type FackRuntimeBundle,
-} from "@/lib/bundle/bundle.type";
+} from "@/lib/bundle/types";
 
 const dummyBundle: FackRuntimeBundle = {
   magic: BUNDLE_MAGIC_HEADER,

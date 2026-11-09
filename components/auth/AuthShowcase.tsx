@@ -43,21 +43,21 @@ const SignInWorkbench = (): React.JSX.Element => {
         <div className="flex items-center gap-1.5">
           <span
             aria-hidden="true"
-            className="size-2.5 rounded-full bg-red-400/80"
+            className="bg-danger/60 size-2.5 rounded-full"
           />
           <span
             aria-hidden="true"
-            className="size-2.5 rounded-full bg-amber-400/80"
+            className="bg-warning/60 size-2.5 rounded-full"
           />
           <span
             aria-hidden="true"
-            className="size-2.5 rounded-full bg-emerald-400/80"
+            className="bg-success/60 size-2.5 rounded-full"
           />
           <div className="bg-muted/70 ml-2 inline-flex rounded-lg p-0.5">
             <button
               type="button"
               onClick={(): void => setActiveTab("traffic")}
-              className={`rounded-md px-2 py-0.5 font-mono text-[10px] font-medium transition-all ${
+              className={`text-mini rounded-md px-2 py-0.5 font-mono font-medium transition-all ${
                 activeTab === "traffic"
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -68,7 +68,7 @@ const SignInWorkbench = (): React.JSX.Element => {
             <button
               type="button"
               onClick={(): void => setActiveTab("cli")}
-              className={`rounded-md px-2 py-0.5 font-mono text-[10px] font-medium transition-all ${
+              className={`text-mini rounded-md px-2 py-0.5 font-mono font-medium transition-all ${
                 activeTab === "cli"
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -79,10 +79,10 @@ const SignInWorkbench = (): React.JSX.Element => {
           </div>
         </div>
 
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+        <div className="border-success/25 bg-success/10 text-mini text-success inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono font-semibold">
           <span className="relative flex size-1.5">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-75" />
-            <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
+            <span className="bg-success absolute inline-flex size-full animate-ping rounded-full opacity-75 motion-reduce:animate-none" />
+            <span className="bg-success relative inline-flex size-1.5 rounded-full" />
           </span>
           <span>12 Endpoints Active</span>
         </div>
@@ -90,54 +90,54 @@ const SignInWorkbench = (): React.JSX.Element => {
 
       {/* Tab 1: Live Traffic Log */}
       {activeTab === "traffic" && (
-        <div className="space-y-2 p-3.5 font-mono text-[11px] leading-relaxed">
+        <div className="text-caption space-y-2 p-3.5 font-mono leading-relaxed">
           <div className="border-border/40 bg-muted/20 hover:border-border/80 flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 transition-colors">
             <div className="flex items-center gap-2 truncate">
-              <span className="text-muted-foreground/60 text-[10px]">
+              <span className="text-muted-foreground/60 text-mini">
                 10:42:15
               </span>
-              <span className="py-0.2 rounded bg-emerald-500/15 px-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="py-0.2 bg-method-get/15 text-mini text-method-get rounded px-1.5 font-bold">
                 GET
               </span>
               <span className="text-foreground/90 truncate font-medium">
                 /api/v1/projects
               </span>
             </div>
-            <span className="text-muted-foreground shrink-0 text-[10px]">
+            <span className="text-muted-foreground text-mini shrink-0">
               200 OK · 14ms
             </span>
           </div>
 
           <div className="border-border/40 bg-muted/20 hover:border-border/80 flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 transition-colors">
             <div className="flex items-center gap-2 truncate">
-              <span className="text-muted-foreground/60 text-[10px]">
+              <span className="text-muted-foreground/60 text-mini">
                 10:42:19
               </span>
-              <span className="py-0.2 rounded bg-blue-500/15 px-1.5 text-[10px] font-bold text-blue-600 dark:text-blue-400">
+              <span className="py-0.2 bg-method-post/15 text-mini text-method-post rounded px-1.5 font-bold">
                 POST
               </span>
               <span className="text-foreground/90 truncate font-medium">
                 /api/cli/auth/device
               </span>
             </div>
-            <span className="text-muted-foreground shrink-0 text-[10px]">
+            <span className="text-muted-foreground text-mini shrink-0">
               201 Created · 22ms
             </span>
           </div>
 
           <div className="border-border/40 bg-muted/20 hover:border-border/80 flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 transition-colors">
             <div className="flex items-center gap-2 truncate">
-              <span className="text-muted-foreground/60 text-[10px]">
+              <span className="text-muted-foreground/60 text-mini">
                 10:42:25
               </span>
-              <span className="py-0.2 rounded bg-emerald-500/15 px-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="py-0.2 bg-method-get/15 text-mini text-method-get rounded px-1.5 font-bold">
                 GET
               </span>
               <span className="text-foreground/90 truncate font-medium">
                 /api/v1/endpoints/users
               </span>
             </div>
-            <span className="text-muted-foreground shrink-0 text-[10px]">
+            <span className="text-muted-foreground text-mini shrink-0">
               200 OK · 8ms
             </span>
           </div>
@@ -146,7 +146,7 @@ const SignInWorkbench = (): React.JSX.Element => {
 
       {/* Tab 2: Interactive CLI Terminal */}
       {activeTab === "cli" && (
-        <div className="p-3.5 font-mono text-[11px] leading-relaxed">
+        <div className="text-caption p-3.5 font-mono leading-relaxed">
           <div className="border-border/50 bg-muted/30 text-foreground/90 space-y-2 rounded-lg border p-3">
             <div className="flex items-center justify-between">
               <div className="text-primary flex items-center gap-2">
@@ -160,17 +160,17 @@ const SignInWorkbench = (): React.JSX.Element => {
                 aria-label="Copy terminal command"
               >
                 {hasCopied ? (
-                  <Check className="size-3.5 text-emerald-500" />
+                  <Check className="text-success size-3.5" />
                 ) : (
                   <Copy className="size-3.5" />
                 )}
               </button>
             </div>
-            <p className="text-muted-foreground text-[10px]">
+            <p className="text-muted-foreground text-mini">
               Decrypted bundle with local secret key · AES-256-GCM
             </p>
-            <div className="border-border/40 flex items-center justify-between border-t pt-1.5 text-[10px]">
-              <span className="text-emerald-600 dark:text-emerald-400">
+            <div className="border-border/40 text-mini flex items-center justify-between border-t pt-1.5">
+              <span className="text-success">
                 ⚡ Serving mock endpoints on http://127.0.0.1:4000
               </span>
               <span className="text-muted-foreground">0ms cloud latency</span>
@@ -180,13 +180,13 @@ const SignInWorkbench = (): React.JSX.Element => {
       )}
 
       {/* Footer bar */}
-      <div className="border-border/60 bg-muted/20 text-muted-foreground flex items-center justify-between border-t px-3.5 py-1.5 font-mono text-[10px]">
+      <div className="border-border/60 bg-muted/20 text-muted-foreground text-mini flex items-center justify-between border-t px-3.5 py-1.5 font-mono">
         <span className="flex items-center gap-1.5">
           <Lock className="text-primary size-3" aria-hidden="true" />
           fack.enc · AES-256-GCM
         </span>
         <span className="flex items-center gap-1">
-          <Activity className="size-3 text-emerald-500" />
+          <Activity className="text-success size-3" />
           SQLite WAL Mode
         </span>
       </div>
@@ -217,21 +217,21 @@ const SignUpWorkbench = (): React.JSX.Element => {
         <div className="flex items-center gap-1.5">
           <span
             aria-hidden="true"
-            className="size-2.5 rounded-full bg-red-400/80"
+            className="bg-danger/60 size-2.5 rounded-full"
           />
           <span
             aria-hidden="true"
-            className="size-2.5 rounded-full bg-amber-400/80"
+            className="bg-warning/60 size-2.5 rounded-full"
           />
           <span
             aria-hidden="true"
-            className="size-2.5 rounded-full bg-emerald-400/80"
+            className="bg-success/60 size-2.5 rounded-full"
           />
           <div className="bg-muted/70 ml-2 inline-flex rounded-lg p-0.5">
             <button
               type="button"
               onClick={(): void => setActiveTab("canvas")}
-              className={`rounded-md px-2 py-0.5 font-mono text-[10px] font-medium transition-all ${
+              className={`text-mini rounded-md px-2 py-0.5 font-mono font-medium transition-all ${
                 activeTab === "canvas"
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -242,7 +242,7 @@ const SignUpWorkbench = (): React.JSX.Element => {
             <button
               type="button"
               onClick={(): void => setActiveTab("typescript")}
-              className={`rounded-md px-2 py-0.5 font-mono text-[10px] font-medium transition-all ${
+              className={`text-mini rounded-md px-2 py-0.5 font-mono font-medium transition-all ${
                 activeTab === "typescript"
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -253,7 +253,7 @@ const SignUpWorkbench = (): React.JSX.Element => {
           </div>
         </div>
 
-        <div className="border-primary/20 bg-primary/10 text-primary inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-semibold">
+        <div className="border-primary/20 bg-primary/10 text-primary text-mini inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono font-semibold">
           <Zap className="size-3" aria-hidden="true" />
           <span>Faker Synthesizer</span>
         </div>
@@ -269,39 +269,33 @@ const SignUpWorkbench = (): React.JSX.Element => {
                 Route: /api/v2/users
               </span>
             </div>
-            <span className="text-muted-foreground font-mono text-[10px]">
+            <span className="text-muted-foreground text-mini font-mono">
               HTTP 200 · JSON
             </span>
           </div>
 
-          <pre className="border-border/40 bg-muted/20 text-foreground/90 overflow-x-auto rounded-lg border p-2.5 font-mono text-[10.5px] leading-relaxed">
+          <pre className="border-border/40 bg-muted/20 text-foreground/90 text-caption overflow-x-auto rounded-lg border p-2.5 font-mono leading-relaxed">
             <code>
               <span className="text-muted-foreground">{"{"}</span>
               <br />
               {"  "}
               <span className="text-primary">&quot;id&quot;</span>:{" "}
-              <span className="text-amber-600 dark:text-amber-300">
-                &quot;usr_9a4f21&quot;
-              </span>
+              <span className="text-warning">&quot;usr_9a4f21&quot;</span>
               ,
               <br />
               {"  "}
               <span className="text-primary">&quot;name&quot;</span>:{" "}
-              <span className="text-amber-600 dark:text-amber-300">
-                &quot;Ada Lovelace&quot;
-              </span>
+              <span className="text-warning">&quot;Ada Lovelace&quot;</span>
               ,
               <br />
               {"  "}
               <span className="text-primary">&quot;role&quot;</span>:{" "}
-              <span className="text-amber-600 dark:text-amber-300">
-                &quot;Lead Architect&quot;
-              </span>
+              <span className="text-warning">&quot;Lead Architect&quot;</span>
               ,
               <br />
               {"  "}
               <span className="text-primary">&quot;active&quot;</span>:{" "}
-              <span className="text-violet-600 dark:text-violet-400">true</span>
+              <span className="text-info">true</span>
               <br />
               <span className="text-muted-foreground">{"}"}</span>
             </code>
@@ -311,10 +305,10 @@ const SignUpWorkbench = (): React.JSX.Element => {
 
       {/* Tab 2: TypeScript DTO Export */}
       {activeTab === "typescript" && (
-        <div className="p-3.5 font-mono text-[11px] leading-relaxed">
+        <div className="text-caption p-3.5 font-mono leading-relaxed">
           <div className="border-border/50 bg-muted/20 relative rounded-lg border p-3">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-muted-foreground flex items-center gap-1.5 text-[10px]">
+              <span className="text-muted-foreground text-mini flex items-center gap-1.5">
                 <FileCode className="text-primary size-3" />
                 types/user.dto.ts
               </span>
@@ -325,13 +319,13 @@ const SignUpWorkbench = (): React.JSX.Element => {
                 aria-label="Copy TypeScript code"
               >
                 {hasCopied ? (
-                  <Check className="size-3.5 text-emerald-500" />
+                  <Check className="text-success size-3.5" />
                 ) : (
                   <Copy className="size-3.5" />
                 )}
               </button>
             </div>
-            <pre className="text-foreground/90 overflow-x-auto text-[10.5px]">
+            <pre className="text-foreground/90 text-caption overflow-x-auto">
               <code>{sampleTypeScript}</code>
             </pre>
           </div>
@@ -339,7 +333,7 @@ const SignUpWorkbench = (): React.JSX.Element => {
       )}
 
       {/* Footer bar */}
-      <div className="border-border/60 bg-muted/20 text-muted-foreground flex items-center justify-between border-t px-3.5 py-1.5 font-mono text-[10px]">
+      <div className="border-border/60 bg-muted/20 text-muted-foreground text-mini flex items-center justify-between border-t px-3.5 py-1.5 font-mono">
         <span className="flex items-center gap-1.5">
           <Cpu className="text-primary size-3" aria-hidden="true" />
           TypeScript &amp; OpenAPI 3.1
@@ -404,14 +398,14 @@ export const AuthShowcase = ({
           <span className="font-heading text-foreground text-base font-extrabold tracking-tight">
             fackapi<span className="text-primary">.</span>studio
           </span>
-          <span className="border-border/80 bg-background/80 text-muted-foreground rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-semibold">
+          <span className="border-border/80 bg-background/80 text-muted-foreground text-mini rounded-md border px-1.5 py-0.5 font-mono font-semibold">
             v1.20
           </span>
         </div>
 
         {isSignIn ? (
           <div className="border-border/80 bg-background/80 text-foreground inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium shadow-xs">
-            <Radio className="size-3 animate-pulse text-emerald-500" />
+            <Radio className="text-success size-3 animate-pulse motion-reduce:animate-none" />
             <span>Workspace Login</span>
           </div>
         ) : (
@@ -462,7 +456,7 @@ export const AuthShowcase = ({
         {trustChips.map((chip) => (
           <span
             key={chip}
-            className="border-border/70 bg-background/70 text-muted-foreground rounded-full border px-2.5 py-1 font-mono text-[10px] tracking-wide shadow-2xs"
+            className="border-border/70 bg-background/70 text-muted-foreground text-mini rounded-full border px-2.5 py-1 font-mono tracking-wide shadow-2xs"
           >
             {chip}
           </span>

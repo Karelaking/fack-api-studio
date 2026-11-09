@@ -5,12 +5,14 @@ import { usePathname } from "next/navigation";
 import {
   RiAddLine,
   RiSaveLine,
+  RiSave3Line,
   RiLoader2Line,
   RiSparkling2Fill,
   RiDownloadLine,
   RiUploadCloud2Line,
   RiMoreLine,
 } from "@remixicon/react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { OPEN_AGENT_COMPOSER_EVENT } from "@/lib/ai/agent-events";
+import { useOptionalProject } from "@/components/project/ProjectProvider";
 
 export function HeaderNewProjectButton(): React.JSX.Element | null {
   const pathname = usePathname();
@@ -29,7 +32,38 @@ export function HeaderNewProjectButton(): React.JSX.Element | null {
   const isCanvasPage =
     isProjectPage && segments[segments.length - 1] === "canvas";
 
+  const currentProject = useOptionalProject();
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isSavingFack, setIsSavingFack] = React.useState(false);
+
+  const handleSaveFack = async () => {
+    if (!currentProject?.id) return;
+    setIsSavingFack(true);
+    try {
+      const res = await fetch("/api/file-manager", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save",
+          projectId: currentProject.id,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Saved to .fack file", {
+          description: data.filePath,
+        });
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to save project",
+      );
+    } finally {
+      setIsSavingFack(false);
+    }
+  };
 
   React.useEffect(() => {
     const handleSaveStart = () => setIsSaving(true);
@@ -63,6 +97,24 @@ export function HeaderNewProjectButton(): React.JSX.Element | null {
       <div className="flex shrink-0 items-center gap-2">
         {/* Secondary actions: inline only when there is room for the labels. */}
         <div className="hidden items-center gap-2 xl:flex">
+          {currentProject && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              title="Save project to .fack file"
+              aria-label="Save project to .fack file"
+              onClick={handleSaveFack}
+              disabled={isSavingFack}
+            >
+              {isSavingFack ? (
+                <RiLoader2Line className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" />
+              ) : (
+                <RiSave3Line className="text-muted-foreground h-3.5 w-3.5" />
+              )}
+              <span>Save .fack</span>
+            </Button>
+          )}
           <Button
             type="button"
             variant="outline"
@@ -116,6 +168,12 @@ export function HeaderNewProjectButton(): React.JSX.Element | null {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuGroup>
+              {currentProject && (
+                <DropdownMenuItem onClick={handleSaveFack}>
+                  <RiSave3Line className="text-muted-foreground" />
+                  <span>Save .fack</span>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={openAiArchitect}>
                 <RiSparkling2Fill className="text-primary" />
                 <span>AI Architect</span>
@@ -168,8 +226,28 @@ export function HeaderNewProjectButton(): React.JSX.Element | null {
     );
   }
 
-  // Hide the global project creation button if inside a project page but not the canvas (e.g. settings/logs)
-  if (isProjectPage) return null;
+  // If on project subpage (e.g. settings/logs/endpoints), show Save .fack button if available
+  if (isProjectPage) {
+    if (!currentProject) return null;
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        title="Save project to .fack file"
+        aria-label="Save project to .fack file"
+        onClick={handleSaveFack}
+        disabled={isSavingFack}
+      >
+        {isSavingFack ? (
+          <RiLoader2Line className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" />
+        ) : (
+          <RiSave3Line className="text-muted-foreground h-3.5 w-3.5" />
+        )}
+        <span>Save .fack</span>
+      </Button>
+    );
+  }
 
   const handleNewProjectClick = () => {
     window.dispatchEvent(new CustomEvent("open-new-project-dialog"));

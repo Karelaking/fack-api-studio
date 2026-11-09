@@ -440,7 +440,7 @@ export const HowToStartSection = (): React.JSX.Element => {
                   </span>
                 </div>
 
-                <pre className="scrollbar-subtle overflow-x-auto px-4 py-3.5 font-mono text-[11px] leading-relaxed sm:text-xs">
+                <pre className="scrollbar-subtle text-caption overflow-x-auto px-4 py-3.5 font-mono leading-relaxed sm:text-xs">
                   <code className="text-foreground">
                     {SCHEMA_SOURCE.split("\n").map(
                       (line: string, index: number) => (
@@ -496,7 +496,7 @@ export const HowToStartSection = (): React.JSX.Element => {
                   </code>
                 </div>
 
-                <pre className="scrollbar-subtle border-border/40 overflow-x-auto border-t px-4 py-3 font-mono text-[11px] leading-relaxed sm:text-xs">
+                <pre className="scrollbar-subtle border-border/40 text-caption overflow-x-auto border-t px-4 py-3 font-mono leading-relaxed sm:text-xs">
                   {RESPONSE_LINES.map(
                     (line: { text: string; tone: string }) => (
                       <span

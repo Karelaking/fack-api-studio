@@ -16,7 +16,7 @@ export interface DeviceRequestSummary {
   status: DeviceRequestStatus;
   createdAt: string;
   expiresAt: string;
-  expired: boolean;
+  isExpired: boolean;
 }
 
 export interface AuthorizeResult {
@@ -35,7 +35,7 @@ function toSummary(
     status: request.status,
     createdAt: request.createdAt.toISOString(),
     expiresAt: request.expiresAt.toISOString(),
-    expired: request.expired,
+    isExpired: request.isExpired,
   };
 }
 
@@ -49,8 +49,8 @@ export async function inspectDeviceCode(
 ): Promise<AuthorizeResult> {
   const userId = await requireUserId();
 
-  const rate = rateLimiter.check(`inspect_code:${userId}`, 20, 300);
-  if (!rate.allowed) {
+  const rate = await rateLimiter.check(`inspect_code:${userId}`, 20, 300);
+  if (!rate.isAllowed) {
     return {
       ok: false,
       error: `Too many code verification attempts. Please wait ${rate.resetInSeconds} seconds before trying again.`,

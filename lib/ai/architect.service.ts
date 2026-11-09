@@ -30,7 +30,7 @@ import {
 import {
   synthesizeDetailedPrompt,
   synthesizeFallbackApi,
-} from "./fallback-synthesizer.constant";
+} from "./fallback-synthesizer";
 import {
   generatedApiSchema,
   detailedPromptSchema,

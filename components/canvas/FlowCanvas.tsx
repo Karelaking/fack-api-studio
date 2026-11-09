@@ -32,6 +32,7 @@ import {
   type DraftPlan,
 } from "./preview-nodes";
 import { useAgentStore } from "@/stores/agent-store-provider";
+import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
 import { LoggerRegistry } from "@/lib/logger-registry";
 
 const canvasUiTrace = LoggerRegistry.getTrace("ui-flow-canvas");
@@ -39,7 +40,7 @@ import { EndpointGroupNode } from "./EndpointGroupNode";
 import { AddRouteDialog } from "./AddRouteDialog";
 import type { Endpoint, Route } from "@/db/schema";
 import { RiGitBranchLine, RiLoader2Line } from "@remixicon/react";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
 
 // Custom Node Types registered on React Flow canvas
@@ -53,11 +54,11 @@ const nodeTypes = {
  * card that grows a metrics footer never overlaps its sibling; the group
  * container is sized to fit its children plus padding.
  */
-const ROUTE_NODE_WIDTH = 280; // must match RouteNode's `w-70`
+const ROUTE_NODE_WIDTH = 320; // must match RouteNode's `w-80`
 const ROUTE_SIBLING_X = 30; // left inset of a route inside its group
 const GROUP_WIDTH = ROUTE_SIBLING_X + ROUTE_NODE_WIDTH + 18; // right inset
 const GROUP_HEADER_OFFSET = 92; // first route's y: group header bottom (~75px) + its mb-4 gap
-const ROUTE_NODE_SPACING = 214; // measured card height (198px: 47 header + 72 body + 77 two-row footer) + 16px gap
+const ROUTE_NODE_SPACING = 250; // card height with field badges + 16px gap
 
 function groupHeightFor(routeCount: number): number {
   return Math.max(
@@ -299,6 +300,7 @@ function FlowCanvasInner({
 }: FlowCanvasInnerProps): React.JSX.Element {
   const reactFlowInstance = useReactFlow();
   const router = useRouter();
+  const setSelectedRouteInStore = useCanvasDndStore((s) => s.setSelectedRoute);
   const { resolvedTheme } = useTheme();
   const [newRouteQuery, setNewRouteQuery] = useQueryState(
     "newRoute",
@@ -419,17 +421,26 @@ function FlowCanvasInner({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // Sync selected node mock links with global dashboard sidebar
+  const lastDispatchedRouteKeyRef = React.useRef<string | null>(null);
+
+  // Sync selected node mock links with global dashboard sidebar and DnD store.
+  // Only dispatch when the selected route identity or attributes actually change,
+  // preventing 250 palette chips from re-rendering on node position updates / drag frames.
   React.useEffect(() => {
     const selectedRouteNode = nodes.find(
       (n) => n.selected && n.type === "routeNode",
     );
     if (selectedRouteNode) {
+      setSelectedRouteInStore(selectedRouteNode.id);
       const selectedRouteData = selectedRouteNode.data as {
         path: string;
         method: string;
         mockUrl: string;
       };
+      const key = `${selectedRouteNode.id}:${selectedRouteData.path}:${selectedRouteData.method}:${selectedRouteData.mockUrl}`;
+      if (lastDispatchedRouteKeyRef.current === key) return;
+      lastDispatchedRouteKeyRef.current = key;
+
       window.dispatchEvent(
         new CustomEvent("route-selected", {
           detail: {
@@ -441,9 +452,18 @@ function FlowCanvasInner({
         }),
       );
     } else {
+      setSelectedRouteInStore(null);
+      if (lastDispatchedRouteKeyRef.current === null) return;
+      lastDispatchedRouteKeyRef.current = null;
       window.dispatchEvent(new CustomEvent("route-selected", { detail: null }));
     }
-  }, [nodes]);
+  }, [nodes, setSelectedRouteInStore]);
+
+  const handlePaneClick = React.useCallback(() => {
+    setSelectedRouteInStore(null);
+    lastDispatchedRouteKeyRef.current = null;
+    window.dispatchEvent(new CustomEvent("route-selected", { detail: null }));
+  }, [setSelectedRouteInStore]);
 
   // Reconcile node state when endpoints or routes change, preserving positions.
   React.useEffect(() => {
@@ -614,6 +634,7 @@ function FlowCanvasInner({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={handleNodeClick}
+        onPaneClick={handlePaneClick}
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={FIT_VIEW_OPTIONS}
@@ -626,7 +647,7 @@ function FlowCanvasInner({
           gap={20}
           size={1.5}
           className="opacity-70 dark:opacity-40"
-          color={resolvedTheme === "dark" ? "#52525b" : "#94a3b8"}
+          color="var(--canvas-dot)"
         />
         <Controls className="bg-card! border-border! shadow-xs!" />
         <MiniMap
@@ -634,15 +655,11 @@ function FlowCanvasInner({
           pannable
           nodeColor={(node) => {
             if (node.type === "endpointGroup") {
-              return resolvedTheme === "dark" ? "#27272a" : "#e2e8f0";
+              return "var(--canvas-minimap-group)";
             }
-            return resolvedTheme === "dark" ? "#6366f1" : "#4f46e5";
+            return "var(--canvas-minimap-node)";
           }}
-          maskColor={
-            resolvedTheme === "dark"
-              ? "rgba(0, 0, 0, 0.6)"
-              : "rgba(241, 245, 249, 0.7)"
-          }
+          maskColor="var(--canvas-mask)"
           className="bg-card! border-border! h-18.75! w-25! shadow-xs! sm:h-27.5! sm:w-37.5! md:h-37.5! md:w-50!"
         />
       </ReactFlow>

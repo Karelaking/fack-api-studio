@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { ensureDataDir } from "@/lib/storage/data-dir";
-import type { RecentFileEntry } from "./file-manager.type";
+import type { RecentFileEntry } from "./types";
 
 const MAX_RECENTS = 20;
 

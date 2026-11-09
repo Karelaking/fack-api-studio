@@ -2,7 +2,7 @@ import { PageShell } from "@/components/dashboard/PageShell";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
- * Route-level skeleton for the workspaces page.
+ * Route-level skeleton for the projects page.
  *
  * It mirrors the real grid's geometry — same shell padding, same rail width,
  * same two-column card track — so the first paint hands over to the loaded
@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function DashboardLoading(): React.JSX.Element {
   return (
     <PageShell aria-busy="true">
-      <span className="sr-only">Loading workspaces</span>
+      <span className="sr-only">Loading projects</span>
 
       <div className="space-y-2" aria-hidden="true">
         <Skeleton className="h-7 w-40" />
@@ -32,7 +32,7 @@ export default function DashboardLoading(): React.JSX.Element {
       <div className="flex flex-col gap-6 md:flex-row md:gap-6 lg:gap-8">
         <aside
           aria-hidden="true"
-          className="order-2 flex w-full shrink-0 flex-col gap-5 md:order-1 md:w-[280px] lg:w-[320px] xl:w-[340px] 2xl:w-[360px]"
+          className="order-2 flex w-full shrink-0 flex-col gap-5 md:order-1 md:w-70 lg:w-[320px] xl:w-85 2xl:w-90"
         >
           {[0, 1, 2].map((section) => (
             <div key={section} className="space-y-3">

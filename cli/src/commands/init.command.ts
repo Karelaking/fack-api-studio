@@ -92,7 +92,7 @@ export async function runInit(options: InitCommandOptions): Promise<void> {
     const displayedOut =
       path.relative(process.cwd(), result.outFile) || result.outFile;
 
-    console.log("");
+    log.blank();
     log.success(
       `Saved ${t.bold(displayedOut)} ${t.dim(
         `(${formatBytes(result.bytes)})`,
@@ -107,15 +107,15 @@ export async function runInit(options: InitCommandOptions): Promise<void> {
     }
     log.success(`Remembered ${project.slug} in ${result.rcPath}`);
 
-    console.log("");
+    log.blank();
     log.info(t.bold("Setup complete."));
-    console.log("");
+    log.blank();
     printCommand("fack dev");
-    console.log("");
+    log.blank();
     log.muted(
       "The local runner serves your mock API on http://localhost:4000.",
     );
-    console.log("");
+    log.blank();
   } catch (error: unknown) {
     if (isUnauthorized(error)) {
       log.error("Fack Studio rejected this terminal's credential.");

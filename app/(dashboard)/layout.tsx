@@ -2,7 +2,7 @@ import * as React from "react";
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
 import { AuthProvider } from "@/components/auth/AuthProvider";
-import { CommandMenu } from "@/components/command-menu";
+import { CommandMenu } from "@/components/CommandMenu";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { RootSidebar } from "@/components/dashboard/RootSidebar";
 import { FileManagerSidebar } from "@/components/file-manager/FileManagerSidebar";
@@ -55,7 +55,11 @@ export default async function DashboardLayout({
           )}
 
           {/* Main Content Area */}
-          <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="relative flex min-w-0 flex-1 flex-col overflow-hidden outline-none"
+          >
             <header className="border-border/60 bg-background/60 absolute inset-x-0 top-0 z-10 flex h-14 items-center border-b px-4 backdrop-blur-md sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
               <div className="flex flex-1 items-center justify-start">
                 <SidebarTrigger className="-ml-1 h-9 w-9" />
@@ -65,7 +69,7 @@ export default async function DashboardLayout({
                 <HeaderNewProjectButton />
               </div>
             </header>
-            <div className="flex-1 overflow-auto pt-14 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
+            <div className="scrollbar-subtle flex-1 overflow-auto pt-14 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
               {children}
             </div>
             <MobileBottomNav />

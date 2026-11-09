@@ -17,7 +17,7 @@ import {
   openBrowser,
 } from "../services/browser.service";
 import { resolveCliSession } from "../services/session.service";
-import { banner, log, sleep, t } from "../ui/terminal";
+import { banner, log, logger, sleep, t } from "../ui/terminal";
 
 const LOGIN_TIMEOUT_MS = 10 * 60 * 1000;
 
@@ -42,12 +42,10 @@ export async function runLogin(options: LoginCommandOptions): Promise<void> {
 
   const verificationUrl = `${studioUrl}${authorization.verificationUriComplete}`;
 
-  console.log(
-    `  ${t.dim("Code")}    ${t.bold(t.cyan(authorization.userCode))}`,
-  );
-  console.log(`  ${t.dim("Device")}  ${deviceName} ${t.dim(`(${platform})`)}`);
-  console.log(`  ${t.dim("Open")}    ${t.underline(verificationUrl)}`);
-  console.log("");
+  logger.raw(`  ${t.dim("Code")}    ${t.bold(t.cyan(authorization.userCode))}`);
+  logger.raw(`  ${t.dim("Device")}  ${deviceName} ${t.dim(`(${platform})`)}`);
+  logger.raw(`  ${t.dim("Open")}    ${t.underline(verificationUrl)}`);
+  log.blank();
 
   if (openBrowser(verificationUrl)) {
     log.info("Opened your browser. Waiting for approval...");
@@ -87,21 +85,21 @@ export async function runLogin(options: LoginCommandOptions): Promise<void> {
         userId: poll.userId,
       });
 
-      console.log("");
+      log.blank();
       log.success(
         `Signed in to ${t.bold(savedUrl)} as ${t.bold(
           poll.device.name || deviceName,
         )}.`,
       );
       log.muted(`Credential saved to ${credentialsPath()}`);
-      console.log("");
-      console.log(`  ${t.dim("Next")}  ${t.bold("fack projects")}`);
-      console.log(
+      log.blank();
+      logger.raw(`  ${t.dim("Next")}  ${t.bold("fack projects")}`);
+      logger.raw(
         `        ${t.bold("fack pull")}    ${t.dim(
           "in a repository, to fetch its bundle",
         )}`,
       );
-      console.log("");
+      log.blank();
       return;
     }
 

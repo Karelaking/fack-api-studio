@@ -14,7 +14,7 @@ import {
   FackApiClient,
 } from "../services/api-client.service";
 import { resolveCliSession } from "../services/session.service";
-import { log, t } from "../ui/terminal";
+import { log } from "../ui/terminal";
 
 export async function runLogout(options: LogoutCommandOptions): Promise<void> {
   const session = resolveCliSession({ url: options.url });
@@ -43,6 +43,6 @@ export async function runLogout(options: LogoutCommandOptions): Promise<void> {
 
   if (session.stored) {
     deleteSession(session.studioUrl);
-    log.muted(`Removed ${t.dim("credentials.json")} for this Studio.`);
+    log.muted("Removed credentials.json for this Studio.");
   }
 }

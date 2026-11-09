@@ -1,7 +1,7 @@
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 import { GeistMono } from "geist/font/mono";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata, Viewport } from "next";
@@ -138,6 +138,12 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="bg-background text-foreground flex min-h-full flex-col">
+        <a
+          href="#main-content"
+          className="bg-background text-foreground focus:ring-ring/50 sr-only rounded-md px-4 py-2 font-medium shadow-lg focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:ring-3 focus:outline-none"
+        >
+          Skip to main content
+        </a>
         <NuqsAdapter>
           <ThemeProvider
             attribute="class"

@@ -17,6 +17,7 @@ import { runLogin } from "./commands/login.command";
 import { runLogout } from "./commands/logout.command";
 import { runProjects } from "./commands/projects.command";
 import { runWhoami } from "./commands/whoami.command";
+import { logger, pc } from "./ui/terminal";
 
 const VERSION = "1.19.0";
 
@@ -36,7 +37,9 @@ export function buildCliProgram(): Command {
   program
     .name("fack")
     .description(
-      "\x1b[36m\x1b[1m⚡ Fack API Local CLI\x1b[0m\nZero-overhead local runner for encrypted mock API projects.",
+      `${pc.cyan(pc.bold("⚡ Fack API Local CLI"))}\n${pc.dim(
+        "Zero-overhead local runner for encrypted mock API projects.",
+      )}`,
     )
     .version(VERSION, "-v, --version", "Show current CLI version");
 
@@ -271,6 +274,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  console.error(`\x1b[31m[fack] Fatal error: ${String(err)}\x1b[0m`);
+  logger.fatal(err);
   process.exit(1);
 });

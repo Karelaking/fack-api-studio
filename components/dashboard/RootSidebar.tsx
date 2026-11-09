@@ -135,7 +135,7 @@ export function RootSidebar({
               placeholder="Find"
               className="border-border/50 bg-background text-foreground placeholder:text-muted-foreground group-hover:border-border pointer-events-none h-11 w-full cursor-pointer rounded-md border py-1 pr-10 pl-9 text-sm transition-colors md:h-9"
             />
-            <div className="border-border/50 bg-muted/50 text-muted-foreground pointer-events-none absolute top-1/2 right-3 flex h-5 items-center justify-center rounded-sm border px-1.5 font-mono text-[10px] font-medium">
+            <div className="border-border/50 bg-muted/50 text-muted-foreground text-mini pointer-events-none absolute top-1/2 right-3 flex h-5 items-center justify-center rounded-sm border px-1.5 font-mono font-medium">
               ⌘K
             </div>
           </div>

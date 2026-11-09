@@ -34,6 +34,13 @@ export function useProject(): ProjectContextValue {
 }
 
 /**
+ * Safe hook to access the current project if within a ProjectProvider, or undefined otherwise.
+ */
+export function useOptionalProject(): ProjectContextValue | undefined {
+  return React.useContext(ProjectContext);
+}
+
+/**
  * Server-rendered provider that passes the validated project down to client
  * components without prop drilling through every subpage.
  */

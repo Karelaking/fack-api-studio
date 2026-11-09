@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
- * Loading skeleton for the project workspace.
+ * Loading skeleton for the project page.
  * Shows while the project layout is validating the project and rendering children.
  */
 export default function ProjectLoading() {

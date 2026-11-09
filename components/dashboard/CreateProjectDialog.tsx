@@ -163,8 +163,8 @@ export function CreateProjectDialog(): React.JSX.Element {
               type="submit"
               disabled={loading}
               aria-disabled={loading}
-              title="Create Workspace"
-              aria-label="Create Workspace"
+              title="Create Project"
+              aria-label="Create Project"
             >
               {loading ? (
                 <>
@@ -175,7 +175,7 @@ export function CreateProjectDialog(): React.JSX.Element {
                   <span>Creating...</span>
                 </>
               ) : (
-                <span>Create Workspace</span>
+                <span>Create Project</span>
               )}
             </Button>
           </DialogFooter>

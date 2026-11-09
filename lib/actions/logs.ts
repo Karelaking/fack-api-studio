@@ -11,6 +11,12 @@ import { toStr } from "@/lib/utils/coerce";
 
 const logsTrace = LoggerRegistry.getTrace("db-logs");
 
+// The log console only ever renders the (pretty-printed) body inside an
+// expandable row. Mock responses can be megabytes; returning 200 full bodies
+// per page load dominated the query payload. Trim in SQL so the large blobs
+// never leave the database.
+const MAX_LOG_PAYLOAD_CHARS = 2_000;
+
 export const getRequestLogs = cache(async function getRequestLogs(
   projectId: string,
 ): Promise<RequestLog[]> {
@@ -19,7 +25,7 @@ export const getRequestLogs = cache(async function getRequestLogs(
   if (sqlClient) {
     try {
       const rows = await sqlClient`
-        SELECT id, project_id as "projectId", timestamp, method, path, query_params as "queryParams", headers, status_code as "statusCode", latency, is_error as "isError", response_payload as "responsePayload"
+        SELECT id, project_id as "projectId", timestamp, method, path, query_params as "queryParams", headers, status_code as "statusCode", latency, is_error as "isError", LEFT(response_payload, ${MAX_LOG_PAYLOAD_CHARS}) as "responsePayload"
         FROM request_logs
         WHERE project_id = ${projectId}
         ORDER BY timestamp DESC
@@ -54,9 +60,9 @@ export const getRequestLogs = cache(async function getRequestLogs(
   // Fallback to SQLite raw execution
   try {
     const res = await db.$client.execute({
-      sql: `SELECT id, project_id, timestamp, method, path, query_params, headers, status_code, latency, is_error, response_payload 
+      sql: `SELECT id, project_id, timestamp, method, path, query_params, headers, status_code, latency, is_error, substr(response_payload, 1, ?) AS response_payload 
             FROM request_logs WHERE project_id = ? ORDER BY timestamp DESC LIMIT 200`,
-      args: [projectId],
+      args: [MAX_LOG_PAYLOAD_CHARS, projectId],
     });
 
     const result = res.rows.map((row) => ({

@@ -50,9 +50,9 @@ const FEATURES: Feature[] = [
   {
     icon: ShieldCheck,
     badge: "Local first",
-    title: "Client-Side SQLite Engine",
+    title: "Local-First SQLite Engine",
     description:
-      "100% offline & private. All schema definitions, route configs, and execution logs remain strictly within local SQLite storage.",
+      "Run it on your machine or your own infrastructure. Schema definitions, route configs, and execution logs stay in the SQLite database you control.",
     iconColor: "text-success",
     iconBg: "bg-success/15 border-success/30",
   },
@@ -67,10 +67,10 @@ const FEATURES: Feature[] = [
   },
   {
     icon: Terminal,
-    badge: "Zero latency",
-    title: "Zero-Latency Mocks",
+    badge: "Low latency",
+    title: "Low-Latency Mocks",
     description:
-      "Lightning-fast mock response generation with built-in memory caching and dynamic route path pattern matching.",
+      "Mock responses come from the local runtime, with in-memory caching and dynamic route path pattern matching keeping the round trip short.",
     iconColor: "text-danger",
     iconBg: "bg-danger/15 border-danger/30",
   },

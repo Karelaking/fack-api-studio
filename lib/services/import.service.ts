@@ -6,7 +6,7 @@ import type {
   JsonSchemaPropertyType,
 } from "@/lib/ai/types";
 import type { HttpMethod } from "@/db/schema";
-import { toProfessionalApiName } from "@/lib/ai/fallback-synthesizer.constant";
+import { toProfessionalApiName } from "@/lib/ai/fallback-synthesizer";
 
 /**
  * Maps OpenAPI schema properties to our recursive GeneratedProperty format.

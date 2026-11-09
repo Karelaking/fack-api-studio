@@ -11,6 +11,7 @@ import { decryptBundle } from "../../../lib/bundle/bundle-crypto.service";
 import { MockServer } from "../server.service";
 import { loadFackRc, loadLocalEnv } from "../services/project-files.service";
 import type { DevCommandOptions } from "../cli.type";
+import { banner, log, printFields, printRoute, t } from "../ui/terminal";
 
 export async function runDev(options: DevCommandOptions): Promise<void> {
   loadLocalEnv();
@@ -19,26 +20,24 @@ export async function runDev(options: DevCommandOptions): Promise<void> {
   const filePath = path.resolve(process.cwd(), options.file || "fack.enc");
 
   if (!fs.existsSync(filePath)) {
-    console.error(
-      `\x1b[31m[fack] Error: Bundle file not found at ${filePath}\x1b[0m`,
-    );
-    console.log("\x1b[33mTo get started, either:\x1b[0m");
-    console.log(
+    log.error(`Bundle file not found at ${filePath}`);
+    log.muted("To get started, either:");
+    log.raw(
       "  1. Download 'fack.enc' from Fack Studio dashboard into this folder.",
     );
-    console.log("  2. Run: fack pull <project-slug> --key <secret-key>\n");
+    log.raw("  2. Run: fack pull <project-slug> --key <secret-key>");
+    log.blank();
     process.exit(1);
   }
 
   const secretKey = options.key || process.env.FACK_PROJECT_KEY;
 
   if (!secretKey) {
-    console.error(
-      "\x1b[31m[fack] Error: Project secret key is required to decrypt the bundle.\x1b[0m",
-    );
-    console.log("\x1b[33mProvide it via:\x1b[0m");
-    console.log("  --key <secret-key>");
-    console.log("  or set FACK_PROJECT_KEY in your .env file.\n");
+    log.error("Project secret key is required to decrypt the bundle.");
+    log.muted("Provide it via:");
+    log.raw("  --key <secret-key>");
+    log.raw("  or set FACK_PROJECT_KEY in your .env file.");
+    log.blank();
     process.exit(1);
   }
 
@@ -46,9 +45,7 @@ export async function runDev(options: DevCommandOptions): Promise<void> {
   try {
     bundleBuffer = fs.readFileSync(filePath);
   } catch (err) {
-    console.error(
-      `\x1b[31m[fack] Failed to read bundle file: ${String(err)}\x1b[0m`,
-    );
+    log.error(`Failed to read bundle file: ${String(err)}`);
     process.exit(1);
   }
 
@@ -57,7 +54,7 @@ export async function runDev(options: DevCommandOptions): Promise<void> {
     const result = decryptBundle(bundleBuffer, secretKey);
     decryptedBundle = result.bundle;
   } catch (err) {
-    console.error(`\x1b[31m[fack] ${String(err)}\x1b[0m`);
+    log.error(err instanceof Error ? err : String(err));
     process.exit(1);
   }
 
@@ -66,8 +63,8 @@ export async function runDev(options: DevCommandOptions): Promise<void> {
   const port = Number(rawPort);
 
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    console.error(
-      `\x1b[31m[fack] Error: Invalid port "${rawPort}". Port must be an integer between 1 and 65535.\x1b[0m`,
+    log.error(
+      `Invalid port "${rawPort}". Port must be an integer between 1 and 65535.`,
     );
     process.exit(1);
   }
@@ -85,37 +82,35 @@ export async function runDev(options: DevCommandOptions): Promise<void> {
     await server.start();
 
     const displayHost = host === "0.0.0.0" ? "localhost" : host;
-    console.log("\n\x1b[36m\x1b[1m⚡ Fack API Local Runner\x1b[0m");
-    console.log(
-      `\x1b[2mProject:\x1b[0m   \x1b[1m${decryptedBundle.projectName}\x1b[0m \x1b[2m(${decryptedBundle.projectSlug})\x1b[0m`,
-    );
-    console.log(
-      `\x1b[2mServing:\x1b[0m   \x1b[32mhttp://${displayHost}:${port}\x1b[0m`,
-    );
-    console.log(
-      `\x1b[2mRoutes:\x1b[0m    \x1b[1m${decryptedBundle.routes.length}\x1b[0m active mock endpoints`,
-    );
-    console.log(
-      `\x1b[2mHealth:\x1b[0m    http://${displayHost}:${port}/__fack/health\n`,
-    );
+    banner("Fack API Local Runner");
+    printFields([
+      [
+        "Project",
+        `${t.bold(decryptedBundle.projectName)} ${t.dim(
+          `(${decryptedBundle.projectSlug})`,
+        )}`,
+      ],
+      ["Serving", t.green(`http://${displayHost}:${port}`)],
+      [
+        "Routes",
+        `${t.bold(String(decryptedBundle.routes.length))} active mock endpoints`,
+      ],
+      ["Health", `http://${displayHost}:${port}/__fack/health`],
+    ]);
+    log.blank();
 
-    console.log("\x1b[1mAvailable Endpoints:\x1b[0m");
+    log.info(t.bold("Available Endpoints"));
     const previewRoutes = decryptedBundle.routes.slice(0, 10);
     for (const route of previewRoutes) {
-      const method = route.method.padEnd(6);
-      const auth = route.isAuthRequired ? "\x1b[33m[Auth]\x1b[0m " : "";
-      console.log(
-        `  \x1b[34m${method}\x1b[0m ${auth}${route.fullPath} \x1b[2m-> ${route.statusCode}\x1b[0m`,
-      );
+      printRoute(route);
     }
     if (decryptedBundle.routes.length > 10) {
-      console.log(
-        `  \x1b[2m... and ${decryptedBundle.routes.length - 10} more routes\x1b[0m`,
-      );
+      log.muted(`... and ${decryptedBundle.routes.length - 10} more routes`);
     }
-    console.log(
-      "\n\x1b[2mReady for frontend requests. Press Ctrl+C to stop.\x1b[0m\n",
-    );
+
+    log.blank();
+    log.muted("Ready for frontend requests. Press Ctrl+C to stop.");
+    log.blank();
 
     // Live hot-reload when bundle file changes (e.g. via `fack pull` or re-export)
     let watchDebounceTimer: NodeJS.Timeout | undefined;
@@ -132,9 +127,13 @@ export async function runDev(options: DevCommandOptions): Promise<void> {
                 secretKey,
               );
               server.updateBundle(updatedBundle);
-              console.log(
-                `\n\x1b[32m✔ [fack] Hot-reloaded ${updatedBundle.routes.length} mock routes from ${path.basename(filePath)}\x1b[0m\n`,
+              log.blank();
+              log.success(
+                `Hot-reloaded ${updatedBundle.routes.length} mock routes from ${path.basename(
+                  filePath,
+                )}`,
               );
+              log.blank();
             } catch {
               // Ignore transient file lock or incomplete write
             }
@@ -146,7 +145,7 @@ export async function runDev(options: DevCommandOptions): Promise<void> {
     }
 
     const shutdown = async (): Promise<void> => {
-      console.log("\n\x1b[33mShutting down Fack runner...\x1b[0m");
+      log.warn("Shutting down Fack runner...");
       await server.stop();
       process.exit(0);
     };
@@ -156,14 +155,13 @@ export async function runDev(options: DevCommandOptions): Promise<void> {
   } catch (err: unknown) {
     const error = err as Record<string, unknown>;
     if (error?.code === "EADDRINUSE") {
-      console.error(
-        `\x1b[31m[fack] Port ${port} is already in use by another process.\x1b[0m`,
-      );
-      console.log(`\x1b[33mTry running on a different port:\x1b[0m`);
-      console.log(`  fack dev --port ${port + 1}\n`);
+      log.error(`Port ${port} is already in use by another process.`);
+      log.muted("Try running on a different port:");
+      log.raw(`  fack dev --port ${port + 1}`);
+      log.blank();
     } else {
-      console.error(
-        `\x1b[31m[fack] Failed to start server: ${String(err)}\x1b[0m`,
+      log.error(
+        err instanceof Error ? err : `Failed to start server: ${String(err)}`,
       );
     }
     process.exit(1);

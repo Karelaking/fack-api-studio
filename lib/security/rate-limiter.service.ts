@@ -1,11 +1,20 @@
 /**
  * Fack API — Sliding-Window Rate Limiter Service
  *
- * Employs `lru-cache` for bounded, high-performance in-memory rate limiting.
- * Automatically evicts stale buckets and bounds total memory consumption.
+ * Uses a shared Redis counter when `REDIS_URL` or the Upstash REST variables
+ * are configured, so every instance enforces the same limit. Without a shared
+ * store it falls back to the bounded in-process LRU implementation.
  */
 
 import { LRUCache } from "lru-cache";
+import {
+  deleteSharedPrefix,
+  incrementSharedCounter,
+  sharedKeys,
+} from "@/lib/cache/shared-store";
+import { getClientIp } from "./client-ip";
+
+export { getClientIp };
 
 interface RateLimitBucket {
   count: number;
@@ -13,7 +22,7 @@ interface RateLimitBucket {
 }
 
 export interface RateLimitResult {
-  allowed: boolean;
+  isAllowed: boolean;
   remaining: number;
   resetInSeconds: number;
 }
@@ -42,7 +51,7 @@ class InMemoryRateLimiter {
       const resetAt = now + windowSeconds * 1000;
       this.cache.set(key, { count: 1, resetAt }, { ttl: windowSeconds * 1000 });
       return {
-        allowed: true,
+        isAllowed: true,
         remaining: limit - 1,
         resetInSeconds: windowSeconds,
       };
@@ -51,7 +60,7 @@ class InMemoryRateLimiter {
     if (bucket.count >= limit) {
       const resetInSeconds = Math.ceil((bucket.resetAt - now) / 1000);
       return {
-        allowed: false,
+        isAllowed: false,
         remaining: 0,
         resetInSeconds: Math.max(resetInSeconds, 1),
       };
@@ -63,7 +72,7 @@ class InMemoryRateLimiter {
     });
     const resetInSeconds = Math.ceil((bucket.resetAt - now) / 1000);
     return {
-      allowed: true,
+      isAllowed: true,
       remaining: limit - bucket.count,
       resetInSeconds: Math.max(resetInSeconds, 1),
     };
@@ -75,20 +84,43 @@ class InMemoryRateLimiter {
   }
 }
 
-// Global singleton instance
-export const rateLimiter = new InMemoryRateLimiter();
+class RateLimiter {
+  private readonly local = new InMemoryRateLimiter();
 
-/**
- * Extracts a client IP from Next.js request headers.
- */
-export function getClientIp(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0].trim();
+  /**
+   * Checks and consumes a token from the rate limit bucket.
+   *
+   * Redis `INCR` + `EXPIRE` run in one Lua script, so concurrent instances see
+   * the same counter. If Redis is unreachable the check degrades to the local
+   * bucket instead of rejecting the request.
+   */
+  public async check(
+    key: string,
+    limit: number,
+    windowSeconds: number,
+  ): Promise<RateLimitResult> {
+    const shared = await incrementSharedCounter(
+      sharedKeys.rateLimit(key),
+      windowSeconds,
+    );
+
+    if (shared) {
+      return {
+        isAllowed: shared.count <= limit,
+        remaining: Math.max(limit - shared.count, 0),
+        resetInSeconds: Math.max(shared.ttlSeconds, 1),
+      };
+    }
+
+    return this.local.check(key, limit, windowSeconds);
   }
-  const realIp = request.headers.get("x-real-ip");
-  if (realIp) {
-    return realIp.trim();
+
+  /** Clears local and shared buckets (useful in test setup). */
+  public async reset(): Promise<void> {
+    this.local.reset();
+    await deleteSharedPrefix("ratelimit:");
   }
-  return "127.0.0.1";
 }
+
+// Global singleton instance
+export const rateLimiter = new RateLimiter();

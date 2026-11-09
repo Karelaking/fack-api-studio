@@ -46,13 +46,13 @@ export async function runProjects(
     return;
   }
 
-  console.log("");
+  log.blank();
   log.info(
     `${result.projects.length} ${
       result.projects.length === 1 ? "project" : "projects"
     } in ${t.bold(session.studioUrl)}`,
   );
-  console.log("");
+  log.blank();
 
   printTable(
     ["SLUG", "NAME", "ENDPOINTS", "ROUTES", "UPDATED"],
@@ -65,7 +65,7 @@ export async function runProjects(
     ]),
   );
 
-  console.log("");
+  log.blank();
   log.muted("Pull one with: fack pull <slug>");
-  console.log("");
+  log.blank();
 }

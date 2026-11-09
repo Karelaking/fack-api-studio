@@ -41,7 +41,7 @@ export function EndpointGroupNode({
       }
     >
       {data.draft ? (
-        <span className="border-primary/40 bg-primary/10 text-primary absolute top-3 right-3 z-10 rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
+        <span className="border-primary/40 bg-primary/10 text-primary text-mini absolute top-3 right-3 z-10 rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase">
           Draft
         </span>
       ) : null}

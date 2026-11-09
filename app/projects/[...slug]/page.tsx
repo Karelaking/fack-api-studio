@@ -24,7 +24,7 @@ interface ProjectPageProps {
 }
 
 /**
- * Project workspace page.
+ * Project page.
  *
  * The layout has already validated the project and handled the bare-slug redirect,
  * so this component only needs to determine which subpage to render and fetch

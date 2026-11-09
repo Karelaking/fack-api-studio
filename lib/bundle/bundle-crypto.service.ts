@@ -11,7 +11,7 @@ import {
   BUNDLE_SPEC_VERSION,
   type FackRuntimeBundle,
   type DecryptedBundleResult,
-} from "./bundle.type";
+} from "./types";
 
 const MAGIC_BYTES = Buffer.from(BUNDLE_MAGIC_HEADER, "utf-8");
 const SALT_LENGTH_BYTES = 16;

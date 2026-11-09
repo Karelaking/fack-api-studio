@@ -10,58 +10,19 @@ import http from "node:http";
 import type {
   FackRuntimeBundle,
   FackRuntimeRoute,
-} from "../../lib/bundle/bundle.type";
+} from "../../lib/bundle/types";
 import { RouteMatcher } from "./matcher.service";
 import { MockStore } from "./mock-store.service";
 import { generatePayload, processQueryParameters } from "../../lib/mock-engine";
 import { renderTemplate } from "../../lib/template-engine";
+import { logger as rootLogger, RequestLogger, type Logger } from "./logger";
 
 interface ServerOptions {
   port: number;
   host: string;
   bundle: FackRuntimeBundle;
   silent?: boolean;
-}
-
-const COLORS = {
-  reset: "\x1b[0m",
-  bold: "\x1b[1m",
-  dim: "\x1b[2m",
-  green: "\x1b[32m",
-  blue: "\x1b[34m",
-  yellow: "\x1b[33m",
-  red: "\x1b[31m",
-  cyan: "\x1b[36m",
-};
-
-function formatMethod(method: string): string {
-  switch (method.toUpperCase()) {
-    case "GET":
-      return `${COLORS.green}${COLORS.bold}GET   ${COLORS.reset}`;
-    case "POST":
-      return `${COLORS.blue}${COLORS.bold}POST  ${COLORS.reset}`;
-    case "PUT":
-      return `${COLORS.yellow}${COLORS.bold}PUT   ${COLORS.reset}`;
-    case "PATCH":
-      return `${COLORS.yellow}${COLORS.bold}PATCH ${COLORS.reset}`;
-    case "DELETE":
-      return `${COLORS.red}${COLORS.bold}DELETE${COLORS.reset}`;
-    default:
-      return `${COLORS.cyan}${COLORS.bold}${method.padEnd(6)}${COLORS.reset}`;
-  }
-}
-
-function formatStatus(status: number): string {
-  if (status >= 200 && status < 300) {
-    return `${COLORS.green}${status}${COLORS.reset}`;
-  }
-  if (status >= 300 && status < 400) {
-    return `${COLORS.cyan}${status}${COLORS.reset}`;
-  }
-  if (status >= 400 && status < 500) {
-    return `${COLORS.yellow}${status}${COLORS.reset}`;
-  }
-  return `${COLORS.red}${status}${COLORS.reset}`;
+  logger?: Logger;
 }
 
 async function readRequestBody(
@@ -104,11 +65,15 @@ export class MockServer {
   private matcher: RouteMatcher;
   private store: MockStore;
   private options: ServerOptions;
+  private logger: Logger;
+  private requestLogger: RequestLogger;
 
   constructor(options: ServerOptions) {
     this.options = options;
     this.matcher = new RouteMatcher(options.bundle.routes);
     this.store = new MockStore(options.bundle.mockStates);
+    this.logger = options.logger ?? rootLogger.child("http");
+    this.requestLogger = new RequestLogger(this.logger);
   }
 
   /** Dynamically updates the runtime bundle and recompiles routes without dropping connections. */
@@ -190,9 +155,7 @@ export class MockServer {
             );
 
             if (!this.options.silent) {
-              console.log(
-                `[fack] ${formatMethod(method)} ${pathname} -> ${formatStatus(404)} ${COLORS.dim}(${elapsed}ms)${COLORS.reset}`,
-              );
+              this.logRequest(method, pathname, 404, elapsed);
             }
             return;
           }
@@ -215,8 +178,12 @@ export class MockServer {
               );
 
               if (!this.options.silent) {
-                console.log(
-                  `[fack] ${formatMethod(method)} ${pathname} -> ${formatStatus(401)} ${COLORS.dim}(${elapsed}ms, auth required)${COLORS.reset}`,
+                this.logRequest(
+                  method,
+                  pathname,
+                  401,
+                  elapsed,
+                  "auth required",
                 );
               }
               return;
@@ -242,8 +209,12 @@ export class MockServer {
             );
 
             if (!this.options.silent) {
-              console.log(
-                `[fack] ${formatMethod(method)} ${pathname} -> ${formatStatus(500)} ${COLORS.dim}(${elapsed}ms, simulated chaos)${COLORS.reset}`,
+              this.logRequest(
+                method,
+                pathname,
+                500,
+                elapsed,
+                "simulated chaos",
               );
             }
             return;
@@ -276,9 +247,7 @@ export class MockServer {
 
           const elapsed = Date.now() - startTime;
           if (!this.options.silent) {
-            console.log(
-              `[fack] ${formatMethod(method)} ${pathname} -> ${formatStatus(status)} ${COLORS.dim}(${elapsed}ms)${COLORS.reset}`,
-            );
+            this.logRequest(method, pathname, status, elapsed);
           }
         } catch (requestError) {
           const elapsed = Date.now() - startTime;
@@ -294,11 +263,15 @@ export class MockServer {
           );
 
           if (!this.options.silent) {
-            console.error(
-              `[fack] ${formatMethod(method)} ${pathname} -> ${formatStatus(500)} ${COLORS.dim}(${elapsed}ms, uncaught error)${COLORS.reset}`,
-              requestError,
-            );
+            this.logRequest(method, pathname, 500, elapsed, "uncaught error");
           }
+          this.logger.error(
+            requestError instanceof Error ? requestError : String(requestError),
+            {
+              method,
+              path: pathname,
+            },
+          );
         }
       });
 
@@ -330,6 +303,17 @@ export class MockServer {
         else resolve();
       });
     });
+  }
+
+  private logRequest(
+    method: string,
+    path: string,
+    status: number,
+    durationMs: number,
+    note?: string,
+  ): void {
+    if (this.options.silent) return;
+    this.requestLogger.log({ method, path, status, durationMs, note });
   }
 
   private calculateLatency(route: FackRuntimeRoute): number {

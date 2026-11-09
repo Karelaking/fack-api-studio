@@ -62,7 +62,7 @@ function statusFromRequest(request: DeviceRequestSummary): {
   if (request.status === "denied") {
     return { phase: "denied" };
   }
-  if (request.expired) {
+  if (request.isExpired) {
     return {
       phase: "idle",
       error:
@@ -198,7 +198,7 @@ export function AuthorizeDeviceForm({
             . It continues on its own — you can close this tab.
           </p>
           <div className="border-border/60 bg-muted/30 mt-6 w-full rounded-lg border px-4 py-3 text-left">
-            <p className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[0.18em] uppercase">
+            <p className="text-muted-foreground text-mini font-mono font-semibold tracking-[0.18em] uppercase">
               Next in your terminal
             </p>
             <code className="mt-1.5 block font-mono text-sm">
@@ -235,7 +235,7 @@ export function AuthorizeDeviceForm({
   return (
     <CardFrame>
       <div className="flex flex-col gap-1">
-        <p className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[0.2em] uppercase">
+        <p className="text-muted-foreground text-mini font-mono font-semibold tracking-[0.2em] uppercase">
           Terminal access
         </p>
         <h1 className="font-heading text-xl font-semibold tracking-tight">
@@ -387,7 +387,7 @@ function CardFrame({
       <div className="bg-card text-card-foreground ring-foreground/10 rounded-xl px-6 py-6 shadow-sm ring-1 sm:px-7 sm:py-7">
         {children}
       </div>
-      <p className="text-muted-foreground mt-4 text-center text-[11px] leading-relaxed">
+      <p className="text-muted-foreground text-caption mt-4 text-center leading-relaxed">
         Signed in as your Fack Studio account. Nothing is shared with the
         terminal beyond project access.
       </p>
