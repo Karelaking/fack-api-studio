@@ -1,4 +1,3 @@
-/* oxlint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect } from "vite-plus/test";
 import { generateTypeScript } from "../lib/ts-generator";
 
@@ -53,7 +52,7 @@ describe("TypeScript Interface Generator", () => {
       properties: {
         badField: { $ref: "#/definitions/missing" },
       },
-    } as any;
+    };
 
     const tsCode = await generateTypeScript(corruptSchema, {
       typeName: "FallbackInterface",

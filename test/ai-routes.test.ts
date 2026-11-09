@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vite-plus/test";
 import { POST as generateHandler } from "../app/api/ai/generate/route";
 import { proxy } from "../proxy";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse, type NextFetchEvent } from "next/server";
+
+const mockEvent = {} as unknown as NextFetchEvent;
 
 describe("AI API Architect — Route Handlers & Proxy Dispatching", () => {
   describe("proxy.ts system path matching", () => {
@@ -9,8 +11,7 @@ describe("AI API Architect — Route Handlers & Proxy Dispatching", () => {
       const req = new NextRequest("http://localhost:3000/api/ai/generate", {
         method: "POST",
       });
-      // oxlint-disable-next-line @typescript-eslint/no-explicit-any
-      const res = (await proxy(req, {} as any)) as any;
+      const res = (await proxy(req, mockEvent)) as NextResponse;
 
       // If rewritten, headers or internal url would change to /api/mock/...
       // For a pass-through, proxy returns NextResponse.next()
@@ -21,8 +22,7 @@ describe("AI API Architect — Route Handlers & Proxy Dispatching", () => {
       const req = new NextRequest("http://localhost:3000/api/ai/apply", {
         method: "POST",
       });
-      // oxlint-disable-next-line @typescript-eslint/no-explicit-any
-      const res = (await proxy(req, {} as any)) as any;
+      const res = (await proxy(req, mockEvent)) as NextResponse;
 
       expect(res.headers.get("x-middleware-rewrite")).toBeNull();
     });
@@ -32,8 +32,7 @@ describe("AI API Architect — Route Handlers & Proxy Dispatching", () => {
         "http://localhost:3000/api/projects/demo/openapi",
         { method: "GET" },
       );
-      // oxlint-disable-next-line @typescript-eslint/no-explicit-any
-      const res = (await proxy(req, {} as any)) as any;
+      const res = (await proxy(req, mockEvent)) as NextResponse;
 
       // Previously /api/projects was rewritten to /api/mock/api/projects/...,
       // making the dashboard export routes unreachable.
@@ -47,8 +46,7 @@ describe("AI API Architect — Route Handlers & Proxy Dispatching", () => {
           method: "GET",
         },
       );
-      // oxlint-disable-next-line @typescript-eslint/no-explicit-any
-      const res = (await proxy(req, {} as any)) as any;
+      const res = (await proxy(req, mockEvent)) as NextResponse;
 
       expect(res.headers.get("x-middleware-rewrite")).toContain(
         "/api/mock/ecommerce-project/products",
@@ -60,8 +58,7 @@ describe("AI API Architect — Route Handlers & Proxy Dispatching", () => {
         "http://localhost:3000/dashboard/projects//the-project-slug",
         { method: "GET" },
       );
-      // oxlint-disable-next-line @typescript-eslint/no-explicit-any
-      const res = (await proxy(req, {} as any)) as any;
+      const res = (await proxy(req, mockEvent)) as NextResponse;
       expect(res.status).toBe(308);
       expect(res.headers.get("location")).toBe(
         "http://localhost:3000/dashboard/projects/the-project-slug",
@@ -73,8 +70,7 @@ describe("AI API Architect — Route Handlers & Proxy Dispatching", () => {
         "http://localhost:3000/dashboard/projects/the-project-slug",
         { method: "GET" },
       );
-      // oxlint-disable-next-line @typescript-eslint/no-explicit-any
-      const res = (await proxy(req, {} as any)) as any;
+      const res = (await proxy(req, mockEvent)) as NextResponse;
       expect(res.status).toBe(308);
       expect(res.headers.get("location")).toBe(
         "http://localhost:3000/projects/the-project-slug",
@@ -85,8 +81,7 @@ describe("AI API Architect — Route Handlers & Proxy Dispatching", () => {
       const req = new NextRequest("http://localhost:3000/dashboard/projects", {
         method: "GET",
       });
-      // oxlint-disable-next-line @typescript-eslint/no-explicit-any
-      const res = (await proxy(req, {} as any)) as any;
+      const res = (await proxy(req, mockEvent)) as NextResponse;
       expect(res.status).toBe(308);
       expect(res.headers.get("location")).toBe(
         "http://localhost:3000/dashboard",

@@ -1,4 +1,3 @@
-/* oxlint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vite-plus/test";
 import { processMockRequest } from "../lib/mock-handler-core";
 import { setCachedRoutes, clearCache } from "../lib/cache";
@@ -351,7 +350,7 @@ describe("Mock Handler Core - Edge Cases and Scenarios", () => {
     const body = await response.json();
     expect(Array.isArray(body.data)).toBe(true);
     // All items returned should have gender = "female"
-    body.data.forEach((item: any) => {
+    body.data.forEach((item: { gender?: string }) => {
       expect(item.gender).toBe("female");
     });
   });
@@ -385,7 +384,7 @@ describe("Mock Handler Core - Edge Cases and Scenarios", () => {
     });
 
     const body = await response.json();
-    body.data.forEach((item: any) => {
+    body.data.forEach((item: { description?: string }) => {
       expect(item.description).toBe("needle");
     });
   });

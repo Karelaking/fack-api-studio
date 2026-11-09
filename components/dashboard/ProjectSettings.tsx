@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
@@ -142,7 +142,6 @@ export function ProjectSettings({
     handleSubmit,
     control,
     setValue,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<UpdateProjectInput>({
     resolver: zodResolver(updateProjectSchema),
@@ -157,8 +156,11 @@ export function ProjectSettings({
     },
   });
 
-  const watchedSlug = watch("slug");
-  const watchedActiveScenarioId = watch("activeScenarioId");
+  const watchedSlug = useWatch({ control, name: "slug" });
+  const watchedActiveScenarioId = useWatch({
+    control,
+    name: "activeScenarioId",
+  });
   const activeScenario = scenarios.find(
     (s) => s.id === watchedActiveScenarioId,
   );
