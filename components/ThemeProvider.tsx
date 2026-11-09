@@ -281,11 +281,17 @@ export const ThemeProvider = ({
           {
             duration: 480,
             easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+            fill: "forwards",
             pseudoElement,
           } as KeyframeAnimationOptions,
         );
 
         await anim.finished;
+        try {
+          await transition.finished;
+        } catch {
+          // Ignore if transition was skipped or aborted
+        }
       } catch {
         applyThemeClass(targetResolvedTheme);
         setThemeState(nextTheme);
