@@ -1,3 +1,32 @@
+# [1.25.0](https://github.com/Karelaking/fack-api-studio/compare/v1.24.0...v1.25.0) (2026-11-09)
+
+### Bug Fixes
+
+- **cache:** scope project cache by user and split slug caches ([5f55e45](https://github.com/Karelaking/fack-api-studio/commit/5f55e45e7c2282fe292dcb5f79456d7a5316b943))
+- **db:** make stateful writes atomic and journal migration 0015 ([d33aa1f](https://github.com/Karelaking/fack-api-studio/commit/d33aa1f34f29765e60d9eca7a916b79e3f3d0fc2))
+- **ui:** eliminate flicker in circular reveal theme transition ([5fd8614](https://github.com/Karelaking/fack-api-studio/commit/5fd8614e6a25339ba917834dfbc495aeb5482cc9))
+- **ui:** improve navigation a11y and add mobile quick actions ([d3206b5](https://github.com/Karelaking/fack-api-studio/commit/d3206b5c2c036d8b5c875728c6d4ded43c013cbc))
+- **ui:** resolve canvas sidebar audit findings ([7ffa45e](https://github.com/Karelaking/fack-api-studio/commit/7ffa45ea09edfcda6bc7d21cd72aafe713f9debe))
+
+### Features
+
+- **api:** rate limit mock requests and answer CORS preflight ([e584bd0](https://github.com/Karelaking/fack-api-studio/commit/e584bd0153071d5ac636ae9ed8d258a6992924eb))
+- **cache:** add shared redis cache and trusted-proxy rate limits ([5fd8b7b](https://github.com/Karelaking/fack-api-studio/commit/5fd8b7b27e524528d1318d7593eadd4850c15fb2))
+- **canvas:** add top nav menubar and persistent node inspector ([762dc9d](https://github.com/Karelaking/fack-api-studio/commit/762dc9d8dbec65d48cd988c359acead1b35d4b77))
+- **canvas:** decouple node selection from the inspector ([7a8b16d](https://github.com/Karelaking/fack-api-studio/commit/7a8b16dbf6838c640fd66f6d2ea219667eba481a))
+- **canvas:** expand top nav menubar with dedicated section menus ([746b929](https://github.com/Karelaking/fack-api-studio/commit/746b929e716bc1b6c1802f18c63521f1c36c8573))
+- **canvas:** implement drag-and-drop faker provider nodes and field inspector ([7a65372](https://github.com/Karelaking/fack-api-studio/commit/7a6537297e4c17c076c1bad827076415c83ceea7))
+- **ui:** polish audit findings and add light-bulb theme transition ([ffb40bb](https://github.com/Karelaking/fack-api-studio/commit/ffb40bbf639867f6235dfb44554696cb445166f9))
+- **ui:** redesign project settings into categorized two-pane architecture ([a54a786](https://github.com/Karelaking/fack-api-studio/commit/a54a78621bfeecc246c6f6b7a09856cf9cf8ce71))
+- **ui:** redesign settings into unified multi-column categorized architecture ([db7ad58](https://github.com/Karelaking/fack-api-studio/commit/db7ad58b916745e6a6468e246794525110fa972b))
+
+### Performance Improvements
+
+- **cache:** bound generated payload caches by bytes ([008e382](https://github.com/Karelaking/fack-api-studio/commit/008e3825691ca3f9e69232e95d0e2e3373af3d73))
+- **db:** drop redundant slug and endpoint indexes ([6c58627](https://github.com/Karelaking/fack-api-studio/commit/6c58627388bdb03d411d9ecabcf8ce764480c33e))
+- **mock-engine:** cache route matchers and parsed payloads ([92d022b](https://github.com/Karelaking/fack-api-studio/commit/92d022b1afb6cdcd621abdb38c378deb226a78b2))
+- **mock-engine:** cache scenarios and add slug miss defense ([da8862f](https://github.com/Karelaking/fack-api-studio/commit/da8862fe9aa9fb4a05006cf7b89e5f8d73070f47))
+
 # [1.24.0](https://github.com/Karelaking/fack-api-studio/compare/v1.23.0...v1.24.0) (2026-11-04)
 
 ### Features
