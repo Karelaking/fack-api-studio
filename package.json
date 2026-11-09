@@ -49,6 +49,7 @@
     "@remixicon/react": "^4.9.0",
     "@tanstack/react-virtual": "^3.14.26",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.1.0",
     "@xyflow/react": "^12.12.1",
     "ai": "^7.0.163",
     "class-variance-authority": "^0.7.1",
