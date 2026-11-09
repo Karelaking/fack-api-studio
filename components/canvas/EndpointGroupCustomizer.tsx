@@ -9,7 +9,6 @@ import {
   RiDeleteBinLine,
   RiLoader2Line,
   RiSearchLine,
-  RiSparklingLine,
 } from "@remixicon/react";
 import {
   Dialog,
@@ -91,9 +90,11 @@ const IconCell = React.memo(
         onClick={() => onSelect(iconName)}
         title={iconName}
         aria-label={iconName}
+        aria-pressed={isSelected}
         className={cn(
           "size-9 rounded-md flex items-center justify-center transition-all cursor-pointer relative",
-          "border border-transparent hover:border-border hover:bg-muted/80",
+          "border border-transparent hover:border-border hover:bg-muted/80 active:scale-95",
+          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-hidden",
           isSelected
             ? "bg-primary/20 text-primary border-primary ring-2 ring-primary ring-offset-1 ring-offset-background shadow-xs font-bold"
             : "text-muted-foreground hover:text-foreground",
@@ -218,7 +219,7 @@ export function EndpointGroupCustomizer({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col gap-0 p-0">
+      <DialogContent className="flex h-170 max-h-[90vh] max-w-2xl flex-col gap-0 overflow-hidden p-0">
         {/* Header with live Icon + Color preview badge */}
         <DialogHeader className="border-border/60 bg-muted/20 shrink-0 border-b p-5">
           <div className="flex items-center justify-between">
@@ -282,9 +283,6 @@ export function EndpointGroupCustomizer({
               <Label className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
                 Group Accent Color
               </Label>
-              <span className="text-mini text-muted-foreground font-mono">
-                {color}
-              </span>
             </div>
             <div className="flex flex-wrap gap-2 pt-0.5">
               {PRESET_COLORS.map((c) => {
@@ -295,9 +293,12 @@ export function EndpointGroupCustomizer({
                     type="button"
                     onClick={() => setColor(c.value)}
                     title={c.label}
+                    aria-label={`Select color ${c.label}`}
+                    aria-pressed={isSelected}
                     className={cn(
                       "size-7 rounded-full flex items-center justify-center transition-all cursor-pointer relative",
                       "border border-black/10 dark:border-white/10 hover:scale-110",
+                      "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-hidden",
                       isSelected &&
                         "ring-2 ring-primary ring-offset-2 ring-offset-background scale-110",
                     )}
@@ -316,27 +317,13 @@ export function EndpointGroupCustomizer({
           </div>
 
           {/* Section 3: Hugeicons Icon Library (All 6,791 Icons) */}
-          <div className="border-border/40 space-y-2.5 border-t pt-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <RiSparklingLine
-                  className="text-primary size-3.5"
-                  aria-hidden="true"
-                />
-                <Label className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
-                  Hugeicons Catalog ({ALL_ICON_KEYS.length.toLocaleString()}{" "}
-                  Icons)
-                </Label>
-              </div>
-              <span className="text-mini text-muted-foreground font-mono">
-                Selected:{" "}
-                <span className="text-foreground font-semibold">{icon}</span>
-              </span>
-            </div>
-
+          <div className="border-border/40 space-y-4 border-t pt-4">
             {/* Search Input */}
             <div className="relative">
-              <RiSearchLine className="text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
+              <RiSearchLine
+                className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2"
+                aria-hidden="true"
+              />
               <Input
                 value={searchQuery}
                 onChange={(e) => {
@@ -344,6 +331,7 @@ export function EndpointGroupCustomizer({
                   setVisibleCount(PAGE_SIZE);
                 }}
                 placeholder="Search across all 6,700+ icons (e.g. user, database, lock, credit, cloud, apple, git)..."
+                aria-label="Search icons"
                 className="h-8.5 pr-8 pl-8 text-xs"
               />
               {searchQuery && (
@@ -353,28 +341,16 @@ export function EndpointGroupCustomizer({
                     setSearchQuery("");
                     setVisibleCount(PAGE_SIZE);
                   }}
-                  className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2"
+                  aria-label="Clear icon search"
+                  className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2 cursor-pointer transition-colors"
                 >
-                  <RiCloseLine className="size-3.5" />
+                  <RiCloseLine className="size-3.5" aria-hidden="true" />
                 </button>
               )}
             </div>
 
-            {/* Counter info */}
-            <div className="text-micro text-muted-foreground flex items-center justify-between px-0.5 font-mono">
-              <span>
-                {searchQuery
-                  ? `Found ${filteredIcons.length.toLocaleString()} icons for "${searchQuery}"`
-                  : `Browsing ${filteredIcons.length.toLocaleString()} icons`}
-              </span>
-              <span>
-                Showing 1–{displayedIcons.length} of{" "}
-                {filteredIcons.length.toLocaleString()}
-              </span>
-            </div>
-
             {/* Icon Grid */}
-            <div className="border-border/60 bg-muted/15 scrollbar-subtle max-h-60 space-y-3 overflow-y-auto rounded-lg border p-2.5">
+            <div className="border-border/60 bg-muted/15 scrollbar-subtle max-h-72 space-y-3 overflow-y-auto rounded-lg border p-2.5">
               {displayedIcons.length === 0 ? (
                 <div className="text-muted-foreground space-y-1 py-8 text-center text-xs">
                   <p className="font-semibold">
@@ -409,7 +385,9 @@ export function EndpointGroupCustomizer({
                     onClick={handleLoadMore}
                     className="hover:bg-muted h-7 px-4 text-xs"
                   >
-                    Load More ({filteredIcons.length - visibleCount} remaining)
+                    Load More (
+                    {(filteredIcons.length - visibleCount).toLocaleString()}{" "}
+                    remaining)
                   </Button>
                 </div>
               )}
@@ -458,9 +436,9 @@ export function EndpointGroupCustomizer({
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
-                className="text-destructive/80 hover:text-destructive flex items-center gap-1 text-xs font-medium transition-colors"
+                className="text-destructive/80 hover:text-destructive focus-visible:ring-destructive -mx-1 flex items-center gap-1 rounded px-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-hidden"
               >
-                <RiDeleteBinLine className="size-3.5" />
+                <RiDeleteBinLine className="size-3.5" aria-hidden="true" />
                 <span>Delete Route Group…</span>
               </button>
             )}
