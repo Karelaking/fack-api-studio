@@ -18,6 +18,9 @@ import {
   RiGitBranchLine,
   RiPencilLine,
   RiAddCircleLine,
+  RiFileCopyLine,
+  RiCheckLine,
+  RiSendPlaneLine,
 } from "@remixicon/react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -54,16 +57,21 @@ interface RouteNodeProps {
   selected: boolean;
 }
 
-/**
- * Premium redesigned Custom Node representing a Mock API route.
- * Sleek card container, glowing indicators, copyable path styling, and rules indicators.
- */
 const MAX_VISIBLE_BADGES = 4;
 
+/**
+ * Compact API Card (Postman / Retool style) representing a Mock API route node.
+ * Features:
+ * - Method accent indicator bar and crisp method + status badges
+ * - Prominent endpoint path block with 1-click URL copy and toast feedback
+ * - Response schema section with typed field pills, drag-and-drop target, and expansion toggle
+ * - Micro telemetry status bar for simulated latency, error rate, headers, and rules
+ * - Quick 'Test' action opening the mock endpoint in a new tab
+ */
 export const RouteNode = ({
   data,
   selected,
-}: RouteNodeProps): React.ReactElement => {
+}: RouteNodeProps): React.JSX.Element => {
   const method = data.method.toUpperCase();
 
   // DnD droppable: this route card is a drop target for provider chips
@@ -75,22 +83,26 @@ export const RouteNode = ({
   const selectedRouteId = useCanvasDndStore((s) => s.selectedRouteId);
   const isSelectedForDrop = selectedRouteId === data.id;
 
+  const [isCopied, setIsCopied] = React.useState(false);
+  const [showAllFields, setShowAllFields] = React.useState(false);
+
   const fields = React.useMemo(() => {
     try {
-      const parsed = JSON.parse(data.responseSchema ?? "{}");
+      const parsed = JSON.parse(data.responseSchema ?? "{}") as Parameters<
+        typeof parseSchemaToFields
+      >[0];
       return parseSchemaToFields(parsed);
     } catch {
       return [];
     }
   }, [data.responseSchema]);
 
-  const [showAllFields, setShowAllFields] = React.useState(false);
   const visibleFields = showAllFields
     ? fields
     : fields.slice(0, MAX_VISIBLE_BADGES);
   const hiddenCount = fields.length - MAX_VISIBLE_BADGES;
 
-  const handleRemoveField = async (fieldId: string) => {
+  const handleRemoveField = async (fieldId: string): Promise<void> => {
     try {
       await removeFieldFromRoute(data.id, fieldId);
       window.dispatchEvent(
@@ -104,59 +116,81 @@ export const RouteNode = ({
     }
   };
 
-  const getRouteVariants = (method: string) => ({
-    wrapper: cn({
-      "hover:shadow-method-get/10 hover:border-method-get/30": method === "GET",
-      "hover:shadow-method-post/10 hover:border-method-post/30":
-        method === "POST",
-      "hover:shadow-method-put/10 hover:border-method-put/30": method === "PUT",
-      "hover:shadow-method-delete/10 hover:border-method-delete/30":
-        method === "DELETE",
-      "hover:shadow-method-patch/10 hover:border-method-patch/30":
-        method === "PATCH",
-      "hover:border-muted/40": ![
-        "GET",
-        "POST",
-        "PUT",
-        "DELETE",
-        "PATCH",
-      ].includes(method),
+  const handleCopyUrl = async (e: React.MouseEvent): Promise<void> => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(data.mockUrl);
+      setIsCopied(true);
+      toast.success("Mock URL copied to clipboard");
+      window.setTimeout(() => setIsCopied(false), 1500);
+    } catch {
+      toast.error("Failed to copy URL");
+    }
+  };
+
+  const handleTestEndpoint = (e: React.MouseEvent): void => {
+    e.stopPropagation();
+    if (typeof window !== "undefined") {
+      window.open(data.mockUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const getRouteVariants = (m: string) => ({
+    topBorder: cn({
+      "bg-method-get": m === "GET",
+      "bg-method-post": m === "POST",
+      "bg-method-put": m === "PUT",
+      "bg-method-delete": m === "DELETE",
+      "bg-method-patch": m === "PATCH",
+      "bg-primary": !["GET", "POST", "PUT", "DELETE", "PATCH"].includes(m),
     }),
     badge: cn({
-      "bg-method-get/10 text-method-get border-method-get/25": method === "GET",
-      "bg-method-post/10 text-method-post border-method-post/25":
-        method === "POST",
-      "bg-method-put/10 text-method-put border-method-put/25": method === "PUT",
-      "bg-method-delete/10 text-method-delete border-method-delete/25":
-        method === "DELETE",
-      "bg-method-patch/10 text-method-patch border-method-patch/25":
-        method === "PATCH",
+      "bg-method-get/10 text-method-get border-method-get/30": m === "GET",
+      "bg-method-post/10 text-method-post border-method-post/30": m === "POST",
+      "bg-method-put/10 text-method-put border-method-put/30": m === "PUT",
+      "bg-method-delete/10 text-method-delete border-method-delete/30":
+        m === "DELETE",
+      "bg-method-patch/10 text-method-patch border-method-patch/30":
+        m === "PATCH",
       "bg-muted/10 text-muted-foreground border-border/20": ![
         "GET",
         "POST",
         "PUT",
         "DELETE",
         "PATCH",
-      ].includes(method),
+      ].includes(m),
     }),
     dot: cn({
-      "bg-method-get shadow-[0_0_8px_var(--color-method-get)]":
-        method === "GET",
-      "bg-method-post shadow-[0_0_8px_var(--color-method-post)]":
-        method === "POST",
-      "bg-method-put shadow-[0_0_8px_var(--color-method-put)]":
-        method === "PUT",
+      "bg-method-get shadow-[0_0_8px_var(--color-method-get)]": m === "GET",
+      "bg-method-post shadow-[0_0_8px_var(--color-method-post)]": m === "POST",
+      "bg-method-put shadow-[0_0_8px_var(--color-method-put)]": m === "PUT",
       "bg-method-delete shadow-[0_0_8px_var(--color-method-delete)]":
-        method === "DELETE",
+        m === "DELETE",
       "bg-method-patch shadow-[0_0_8px_var(--color-method-patch)]":
-        method === "PATCH",
+        m === "PATCH",
       "bg-muted-foreground": ![
         "GET",
         "POST",
         "PUT",
         "DELETE",
         "PATCH",
-      ].includes(method),
+      ].includes(m),
+    }),
+    wrapper: cn({
+      "hover:shadow-method-get/10 hover:border-method-get/30": m === "GET",
+      "hover:shadow-method-post/10 hover:border-method-post/30": m === "POST",
+      "hover:shadow-method-put/10 hover:border-method-put/30": m === "PUT",
+      "hover:shadow-method-delete/10 hover:border-method-delete/30":
+        m === "DELETE",
+      "hover:shadow-method-patch/10 hover:border-method-patch/30":
+        m === "PATCH",
+      "hover:border-muted/40": ![
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "PATCH",
+      ].includes(m),
     }),
   });
 
@@ -167,25 +201,27 @@ export const RouteNode = ({
   let StatusIcon = RiPulseLine;
 
   if (data.statusCode >= 200 && data.statusCode < 300) {
-    statusBadgeClass = "bg-success/10 text-success border-success/20";
+    statusBadgeClass = "bg-success/10 text-success border-success/25";
     StatusIcon = RiCheckboxCircleLine;
   } else if (data.statusCode >= 300 && data.statusCode < 400) {
-    statusBadgeClass = "bg-warning/10 text-warning border-warning/20";
+    statusBadgeClass = "bg-warning/10 text-warning border-warning/25";
     StatusIcon = RiFlashlightLine;
   } else if (data.statusCode >= 400 && data.statusCode < 500) {
     statusBadgeClass =
-      "bg-destructive/10 text-destructive border-destructive/20";
+      "bg-destructive/10 text-destructive border-destructive/25";
     StatusIcon = RiAlertLine;
   } else if (data.statusCode >= 500) {
     statusBadgeClass =
-      "bg-destructive/10 text-destructive border-destructive/20 animate-pulse motion-reduce:animate-none";
+      "bg-destructive/15 text-destructive border-destructive/30 animate-pulse motion-reduce:animate-none";
     StatusIcon = RiShieldCrossLine;
   }
 
   const headersKeysCount = React.useMemo(() => {
     try {
-      const parsed = JSON.parse(data.customHeaders || "{}");
-      return Object.keys(parsed).length;
+      const parsed: unknown = JSON.parse(data.customHeaders || "{}");
+      return typeof parsed === "object" && parsed !== null
+        ? Object.keys(parsed).length
+        : 0;
     } catch {
       return 0;
     }
@@ -193,14 +229,14 @@ export const RouteNode = ({
 
   const rulesCount = React.useMemo(() => {
     try {
-      const parsed = JSON.parse(data.conditionalRules || "[]");
+      const parsed: unknown = JSON.parse(data.conditionalRules || "[]");
       return Array.isArray(parsed) ? parsed.length : 0;
     } catch {
       return 0;
     }
   }, [data.conditionalRules]);
 
-  const handleToggle = (checked: boolean) => {
+  const handleToggle = (checked: boolean): void => {
     data.onToggleEnabled(data.id, checked);
   };
 
@@ -211,14 +247,14 @@ export const RouteNode = ({
     <div
       ref={setDropRef}
       className={cn(
-        "bg-card border-border relative flex w-80 cursor-pointer flex-col overflow-hidden rounded-xl border shadow-sm transition-all duration-200 select-none",
+        "bg-card border-border/80 relative flex w-80 cursor-pointer flex-col overflow-hidden rounded-xl border shadow-sm transition-all duration-200 select-none",
         variants.wrapper,
         selected
-          ? "border-primary ring-primary/20 shadow-primary/5 -translate-y-1 scale-[1.02] shadow-lg ring-4"
+          ? "border-primary ring-primary/20 shadow-primary/10 -translate-y-1 scale-[1.01] shadow-lg ring-4"
           : "hover:-translate-y-0.5 hover:shadow-md",
         isOver &&
           "ring-primary/40 border-primary/60 ring-2 shadow-primary/10 shadow-md",
-        isSelectedForDrop && !selected && "ring-primary/20 ring-1",
+        isSelectedForDrop && !selected && "ring-primary/25 ring-2",
         !data.isEnabled && "opacity-60 grayscale-[0.5]",
         data.draft?.changeType === "create" &&
           "agent-draft-enter border-primary/50 ring-primary/15 ring-2",
@@ -233,11 +269,14 @@ export const RouteNode = ({
           : undefined
       }
     >
+      {/* Top Method Accent Line */}
+      <div className={cn("h-1 w-full shrink-0", variants.topBorder)} />
+
       {data.draft ? (
         <span
           aria-hidden="true"
           className={cn(
-            "absolute top-2 right-2 z-10 rounded-full border px-2 py-0.5 text-mini font-bold tracking-wider uppercase",
+            "absolute top-2.5 right-2 z-10 rounded-full border px-2 py-0.5 text-mini font-bold tracking-wider uppercase",
             data.draft.changeType === "delete"
               ? "border-destructive/40 bg-destructive/10 text-destructive"
               : data.draft.changeType === "update"
@@ -255,13 +294,13 @@ export const RouteNode = ({
       {data.draft?.hasConflict ? (
         <span
           aria-hidden="true"
-          className="border-warning/40 bg-warning/10 text-warning text-mini absolute top-2 right-18 z-10 rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase"
+          className="border-warning/40 bg-warning/10 text-warning text-mini absolute top-2.5 right-18 z-10 rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase"
         >
           Conflict
         </span>
       ) : null}
 
-      {/* Node handles for connections */}
+      {/* React Flow connection handle (Input / Target) */}
       <Handle
         type="target"
         position={Position.Left}
@@ -273,13 +312,13 @@ export const RouteNode = ({
         )}
       />
 
-      {/* Header: Status and Controls */}
-      <div className="border-border/40 bg-muted/10 flex items-center justify-between border-b px-3 py-2">
-        <div className="flex items-center gap-2">
+      {/* Header: Method + Status Code + Toolbar Actions */}
+      <div className="border-border/40 bg-muted/15 flex items-center justify-between border-b px-3.5 py-2">
+        <div className="flex items-center gap-1.5">
           {/* Method Badge with glowing indicator dot */}
           <span
             className={cn(
-              "flex shrink-0 items-center gap-1.5 rounded-md border px-1.5 py-0.5 text-micro font-extrabold tracking-wider",
+              "flex shrink-0 items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-micro font-bold tracking-wider uppercase",
               variants.badge,
             )}
           >
@@ -297,7 +336,7 @@ export const RouteNode = ({
           {/* Status code view */}
           <span
             className={cn(
-              "flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-mini font-bold",
+              "flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-mini font-semibold",
               statusBadgeClass,
             )}
           >
@@ -306,18 +345,18 @@ export const RouteNode = ({
           </span>
         </div>
 
-        {/* Actions block: Toggle Switch */}
+        {/* Action Toolbar: Edit Button + Enable Switch */}
         <div
-          className="flex items-center gap-3"
+          className="flex items-center gap-1.5"
           onPointerDown={(e) => e.stopPropagation()}
         >
           <Button
             type="button"
             size="icon-xs"
             variant="ghost"
-            className="canvas-touch-target"
-            title="Edit Route"
-            aria-label="Edit Route"
+            className="canvas-touch-target hover:bg-muted text-muted-foreground hover:text-foreground"
+            title="Edit Route in Inspector"
+            aria-label="Edit Route in Inspector"
             onClick={(e) => {
               e.stopPropagation();
               data.onOpenEdit(data.id);
@@ -334,19 +373,57 @@ export const RouteNode = ({
         </div>
       </div>
 
-      {/* Body: Path, URL, and Field Badges */}
-      <div className="flex flex-col gap-1 px-4 py-3">
-        <span className="text-foreground line-clamp-1 text-sm font-semibold tracking-tight">
-          {data.path}
-        </span>
-        <span className="text-muted-foreground text-mini line-clamp-1 font-mono">
+      {/* Body: Endpoint Path Bar, URL preview, and Field Schema */}
+      <div className="flex flex-col gap-2 p-3.5">
+        {/* Postman-style Endpoint Path Bar with 1-Click Copy */}
+        <div className="bg-muted/30 border-border/40 flex items-center justify-between gap-1.5 rounded-md border px-2.5 py-1.5">
+          <div className="flex min-w-0 flex-1 items-center gap-1.5">
+            <span className="text-muted-foreground text-caption font-mono font-medium select-none">
+              PATH
+            </span>
+            <span className="text-foreground truncate font-mono text-xs font-semibold select-all">
+              {data.path}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleCopyUrl}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 rounded p-1 transition-colors"
+            title="Copy mock URL to clipboard"
+            aria-label="Copy mock URL to clipboard"
+          >
+            {isCopied ? (
+              <RiCheckLine
+                className="text-success h-3.5 w-3.5"
+                aria-hidden="true"
+              />
+            ) : (
+              <RiFileCopyLine className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+          </button>
+        </div>
+
+        {/* Subtle Host URL Breadcrumb */}
+        <span className="text-muted-foreground/60 text-micro truncate font-mono select-all">
           {data.mockUrl}
         </span>
 
-        {/* Field badges from response schema */}
+        {/* Schema Header with Field Count */}
+        <div className="mt-1 flex items-center justify-between px-0.5">
+          <span className="text-muted-foreground text-micro font-bold tracking-wider uppercase">
+            Response Schema
+          </span>
+          <span className="text-muted-foreground/70 text-mini font-mono">
+            {fields.length} {fields.length === 1 ? "field" : "fields"}
+          </span>
+        </div>
+
+        {/* Field Badges Container */}
         {fields.length > 0 && (
           <div
-            className="mt-2 flex flex-wrap gap-1"
+            className="flex flex-wrap gap-1"
             onPointerDown={(e) => e.stopPropagation()}
           >
             {visibleFields.map((field) => (
@@ -371,80 +448,131 @@ export const RouteNode = ({
                 +{hiddenCount} more
               </button>
             )}
+            {showAllFields && hiddenCount > 0 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAllFields(false);
+                }}
+                className="text-muted-foreground hover:text-primary border-border/60 hover:border-primary/40 text-mini rounded-md border border-dashed px-1.5 py-0.5 font-medium transition-colors"
+                aria-label="Show fewer fields"
+              >
+                Show less
+              </button>
+            )}
           </div>
         )}
 
-        {/* Drop zone cue when dragging over */}
+        {/* Active Drop Zone Indicator when dragging a provider over this node */}
         {isOver && (
           <div
-            className="border-primary/40 bg-primary/5 mt-2 flex items-center gap-1.5 rounded-md border border-dashed px-2 py-1.5"
+            className="border-primary/50 bg-primary/10 flex items-center justify-center gap-1.5 rounded-lg border border-dashed px-3 py-2 transition-all"
             aria-live="polite"
             aria-label="Drop zone active — release to add field"
           >
             <RiAddCircleLine
-              className="text-primary h-3 w-3 shrink-0"
+              className="text-primary h-3.5 w-3.5 shrink-0 animate-pulse motion-reduce:animate-none"
               aria-hidden="true"
             />
-            <span className="text-primary text-mini font-medium">
-              Drop to add field
+            <span className="text-primary text-mini font-semibold">
+              Drop here to append field
             </span>
           </div>
         )}
 
         {/* Empty state: invite the user to drop a provider */}
         {fields.length === 0 && !isOver && !data.draft && (
-          <p className="text-muted-foreground/60 text-mini mt-1.5 leading-snug">
-            Drag a provider from the left panel to add fields.
-          </p>
+          <div className="border-border/50 bg-muted/20 flex flex-col items-center justify-center rounded-lg border border-dashed px-3 py-3 text-center">
+            <span className="text-muted-foreground/80 text-mini font-medium">
+              No schema fields yet
+            </span>
+            <span className="text-muted-foreground/60 text-micro mt-0.5">
+              Drag faker providers from the left panel to build payload
+            </span>
+          </div>
         )}
       </div>
 
-      {/* Footer: Chaos / Headers / Rules metadata indicators */}
-      {(headersKeysCount > 0 || rulesCount > 0 || hasLatency || hasErrors) && (
-        <div className="border-border/40 bg-muted/20 flex flex-wrap items-center gap-2 border-t px-4 py-2.5">
-          {headersKeysCount > 0 && (
-            <div className="text-muted-foreground text-mini flex items-center gap-1 font-medium">
-              <RiEqualizerLine
-                className="text-info h-3.5 w-3.5 shrink-0"
-                aria-hidden="true"
-              />
-              <span>Hdrs</span>
-            </div>
-          )}
-          {rulesCount > 0 && (
-            <div className="text-muted-foreground text-mini flex items-center gap-1 font-medium">
-              <RiGitBranchLine
-                className="text-primary h-3.5 w-3.5 shrink-0"
-                aria-hidden="true"
-              />
-              <span>Rules</span>
-            </div>
-          )}
-          {hasLatency && (
-            <div className="text-muted-foreground text-mini flex items-center gap-1 font-medium">
+      {/* Footer: Telemetry & Rules status bar + Quick Test Trigger */}
+      <div className="border-border/40 bg-muted/15 flex items-center justify-between border-t px-3.5 py-2">
+        {/* Left: Metadata badges */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {hasLatency ? (
+            <span
+              className="border-border/50 bg-muted/60 text-muted-foreground text-mini inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono font-medium"
+              title={`Simulated Latency: ${data.latencyMin}-${data.latencyMax}ms`}
+            >
               <RiTimeLine
-                className="text-warning h-3.5 w-3.5 shrink-0"
+                className="text-warning h-3 w-3 shrink-0"
                 aria-hidden="true"
               />
-              <span>
-                {data.latencyMin === data.latencyMax
-                  ? `${data.latencyMin}ms`
-                  : `${data.latencyMin}-${data.latencyMax}ms`}
-              </span>
-            </div>
+              {data.latencyMin === data.latencyMax
+                ? `${data.latencyMin}ms`
+                : `${data.latencyMin}-${data.latencyMax}ms`}
+            </span>
+          ) : (
+            <span
+              className="border-border/40 bg-muted/30 text-muted-foreground/60 text-micro inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono"
+              title="Instant response"
+            >
+              <RiTimeLine className="h-3 w-3 shrink-0" aria-hidden="true" />
+              0ms
+            </span>
           )}
+
           {hasErrors && (
-            <div className="text-muted-foreground text-mini flex items-center gap-1 font-medium">
-              <RiAlertLine
-                className="text-destructive h-3.5 w-3.5 shrink-0 animate-pulse motion-reduce:animate-none"
+            <span
+              className="border-destructive/30 bg-destructive/10 text-destructive text-mini inline-flex animate-pulse items-center gap-1 rounded border px-1.5 py-0.5 font-mono font-semibold motion-reduce:animate-none"
+              title={`Simulated Error Rate: ${data.errorRate}%`}
+            >
+              <RiAlertLine className="h-3 w-3 shrink-0" aria-hidden="true" />
+              {data.errorRate}% Err
+            </span>
+          )}
+
+          {headersKeysCount > 0 && (
+            <span
+              className="border-border/50 bg-muted/60 text-muted-foreground text-mini inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono font-medium"
+              title={`${headersKeysCount} Custom Headers`}
+            >
+              <RiEqualizerLine
+                className="text-info h-3 w-3 shrink-0"
                 aria-hidden="true"
               />
-              <span>{data.errorRate}% Err</span>
-            </div>
+              {headersKeysCount} {headersKeysCount === 1 ? "Hdr" : "Hdrs"}
+            </span>
+          )}
+
+          {rulesCount > 0 && (
+            <span
+              className="border-border/50 bg-muted/60 text-muted-foreground text-mini inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono font-medium"
+              title={`${rulesCount} Conditional Rules`}
+            >
+              <RiGitBranchLine
+                className="text-primary h-3 w-3 shrink-0"
+                aria-hidden="true"
+              />
+              {rulesCount} {rulesCount === 1 ? "Rule" : "Rules"}
+            </span>
           )}
         </div>
-      )}
 
+        {/* Right: Quick Test Action */}
+        <button
+          type="button"
+          onClick={handleTestEndpoint}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="text-muted-foreground hover:text-primary hover:bg-primary/10 text-micro inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium transition-colors"
+          title="Open live mock response in new tab"
+          aria-label="Test mock endpoint"
+        >
+          <RiSendPlaneLine className="h-3 w-3 shrink-0" aria-hidden="true" />
+          <span>Test</span>
+        </button>
+      </div>
+
+      {/* React Flow connection handle (Output / Source) */}
       <Handle
         type="source"
         position={Position.Right}

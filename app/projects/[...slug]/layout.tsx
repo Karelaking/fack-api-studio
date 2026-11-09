@@ -97,7 +97,7 @@ export default async function ProjectLayout({
           <SidebarProvider
             style={
               {
-                "--sidebar-width": "20rem",
+                "--sidebar-width": "26rem",
               } as React.CSSProperties
             }
           >

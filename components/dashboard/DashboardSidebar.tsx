@@ -693,7 +693,7 @@ export const DashboardSidebar = ({
             </div>
           ) : (
             /* Expanded Floating Dock Window */
-            <div className="bg-card/95 dark:bg-card/90 border-border/80 flex max-h-[calc(100vh-6rem)] w-80 flex-col overflow-hidden rounded-xl border shadow-2xl backdrop-blur-md">
+            <div className="bg-card/95 dark:bg-card/90 border-border/80 flex max-h-[calc(100vh-6rem)] w-[23rem] flex-col overflow-hidden rounded-xl border shadow-2xl backdrop-blur-md">
               {/* Floating Dock Header */}
               <div className="bg-muted/30 border-border/60 flex h-11 shrink-0 items-center justify-between border-b px-3">
                 {/* Tab Switcher */}

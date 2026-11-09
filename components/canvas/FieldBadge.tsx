@@ -5,29 +5,8 @@ import { RiCloseLine } from "@remixicon/react";
 import { cn } from "@/lib/utils";
 import type { SchemaField } from "@/lib/schema-synthesizer";
 import { getProviderByValue } from "@/lib/faker-registry";
+import { getCategoryColor } from "@/lib/utils/category-colors";
 import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
-
-/** Category color palette — maps category prefix to a CSS custom property. */
-const CATEGORY_HUES: Record<string, string> = {
-  person: "var(--method-get)",
-  internet: "var(--info)",
-  finance: "var(--method-patch)",
-  location: "var(--method-put)",
-  date: "var(--chart-5)",
-  commerce: "var(--method-post)",
-  company: "var(--chart-4)",
-  image: "var(--chart-3)",
-  system: "var(--muted-foreground)",
-  string: "var(--muted-foreground)",
-  number: "var(--muted-foreground)",
-  datatype: "var(--chart-2)",
-};
-
-function getFieldColor(fakerProvider?: string): string {
-  if (!fakerProvider) return "var(--muted-foreground)";
-  const prefix = fakerProvider.split(".")[0]?.toLowerCase() ?? "";
-  return CATEGORY_HUES[prefix] ?? "var(--primary)";
-}
 
 interface FieldBadgeProps {
   field: SchemaField;
@@ -55,7 +34,7 @@ export const FieldBadge = ({
   const inspectedFieldId = useCanvasDndStore((s) => s.inspectedFieldId);
 
   const isInspected = inspectedFieldId === field.id;
-  const color = getFieldColor(field.fakerProvider);
+  const color = getCategoryColor(field.fakerProvider);
 
   const provider = field.fakerProvider
     ? getProviderByValue(field.fakerProvider)
