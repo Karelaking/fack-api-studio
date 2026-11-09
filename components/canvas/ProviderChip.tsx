@@ -3,7 +3,8 @@
 import * as React from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { RiAddLine, RiDraggable } from "@remixicon/react";
+import * as PikaCore from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { cn } from "@/lib/utils";
 import type { FakerProvider } from "@/lib/faker-registry";
 import { getCategoryColor, getCategoryTint } from "@/lib/utils/category-colors";
@@ -166,16 +167,20 @@ export const ProviderChip = React.memo(
                 aria-hidden="true"
                 className="bg-primary/15 text-primary text-micro inline-flex shrink-0 items-center gap-0.5 rounded px-1.5 py-0.5 font-bold tracking-wider whitespace-nowrap uppercase opacity-0 transition-[opacity,transform] duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
               >
-                <RiAddLine
-                  className="h-2.5 w-2.5 shrink-0"
+                <PikaIcon
+                  icon={PikaCore.PlusIcon}
+                  size={10}
+                  className="shrink-0"
                   aria-hidden="true"
                 />
                 <span>Add</span>
               </span>
             ) : (
-              <RiDraggable
+              <PikaIcon
+                icon={PikaCore.ThreeDotsMenuVerticalIcon}
+                size={14}
                 aria-hidden="true"
-                className="text-muted-foreground/40 group-hover:text-muted-foreground/80 h-3.5 w-3.5 shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                className="text-muted-foreground/40 group-hover:text-muted-foreground/80 shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
               />
             )}
           </div>
@@ -239,13 +244,20 @@ export const ProviderChip = React.memo(
           <div className="border-border/40 text-muted-foreground text-mini border-t pt-1.5">
             {isRouteSelected ? (
               <span className="text-primary flex items-center gap-1 font-medium">
-                <RiAddLine className="h-3 w-3 shrink-0" aria-hidden="true" />
+                <PikaIcon
+                  icon={PikaCore.PlusIcon}
+                  size={12}
+                  className="shrink-0"
+                  aria-hidden="true"
+                />
                 Press Space/Enter to insert
               </span>
             ) : (
               <span className="text-muted-foreground/80 flex items-center gap-1">
-                <RiDraggable
-                  className="text-muted-foreground/60 h-3 w-3 shrink-0"
+                <PikaIcon
+                  icon={PikaCore.ThreeDotsMenuVerticalIcon}
+                  size={12}
+                  className="text-muted-foreground/60 shrink-0"
                   aria-hidden="true"
                 />
                 Drag onto canvas route

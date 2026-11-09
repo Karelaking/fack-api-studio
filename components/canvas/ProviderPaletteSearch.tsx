@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { RiSearchLine, RiCloseLine } from "@remixicon/react";
+import * as PikaCore from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { cn } from "@/lib/utils";
 
 /** Category tab definition. */
@@ -74,8 +75,10 @@ export const ProviderPaletteSearch = ({
     <div className="flex flex-col gap-2">
       {/* Search input */}
       <div className="relative">
-        <RiSearchLine
-          className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2"
+        <PikaIcon
+          icon={PikaCore.SearchIcon}
+          size={14}
+          className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2"
           aria-hidden="true"
         />
         <input
@@ -98,7 +101,11 @@ export const ProviderPaletteSearch = ({
             className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-2 -translate-y-1/2 p-1 transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
             aria-label="Clear search"
           >
-            <RiCloseLine className="h-3.5 w-3.5" aria-hidden="true" />
+            <PikaIcon
+              icon={PikaCore.MultipleCrossCancelIcon}
+              size={14}
+              aria-hidden="true"
+            />
           </button>
         )}
       </div>

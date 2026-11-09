@@ -39,7 +39,8 @@ const canvasUiTrace = LoggerRegistry.getTrace("ui-flow-canvas");
 import { EndpointGroupNode } from "./EndpointGroupNode";
 import { AddRouteDialog } from "./AddRouteDialog";
 import type { Endpoint, Route } from "@/db/schema";
-import { RiGitBranchLine, RiLoader2Line } from "@remixicon/react";
+import * as PikaCore from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
 
@@ -709,7 +710,11 @@ function FlowCanvasInner({
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-6">
           <div className="bg-card/95 border-border pointer-events-auto flex max-w-sm flex-col items-center gap-4 rounded-xl border px-6 py-8 text-center shadow-lg backdrop-blur-sm">
             <span className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-full">
-              <RiGitBranchLine className="size-5" aria-hidden="true" />
+              <PikaIcon
+                icon={PikaCore.GitBranchIcon}
+                size={20}
+                aria-hidden="true"
+              />
             </span>
             <div className="space-y-1.5">
               <h2 className="text-foreground text-base font-semibold">
@@ -767,7 +772,9 @@ export function FlowCanvas(props: FlowCanvasInnerProps) {
   if (!mounted) {
     return (
       <output className="bg-card text-muted-foreground relative flex h-full w-full flex-col items-center justify-center gap-2">
-        <RiLoader2Line
+        <PikaIcon
+          icon={PikaCore.RefreshIcon}
+          size={32}
           className="h-8 w-8 animate-spin motion-reduce:animate-none"
           aria-hidden="true"
         />

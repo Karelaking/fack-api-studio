@@ -1,13 +1,8 @@
 "use client";
 
 import * as React from "react";
-import {
-  RiArrowLeftSLine,
-  RiSaveLine,
-  RiDeleteBin6Line,
-  RiLoader2Line,
-  RiSettings2Line,
-} from "@remixicon/react";
+import * as PikaCore from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
@@ -128,7 +123,11 @@ function FieldInspectorForm({
           className="text-muted-foreground hover:text-foreground -ml-0.5 rounded p-0.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
           aria-label="Back to canvas"
         >
-          <RiArrowLeftSLine className="h-4 w-4" aria-hidden="true" />
+          <PikaIcon
+            icon={PikaCore.ChevronLeftIcon}
+            size={16}
+            aria-hidden="true"
+          />
         </button>
         <h2 className="text-foreground text-xs font-semibold">
           Field Inspector
@@ -229,7 +228,11 @@ function FieldInspectorForm({
             onClick={onOpenAdvanced}
             className="text-muted-foreground hover:text-primary flex items-center gap-1.5 text-xs font-medium transition-colors"
           >
-            <RiSettings2Line className="h-3.5 w-3.5" aria-hidden="true" />
+            <PikaIcon
+              icon={PikaCore.Settings01Icon}
+              size={14}
+              aria-hidden="true"
+            />
             Advanced settings (chaos, headers, rules…)
           </button>
         </div>
@@ -247,12 +250,18 @@ function FieldInspectorForm({
           aria-label={`Remove field ${field.name}`}
         >
           {loading ? (
-            <RiLoader2Line
-              className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
+            <PikaIcon
+              icon={PikaCore.RefreshIcon}
+              size={14}
+              className="animate-spin motion-reduce:animate-none"
               aria-hidden="true"
             />
           ) : (
-            <RiDeleteBin6Line className="h-3.5 w-3.5" aria-hidden="true" />
+            <PikaIcon
+              icon={PikaCore.DeleteDustbin01Icon}
+              size={14}
+              aria-hidden="true"
+            />
           )}
           Remove
         </Button>
@@ -266,12 +275,14 @@ function FieldInspectorForm({
           aria-label="Save field changes"
         >
           {loading ? (
-            <RiLoader2Line
-              className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
+            <PikaIcon
+              icon={PikaCore.RefreshIcon}
+              size={14}
+              className="animate-spin motion-reduce:animate-none"
               aria-hidden="true"
             />
           ) : (
-            <RiSaveLine className="h-3.5 w-3.5" aria-hidden="true" />
+            <PikaIcon icon={PikaCore.FloppyIcon} size={14} aria-hidden="true" />
           )}
           Save
         </Button>

@@ -7,22 +7,8 @@
 import * as React from "react";
 import { Handle, Position } from "@xyflow/react";
 import { useDroppable } from "@dnd-kit/core";
-import {
-  RiAlertLine,
-  RiTimeLine,
-  RiPulseLine,
-  RiCheckboxCircleLine,
-  RiShieldCrossLine,
-  RiFlashlightLine,
-  RiEqualizerLine,
-  RiGitBranchLine,
-  RiPencilLine,
-  RiAddCircleLine,
-  RiFileCopyLine,
-  RiCheckLine,
-  RiDeleteBinLine,
-  RiLoader2Line,
-} from "@remixicon/react";
+import * as PikaCore from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -228,22 +214,22 @@ export const RouteNode = ({
 
   // Status code colors and icons
   let statusBadgeClass = "bg-muted/30 text-muted-foreground border-border/40";
-  let StatusIcon = RiPulseLine;
+  let statusIcon = PikaCore.GraphTrendLineIcon;
 
   if (data.statusCode >= 200 && data.statusCode < 300) {
     statusBadgeClass = "bg-success/10 text-success border-success/25";
-    StatusIcon = RiCheckboxCircleLine;
+    statusIcon = PikaCore.CheckTickCircleIcon;
   } else if (data.statusCode >= 300 && data.statusCode < 400) {
     statusBadgeClass = "bg-warning/10 text-warning border-warning/25";
-    StatusIcon = RiFlashlightLine;
+    statusIcon = PikaCore.LightningThunderElectricOnIcon;
   } else if (data.statusCode >= 400 && data.statusCode < 500) {
     statusBadgeClass =
       "bg-destructive/10 text-destructive border-destructive/25";
-    StatusIcon = RiAlertLine;
+    statusIcon = PikaCore.AlertCircleIcon;
   } else if (data.statusCode >= 500) {
     statusBadgeClass =
       "bg-destructive/15 text-destructive border-destructive/30 animate-pulse motion-reduce:animate-none";
-    StatusIcon = RiShieldCrossLine;
+    statusIcon = PikaCore.AlertTriangleIcon;
   }
 
   const headersKeysCount = React.useMemo(() => {
@@ -370,7 +356,12 @@ export const RouteNode = ({
               statusBadgeClass,
             )}
           >
-            <StatusIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
+            <PikaIcon
+              icon={statusIcon}
+              size={12}
+              className="shrink-0"
+              aria-hidden="true"
+            />
             {data.statusCode}
           </span>
         </div>
@@ -392,7 +383,11 @@ export const RouteNode = ({
               data.onOpenEdit(data.id);
             }}
           >
-            <RiPencilLine className="h-3.5 w-3.5" aria-hidden="true" />
+            <PikaIcon
+              icon={PikaCore.PencilEditIcon}
+              size={14}
+              aria-hidden="true"
+            />
           </Button>
 
           {/* Quick Delete Popover */}
@@ -412,7 +407,11 @@ export const RouteNode = ({
                 />
               }
             >
-              <RiDeleteBinLine className="h-3.5 w-3.5" aria-hidden="true" />
+              <PikaIcon
+                icon={PikaCore.DeleteDustbin01Icon}
+                size={14}
+                aria-hidden="true"
+              />
             </PopoverTrigger>
             <PopoverContent
               align="end"
@@ -449,7 +448,12 @@ export const RouteNode = ({
                     disabled={isDeleting}
                   >
                     {isDeleting ? (
-                      <RiLoader2Line className="h-3 w-3 animate-spin motion-reduce:animate-none" />
+                      <PikaIcon
+                        icon={PikaCore.RefreshIcon}
+                        size={12}
+                        className="animate-spin motion-reduce:animate-none"
+                        aria-hidden="true"
+                      />
                     ) : (
                       "Delete"
                     )}
@@ -490,12 +494,14 @@ export const RouteNode = ({
             aria-label="Copy mock URL to clipboard"
           >
             {isCopied ? (
-              <RiCheckLine
-                className="text-success h-3.5 w-3.5"
+              <PikaIcon
+                icon={PikaCore.CheckTickCircleIcon}
+                size={14}
+                className="text-success"
                 aria-hidden="true"
               />
             ) : (
-              <RiFileCopyLine className="h-3.5 w-3.5" aria-hidden="true" />
+              <PikaIcon icon={PikaCore.CopyIcon} size={14} aria-hidden="true" />
             )}
           </button>
         </div>
@@ -561,8 +567,10 @@ export const RouteNode = ({
             aria-live="polite"
             aria-label="Drop zone active — release to add field"
           >
-            <RiAddCircleLine
-              className="text-primary h-3.5 w-3.5 shrink-0 animate-pulse motion-reduce:animate-none"
+            <PikaIcon
+              icon={PikaCore.PlusCircleIcon}
+              size={14}
+              className="text-primary shrink-0 animate-pulse motion-reduce:animate-none"
               aria-hidden="true"
             />
             <span className="text-primary text-mini font-semibold">
@@ -593,7 +601,12 @@ export const RouteNode = ({
               className="border-warning/30 bg-warning/10 text-warning text-mini inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono font-medium"
               title={`Simulated Latency: ${data.latencyMin}-${data.latencyMax}ms`}
             >
-              <RiTimeLine className="h-3 w-3 shrink-0" aria-hidden="true" />
+              <PikaIcon
+                icon={PikaCore.ClockIcon}
+                size={12}
+                className="shrink-0"
+                aria-hidden="true"
+              />
               {data.latencyMin === data.latencyMax
                 ? `${data.latencyMin}ms`
                 : `${data.latencyMin}-${data.latencyMax}ms`}
@@ -603,7 +616,12 @@ export const RouteNode = ({
               className="border-border/40 bg-muted/30 text-muted-foreground/70 text-mini inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono"
               title="Instant response (0ms simulated latency)"
             >
-              <RiTimeLine className="h-3 w-3 shrink-0" aria-hidden="true" />
+              <PikaIcon
+                icon={PikaCore.ClockIcon}
+                size={12}
+                className="shrink-0"
+                aria-hidden="true"
+              />
               0ms
             </span>
           )}
@@ -613,7 +631,12 @@ export const RouteNode = ({
               className="border-destructive/30 bg-destructive/10 text-destructive text-mini inline-flex h-5 animate-pulse items-center gap-1 rounded border px-1.5 font-mono font-semibold motion-reduce:animate-none"
               title={`Simulated Error Rate: ${data.errorRate}%`}
             >
-              <RiAlertLine className="h-3 w-3 shrink-0" aria-hidden="true" />
+              <PikaIcon
+                icon={PikaCore.AlertTriangleIcon}
+                size={12}
+                className="shrink-0"
+                aria-hidden="true"
+              />
               {data.errorRate}% Err
             </span>
           )}
@@ -623,8 +646,10 @@ export const RouteNode = ({
               className="border-info/30 bg-info/10 text-info text-mini inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono font-medium"
               title={`${headersKeysCount} Custom Header${headersKeysCount === 1 ? "" : "s"}`}
             >
-              <RiEqualizerLine
-                className="h-3 w-3 shrink-0"
+              <PikaIcon
+                icon={PikaCore.FilterHorizontalIcon}
+                size={12}
+                className="shrink-0"
                 aria-hidden="true"
               />
               {headersKeysCount} {headersKeysCount === 1 ? "Hdr" : "Hdrs"}
@@ -636,8 +661,10 @@ export const RouteNode = ({
               className="border-primary/30 bg-primary/10 text-primary text-mini inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono font-medium"
               title={`${rulesCount} Conditional Rule${rulesCount === 1 ? "" : "s"}`}
             >
-              <RiGitBranchLine
-                className="h-3 w-3 shrink-0"
+              <PikaIcon
+                icon={PikaCore.GitBranchIcon}
+                size={12}
+                className="shrink-0"
                 aria-hidden="true"
               />
               {rulesCount} {rulesCount === 1 ? "Rule" : "Rules"}

@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { RiCloseLine } from "@remixicon/react";
+import * as PikaCore from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { cn } from "@/lib/utils";
 import type { SchemaField } from "@/lib/schema-synthesizer";
 import { getProviderByValue } from "@/lib/faker-registry";
@@ -102,7 +103,11 @@ export const FieldBadge = ({
         title={`Remove field "${field.name}"`}
         aria-label={`Remove field ${field.name}`}
       >
-        <RiCloseLine className="size-3" aria-hidden="true" />
+        <PikaIcon
+          icon={PikaCore.MultipleCrossCancelIcon}
+          size={12}
+          aria-hidden="true"
+        />
       </button>
     </div>
   );

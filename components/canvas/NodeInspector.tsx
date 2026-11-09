@@ -1,17 +1,8 @@
 "use client";
 
 import * as React from "react";
-import {
-  RiArrowLeftSLine,
-  RiCloseLine,
-  RiSaveLine,
-  RiDeleteBin6Line,
-  RiLoader2Line,
-  RiSettings2Line,
-  RiNodeTree,
-  RiPulseLine,
-  RiSparklingLine,
-} from "@remixicon/react";
+import * as PikaCore from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
@@ -148,7 +139,11 @@ const FieldEditor = ({
             className="text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring flex size-8 items-center justify-center rounded-md p-1 transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
             aria-label="Back to route inspection"
           >
-            <RiArrowLeftSLine className="h-4 w-4" aria-hidden="true" />
+            <PikaIcon
+              icon={PikaCore.ChevronLeftIcon}
+              size={16}
+              aria-hidden="true"
+            />
           </button>
           <div className="flex flex-col">
             <h2 className="text-foreground text-xs font-semibold">
@@ -255,7 +250,11 @@ const FieldEditor = ({
             onClick={onOpenAdvanced}
             className="text-muted-foreground hover:text-primary focus-visible:ring-ring flex items-center gap-1.5 rounded-sm text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
           >
-            <RiSettings2Line className="h-3.5 w-3.5" aria-hidden="true" />
+            <PikaIcon
+              icon={PikaCore.Settings01Icon}
+              size={14}
+              aria-hidden="true"
+            />
             <span>Advanced settings (chaos, headers…)</span>
           </button>
         </div>
@@ -273,12 +272,18 @@ const FieldEditor = ({
           aria-label={`Remove field ${field.name}`}
         >
           {loading ? (
-            <RiLoader2Line
-              className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
+            <PikaIcon
+              icon={PikaCore.RefreshIcon}
+              size={14}
+              className="animate-spin motion-reduce:animate-none"
               aria-hidden="true"
             />
           ) : (
-            <RiDeleteBin6Line className="h-3.5 w-3.5" aria-hidden="true" />
+            <PikaIcon
+              icon={PikaCore.DeleteDustbin01Icon}
+              size={14}
+              aria-hidden="true"
+            />
           )}
           <span>Remove</span>
         </Button>
@@ -292,12 +297,14 @@ const FieldEditor = ({
           aria-label="Save field changes"
         >
           {loading ? (
-            <RiLoader2Line
-              className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
+            <PikaIcon
+              icon={PikaCore.RefreshIcon}
+              size={14}
+              className="animate-spin motion-reduce:animate-none"
               aria-hidden="true"
             />
           ) : (
-            <RiSaveLine className="h-3.5 w-3.5" aria-hidden="true" />
+            <PikaIcon icon={PikaCore.FloppyIcon} size={14} aria-hidden="true" />
           )}
           <span>Save</span>
         </Button>
@@ -420,7 +427,12 @@ const RouteEditor = ({
       {/* Header */}
       <div className="border-border/60 flex shrink-0 items-center justify-between border-b px-3 py-3">
         <div className="flex items-center gap-1.5">
-          <RiPulseLine className="text-primary h-4 w-4" aria-hidden="true" />
+          <PikaIcon
+            icon={PikaCore.GraphTrendLineIcon}
+            size={16}
+            className="text-primary"
+            aria-hidden="true"
+          />
           <h2 className="text-foreground text-xs font-semibold">
             Route Node Inspector
           </h2>
@@ -432,7 +444,11 @@ const RouteEditor = ({
           title="Deselect route"
           aria-label="Deselect route"
         >
-          <RiCloseLine className="h-4 w-4" aria-hidden="true" />
+          <PikaIcon
+            icon={PikaCore.MultipleCrossCancelIcon}
+            size={16}
+            aria-hidden="true"
+          />
         </button>
       </div>
 
@@ -585,8 +601,9 @@ const RouteEditor = ({
                       title={`Remove field "${f.name}"`}
                       aria-label={`Remove field ${f.name}`}
                     >
-                      <RiDeleteBin6Line
-                        className="size-3.5"
+                      <PikaIcon
+                        icon={PikaCore.DeleteDustbin01Icon}
+                        size={14}
                         aria-hidden="true"
                       />
                     </button>
@@ -604,7 +621,11 @@ const RouteEditor = ({
             onClick={onOpenAdvanced}
             className="text-muted-foreground hover:text-primary focus-visible:ring-ring flex items-center gap-1.5 rounded-sm text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
           >
-            <RiSettings2Line className="h-3.5 w-3.5" aria-hidden="true" />
+            <PikaIcon
+              icon={PikaCore.Settings01Icon}
+              size={14}
+              aria-hidden="true"
+            />
             <span>Chaos rules & headers drawer…</span>
           </button>
         </div>
@@ -622,7 +643,12 @@ const RouteEditor = ({
               disabled={isDeleting || loading}
             >
               {isDeleting ? (
-                <RiLoader2Line className="size-3 animate-spin motion-reduce:animate-none" />
+                <PikaIcon
+                  icon={PikaCore.RefreshIcon}
+                  size={12}
+                  className="mr-1 animate-spin motion-reduce:animate-none"
+                  aria-hidden="true"
+                />
               ) : (
                 "Confirm Delete"
               )}
@@ -647,7 +673,11 @@ const RouteEditor = ({
             className="text-destructive hover:bg-destructive/10 hover:text-destructive text-xs"
             aria-label="Delete this route"
           >
-            <RiDeleteBin6Line className="h-3.5 w-3.5" aria-hidden="true" />
+            <PikaIcon
+              icon={PikaCore.DeleteDustbin01Icon}
+              size={14}
+              aria-hidden="true"
+            />
             <span>Delete Route</span>
           </Button>
         )}
@@ -661,12 +691,14 @@ const RouteEditor = ({
           aria-label="Save route changes"
         >
           {loading ? (
-            <RiLoader2Line
-              className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
+            <PikaIcon
+              icon={PikaCore.RefreshIcon}
+              size={14}
+              className="animate-spin motion-reduce:animate-none"
               aria-hidden="true"
             />
           ) : (
-            <RiSaveLine className="h-3.5 w-3.5" aria-hidden="true" />
+            <PikaIcon icon={PikaCore.FloppyIcon} size={14} aria-hidden="true" />
           )}
           <span>Save Route</span>
         </Button>
@@ -692,8 +724,10 @@ const IdleInspector = ({
       {/* Empty State Body */}
       <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
         <div className="bg-muted/40 border-border/60 mb-3 flex size-12 items-center justify-center rounded-xl border">
-          <RiNodeTree
-            className="text-muted-foreground size-6"
+          <PikaIcon
+            icon={PikaCore.GitBranchIcon}
+            size={24}
+            className="text-muted-foreground"
             aria-hidden="true"
           />
         </div>
@@ -714,7 +748,12 @@ const IdleInspector = ({
             </span>
           </div>
           <div className="text-muted-foreground text-mini mt-2 flex items-center gap-1.5">
-            <RiSparklingLine className="text-primary size-3 shrink-0" />
+            <PikaIcon
+              icon={PikaCore.SparkleAi01Icon}
+              size={12}
+              className="text-primary shrink-0"
+              aria-hidden="true"
+            />
             <span>Drag providers from the left sidebar onto any route.</span>
           </div>
         </div>
