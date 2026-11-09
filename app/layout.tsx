@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 /**
  * `viewportFit: "cover"` is what makes `env(safe-area-inset-*)` report real
@@ -156,6 +157,7 @@ export default function RootLayout({
                   elsewhere makes the client request /_vercel/insights/script.js
                   and log a 404 in the console. */}
               {process.env.VERCEL ? <Analytics /> : null}
+              {process.env.VERCEL ? <SpeedInsights /> : null}
               {children}
               <Toaster position="top-right" richColors />
             </TooltipProvider>
