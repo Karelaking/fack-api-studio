@@ -8039,7 +8039,6 @@ snapshots:
       ajv: 8.20.0
       ajv-formats: 2.1.1(ajv@8.20.0)
       zod: 4.6.7
-
   '@hugeicons/core-free-icons@4.4.0': {}
 
   '@hugeicons/react@1.1.10(react@19.3.1)':
@@ -8610,7 +8609,6 @@ snapshots:
     optional: true
 
   '@oxlint/plugins@1.91.0': {}
-
   '@pikaicons/core-free@0.1.0': {}
 
   '@pikaicons/react@0.1.0(react@19.3.1)':
