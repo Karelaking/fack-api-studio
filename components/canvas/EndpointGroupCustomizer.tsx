@@ -219,7 +219,7 @@ export function EndpointGroupCustomizer({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-170 max-h-[90vh] max-w-2xl flex-col gap-0 overflow-hidden p-0">
+      <DialogContent className="flex h-185 max-h-[90vh] max-w-2xl flex-col gap-0 overflow-hidden p-0">
         {/* Header with live Icon + Color preview badge */}
         <DialogHeader className="border-border/60 bg-muted/20 shrink-0 border-b p-5">
           <div className="flex items-center justify-between">
@@ -259,6 +259,12 @@ export function EndpointGroupCustomizer({
                 id="group-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void handleSave();
+                  }
+                }}
                 placeholder="e.g. Users API, Auth"
                 className="h-8.5 text-xs font-medium"
               />
@@ -271,6 +277,12 @@ export function EndpointGroupCustomizer({
                 id="group-path"
                 value={basePath}
                 onChange={(e) => setBasePath(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void handleSave();
+                  }
+                }}
                 placeholder="/api/v1/users"
                 className="h-8.5 font-mono text-xs"
               />
@@ -393,80 +405,94 @@ export function EndpointGroupCustomizer({
               )}
             </div>
           </div>
-
-          {/* Section 4: Danger Zone (Delete Group) */}
-          <div className="border-destructive/20 border-t pt-3">
-            {confirmDelete ? (
-              <div className="bg-destructive/10 border-destructive/30 space-y-2 rounded-lg border p-3">
-                <p className="text-destructive text-xs font-semibold">
-                  Delete route group &quot;{endpoint.name}&quot;?
-                </p>
-                <p className="text-mini text-muted-foreground">
-                  {endpoint.routesCount && endpoint.routesCount > 0
-                    ? `Warning: This group contains ${endpoint.routesCount} routes which will also be deleted.`
-                    : "This group has no routes."}
-                </p>
-                <div className="flex items-center gap-2 pt-1">
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="xs"
-                    onClick={handleDelete}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <RiLoader2Line className="mr-1 size-3 animate-spin motion-reduce:animate-none" />
-                    ) : (
-                      <RiDeleteBinLine className="mr-1 size-3" />
-                    )}
-                    Confirm Delete
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => setConfirmDelete(false)}
-                    disabled={loading}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(true)}
-                className="text-destructive/80 hover:text-destructive focus-visible:ring-destructive -mx-1 flex items-center gap-1 rounded px-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-hidden"
-              >
-                <RiDeleteBinLine className="size-3.5" aria-hidden="true" />
-                <span>Delete Route Group…</span>
-              </button>
-            )}
-          </div>
         </div>
 
         {/* Footer */}
-        <DialogFooter className="border-border/60 bg-muted/20 flex shrink-0 items-center justify-between border-t p-4 sm:justify-between">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleSave}
-            disabled={loading || !name.trim()}
-          >
-            {loading && (
-              <RiLoader2Line className="mr-1.5 size-3.5 animate-spin motion-reduce:animate-none" />
+        <DialogFooter className="border-border/60 bg-muted/20 m-0 flex shrink-0 items-center justify-between border-t p-4 sm:justify-between">
+          {/* Left: Delete Group action with inline confirmation */}
+          <div className="flex items-center">
+            {confirmDelete ? (
+              <div className="flex items-center gap-1.5" role="alert">
+                <span className="text-destructive text-mini font-medium">
+                  Delete
+                  {endpoint.routesCount && endpoint.routesCount > 0
+                    ? ` with ${endpoint.routesCount} routes`
+                    : ""}
+                  ?
+                </span>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="xs"
+                  onClick={handleDelete}
+                  disabled={loading}
+                  className="h-7 px-2 text-xs"
+                >
+                  {loading ? (
+                    <RiLoader2Line className="mr-1 size-3 animate-spin motion-reduce:animate-none" />
+                  ) : (
+                    <RiDeleteBinLine className="mr-1 size-3" />
+                  )}
+                  Delete
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setConfirmDelete(false)}
+                  disabled={loading}
+                  className="h-7 px-2 text-xs"
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setConfirmDelete(true)}
+                disabled={loading}
+                className="text-destructive/80 hover:text-destructive hover:bg-destructive/10 -ml-1 text-xs font-medium transition-colors"
+                title="Delete this route group"
+                aria-label="Delete this route group"
+              >
+                <RiDeleteBinLine
+                  className="mr-1.5 size-3.5"
+                  aria-hidden="true"
+                />
+                <span>Delete Group</span>
+              </Button>
             )}
-            Save Changes
-          </Button>
+          </div>
+
+          {/* Right: Cancel and Save Changes */}
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+              className="text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleSave}
+              disabled={loading || !name.trim()}
+              className="min-w-28 text-xs font-semibold shadow-xs"
+            >
+              {loading ? (
+                <RiLoader2Line className="mr-1.5 size-3.5 animate-spin motion-reduce:animate-none" />
+              ) : (
+                <RiCheckLine className="mr-1.5 size-3.5" aria-hidden="true" />
+              )}
+              Save Changes
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
