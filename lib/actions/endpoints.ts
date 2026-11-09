@@ -125,6 +125,8 @@ export async function createEndpoint(
         name: parsed.name,
         description: parsed.description ?? "",
         basePath: parsed.basePath ?? "",
+        color: parsed.color ?? "",
+        icon: parsed.icon ?? "",
       })
       .returning();
 

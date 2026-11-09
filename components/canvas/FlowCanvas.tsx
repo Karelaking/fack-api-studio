@@ -113,12 +113,18 @@ interface FlowCanvasInnerProps {
   };
   onSelectRoute: (routeId: string) => void;
   onOpenEdit: (routeId: string) => void;
+  onDeleteRoute?: (routeId: string) => void;
+  onUpdateGroup?: (updatedEndpoint: Endpoint) => void;
+  onDeleteGroup?: (endpointId: string) => void;
 }
 
 interface ReconcileCallbacks {
   onToggleEnabled: (id: string, isEnabled: boolean) => void;
   onSelectRoute: (id: string) => void;
   onOpenEdit: (id: string) => void;
+  onDeleteRoute?: (id: string) => void;
+  onUpdateGroup?: (updatedEndpoint: Endpoint) => void;
+  onDeleteGroup?: (endpointId: string) => void;
 }
 
 /**
@@ -157,7 +163,16 @@ function reconcileNodes(
       ...saved,
       id: groupId,
       type: "endpointGroup",
-      data: { label: ep.name, basePath: ep.basePath },
+      data: {
+        id: ep.id,
+        label: ep.name,
+        basePath: ep.basePath,
+        color: ep.color ?? "",
+        icon: ep.icon ?? "",
+        routesCount: ep.routes.length,
+        onUpdateGroup: callbacks.onUpdateGroup,
+        onDeleteGroup: callbacks.onDeleteGroup,
+      },
       position: saved?.position ?? {
         x: 40 + epIdx * (GROUP_WIDTH + 40),
         y: 40,
@@ -193,6 +208,7 @@ function reconcileNodes(
       onToggleEnabled: callbacks.onToggleEnabled,
       onSelectRoute: callbacks.onSelectRoute,
       onOpenEdit: callbacks.onOpenEdit,
+      onDeleteRoute: callbacks.onDeleteRoute,
       mockUrl: `${origin}/${projectSlug}${endpoint.basePath || ""}${route.path}`,
       draft: draftPlan.marks[route.id],
     } satisfies RouteNodeData;
@@ -297,6 +313,9 @@ function FlowCanvasInner({
   initialState,
   onSelectRoute,
   onOpenEdit,
+  onDeleteRoute,
+  onUpdateGroup,
+  onDeleteGroup,
 }: FlowCanvasInnerProps): React.JSX.Element {
   const reactFlowInstance = useReactFlow();
   const router = useRouter();
@@ -357,8 +376,18 @@ function FlowCanvasInner({
         void handleToggleEnabled(id, isEnabled),
       onSelectRoute,
       onOpenEdit,
+      onDeleteRoute,
+      onUpdateGroup,
+      onDeleteGroup,
     }),
-    [handleToggleEnabled, onSelectRoute, onOpenEdit],
+    [
+      handleToggleEnabled,
+      onSelectRoute,
+      onOpenEdit,
+      onDeleteRoute,
+      onUpdateGroup,
+      onDeleteGroup,
+    ],
   );
 
   const initialNodes: Node[] = React.useMemo(() => {
@@ -619,6 +648,17 @@ function FlowCanvasInner({
     [onSelectRoute],
   );
 
+  const handleNodesDelete = React.useCallback(
+    (deletedNodes: Node[]) => {
+      deletedNodes.forEach((node) => {
+        if (node.type === "routeNode") {
+          onDeleteRoute?.(node.id);
+        }
+      });
+    },
+    [onDeleteRoute],
+  );
+
   const isEmpty = routes.length === 0;
   const hasEndpoints = endpoints.length > 0;
 
@@ -635,12 +675,13 @@ function FlowCanvasInner({
         onConnect={onConnect}
         onNodeClick={handleNodeClick}
         onPaneClick={handlePaneClick}
+        onNodesDelete={handleNodesDelete}
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={FIT_VIEW_OPTIONS}
         minZoom={MIN_ZOOM}
         colorMode={resolvedTheme}
-        deleteKeyCode={null}
+        deleteKeyCode={["Backspace", "Delete"]}
       >
         <Background
           variant={BackgroundVariant.Dots}

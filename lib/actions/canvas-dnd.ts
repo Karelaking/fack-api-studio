@@ -223,3 +223,49 @@ export async function removeFieldFromRoute(
     throw error;
   }
 }
+
+/**
+ * Removes all fields from a route schema, resetting it to an empty object schema.
+ */
+export async function clearFieldsFromRoute(routeId: string): Promise<Route> {
+  dndTrace.traceCall("clearFieldsFromRoute", routeId);
+  await requireRouteAccess(routeId);
+
+  try {
+    const existing = await db.query.routes.findFirst({
+      where: eq(routes.id, routeId),
+    });
+
+    if (!existing) {
+      throw new Error(`Route ${routeId} not found`);
+    }
+
+    const emptySchema = synthesizeSchema([]);
+
+    const [route] = await db
+      .update(routes)
+      .set({
+        responseSchema: JSON.stringify(emptySchema),
+        updatedAt: new Date(),
+      })
+      .where(eq(routes.id, routeId))
+      .returning();
+
+    const parentEndpoint = await db.query.endpoints.findFirst({
+      where: eq((await import("@/db/schema")).endpoints.id, route.endpointId),
+      columns: { projectId: true },
+    });
+    if (parentEndpoint) {
+      clearProjectCache(parentEndpoint.projectId);
+      markProjectDirty(parentEndpoint.projectId);
+    }
+    clearRouteCache(route.id);
+    revalidatePath("/");
+
+    dndTrace.traceSuccess("clearFieldsFromRoute", routeId);
+    return route;
+  } catch (error) {
+    dndTrace.traceError("clearFieldsFromRoute", error);
+    throw error;
+  }
+}

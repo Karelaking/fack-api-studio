@@ -66,6 +66,8 @@ export const createEndpointSchema = z.object({
     .max(500, "Description must be 500 characters or fewer")
     .optional(),
   basePath: z.string().max(200).optional(),
+  color: z.string().max(50).optional(),
+  icon: z.string().max(100).optional(),
 });
 
 export const updateEndpointSchema = z.object({
@@ -73,6 +75,8 @@ export const updateEndpointSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
   basePath: z.string().max(200).optional(),
+  color: z.string().max(50).optional(),
+  icon: z.string().max(100).optional(),
 });
 
 // ─── Route ───────────────────────────────────────────────────────────────────

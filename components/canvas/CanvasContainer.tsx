@@ -60,6 +60,10 @@ function CanvasContainerInner({
 }: CanvasContainerProps): React.JSX.Element {
   const [prevRoutes, setPrevRoutes] = React.useState<Route[]>(routes);
   const [activeRoutes, setActiveRoutes] = React.useState<Route[]>(routes);
+  const [prevEndpoints, setPrevEndpoints] =
+    React.useState<(Endpoint & { routes: Route[] })[]>(endpoints);
+  const [activeEndpoints, setActiveEndpoints] =
+    React.useState<(Endpoint & { routes: Route[] })[]>(endpoints);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const isBelowLg = useBelowLg();
 
@@ -78,6 +82,10 @@ function CanvasContainerInner({
   if (routes !== prevRoutes) {
     setPrevRoutes(routes);
     setActiveRoutes(routes);
+  }
+  if (endpoints !== prevEndpoints) {
+    setPrevEndpoints(endpoints);
+    setActiveEndpoints(endpoints);
   }
 
   const inspectorRoute = React.useMemo(() => {
@@ -141,9 +149,36 @@ function CanvasContainerInner({
     [setSelectedRoute],
   );
 
-  // Sync route updates emitted from provider drag/drop or keyboard additions
+  const handleEndpointUpdated = React.useCallback(
+    (updatedEndpoint: Endpoint) => {
+      setActiveEndpoints((prev) =>
+        prev.map((ep) =>
+          ep.id === updatedEndpoint.id ? { ...ep, ...updatedEndpoint } : ep,
+        ),
+      );
+    },
+    [],
+  );
+
+  const handleEndpointDeleted = React.useCallback(
+    (endpointId: string) => {
+      setActiveEndpoints((prev) => prev.filter((ep) => ep.id !== endpointId));
+      setActiveRoutes((prev) =>
+        prev.filter((r) => r.endpointId !== endpointId),
+      );
+      setInspectorRouteId((current) => {
+        const currentRoute = activeRoutes.find((r) => r.id === current);
+        return currentRoute?.endpointId === endpointId ? null : current;
+      });
+      setSelectedRoute(null);
+      setIsEditOpen(false);
+    },
+    [activeRoutes, setSelectedRoute],
+  );
+
+  // Sync route updates and removals emitted from canvas cards or inspector
   React.useEffect(() => {
-    const handleFieldSync = (e: Event) => {
+    const handleFieldSync = (e: Event): void => {
       const customEvent = e as CustomEvent<{
         routeId: string;
         updatedRoute?: Route;
@@ -152,10 +187,27 @@ function CanvasContainerInner({
         handleRouteUpdated(customEvent.detail.updatedRoute);
       }
     };
+
+    const handleRouteDeletedSync = (e: Event): void => {
+      const customEvent = e as CustomEvent<{ routeId: string }>;
+      if (customEvent.detail?.routeId) {
+        handleRouteDeleted(customEvent.detail.routeId);
+      }
+    };
+
     window.addEventListener("canvas-field-added", handleFieldSync);
-    return () =>
+    window.addEventListener("canvas-field-removed", handleFieldSync);
+    window.addEventListener("canvas-route-deleted", handleRouteDeletedSync);
+
+    return () => {
       window.removeEventListener("canvas-field-added", handleFieldSync);
-  }, [handleRouteUpdated]);
+      window.removeEventListener("canvas-field-removed", handleFieldSync);
+      window.removeEventListener(
+        "canvas-route-deleted",
+        handleRouteDeletedSync,
+      );
+    };
+  }, [handleRouteUpdated, handleRouteDeleted]);
 
   return (
     <div className="relative flex h-full min-h-0 w-full min-w-0 overflow-hidden">
@@ -164,11 +216,14 @@ function CanvasContainerInner({
         <FlowCanvas
           projectId={projectId}
           projectSlug={projectSlug}
-          endpoints={endpoints}
+          endpoints={activeEndpoints}
           routes={activeRoutes}
           initialState={initialState}
           onSelectRoute={handleSelectRoute}
           onOpenEdit={handleOpenEdit}
+          onDeleteRoute={handleRouteDeleted}
+          onUpdateGroup={handleEndpointUpdated}
+          onDeleteGroup={handleEndpointDeleted}
         />
 
         {/* Agent composer docked over the canvas */}
@@ -185,6 +240,7 @@ function CanvasContainerInner({
           inspectedFieldId={inspectedFieldId}
           activeRoutesCount={activeRoutes.length}
           onRouteUpdated={handleRouteUpdated}
+          onRouteDeleted={handleRouteDeleted}
           onOpenAdvanced={() => setIsEditOpen(true)}
           onCloseInspector={handleCloseInspector}
         />
@@ -214,6 +270,7 @@ function CanvasContainerInner({
               inspectedFieldId={inspectedFieldId}
               activeRoutesCount={activeRoutes.length}
               onRouteUpdated={handleRouteUpdated}
+              onRouteDeleted={handleRouteDeleted}
               onOpenAdvanced={() => setIsEditOpen(true)}
               onCloseInspector={handleCloseInspector}
             />
@@ -226,7 +283,7 @@ function CanvasContainerInner({
         <EditBar
           route={inspectorRoute}
           projectSlug={projectSlug}
-          endpoints={endpoints}
+          endpoints={activeEndpoints}
           open={isEditOpen}
           onOpenChange={setIsEditOpen}
           onRouteUpdated={handleRouteUpdated}

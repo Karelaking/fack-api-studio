@@ -17,8 +17,11 @@ import { cn } from "@/lib/utils";
 import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
 import { FakerProviderSelect } from "@/components/edit-bar/FakerProviderSelect";
 import { getProviderByValue } from "@/lib/faker-registry";
-import { updateRoute } from "@/lib/actions/routes";
-import { removeFieldFromRoute } from "@/lib/actions/canvas-dnd";
+import { updateRoute, deleteRoute } from "@/lib/actions/routes";
+import {
+  removeFieldFromRoute,
+  clearFieldsFromRoute,
+} from "@/lib/actions/canvas-dnd";
 import {
   parseSchemaToFields,
   synthesizeSchema,
@@ -52,6 +55,8 @@ interface NodeInspectorProps {
   activeRoutesCount: number;
   /** Called when a route or its fields change so parent state stays synced. */
   onRouteUpdated: (updatedRoute: Route) => void;
+  /** Called when a route is deleted so canvas and selection clean up. */
+  onRouteDeleted?: (routeId: string) => void;
   /** Called to open the full advanced EditBar sheet. */
   onOpenAdvanced: () => void;
   /** Called when the user closes the inspector (back/close). */
@@ -304,6 +309,7 @@ const FieldEditor = ({
 interface RouteEditorProps {
   route: Route;
   onRouteUpdated: (updatedRoute: Route) => void;
+  onRouteDeleted?: (routeId: string) => void;
   onSelectField: (fieldId: string) => void;
   onDeselect: () => void;
   onOpenAdvanced: () => void;
@@ -312,11 +318,14 @@ interface RouteEditorProps {
 const RouteEditor = ({
   route,
   onRouteUpdated,
+  onRouteDeleted,
   onSelectField,
   onDeselect,
   onOpenAdvanced,
 }: RouteEditorProps): React.JSX.Element => {
   const [loading, setLoading] = React.useState(false);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
   const [method, setMethod] = React.useState<HttpMethod>(
     (route.method.toUpperCase() as HttpMethod) || "GET",
   );
@@ -336,6 +345,51 @@ const RouteEditor = ({
       return [];
     }
   }, [routeResponseSchema]);
+
+  const handleClearAllFields = async (): Promise<void> => {
+    setLoading(true);
+    try {
+      const updated = await clearFieldsFromRoute(route.id);
+      onRouteUpdated(updated);
+      toast.success("All schema fields cleared");
+    } catch {
+      toast.error("Failed to clear fields");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveFieldDirect = async (
+    fieldId: string,
+    fieldName: string,
+    e: React.MouseEvent,
+  ): Promise<void> => {
+    e.stopPropagation();
+    try {
+      const updated = await removeFieldFromRoute(route.id, fieldId);
+      onRouteUpdated(updated);
+      toast.success(`Field "${fieldName}" removed`);
+    } catch {
+      toast.error("Failed to remove field");
+    }
+  };
+
+  const handleDeleteRoute = async (): Promise<void> => {
+    setIsDeleting(true);
+    try {
+      await deleteRoute(route.id);
+      onRouteDeleted?.(route.id);
+      window.dispatchEvent(
+        new CustomEvent("canvas-route-deleted", {
+          detail: { routeId: route.id },
+        }),
+      );
+      toast.success("Route deleted");
+    } catch {
+      toast.error("Failed to delete route");
+      setIsDeleting(false);
+    }
+  };
 
   const handleSaveRoute = async () => {
     if (!path.trim()) {
@@ -475,6 +529,17 @@ const RouteEditor = ({
             <span className="text-muted-foreground text-mini font-bold tracking-wider uppercase">
               Route Fields ({fields.length})
             </span>
+            {fields.length > 0 && (
+              <button
+                type="button"
+                onClick={() => void handleClearAllFields()}
+                disabled={loading}
+                className="text-muted-foreground hover:text-destructive text-mini font-medium transition-colors"
+                title="Remove all fields from this route"
+              >
+                Clear all
+              </button>
+            )}
           </div>
 
           {fields.length === 0 ? (
@@ -487,24 +552,46 @@ const RouteEditor = ({
           ) : (
             <div className="space-y-1.5">
               {fields.map((f) => (
-                <button
+                <div
                   key={f.id}
-                  type="button"
-                  onClick={() => onSelectField(f.id)}
-                  className="bg-card hover:border-primary/50 hover:bg-primary/5 border-border/60 focus-visible:ring-ring flex w-full items-center justify-between rounded-md border p-2 text-left transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
+                  className="bg-card hover:border-border border-border/60 group flex items-center justify-between rounded-md border p-2 transition-colors"
                 >
-                  <div className="flex min-w-0 flex-col">
-                    <span className="text-foreground truncate font-mono text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => onSelectField(f.id)}
+                    className="flex min-w-0 flex-1 flex-col text-left focus-visible:outline-hidden"
+                  >
+                    <span className="text-foreground group-hover:text-primary truncate font-mono text-xs font-semibold transition-colors">
                       {f.name}
                     </span>
                     <span className="text-muted-foreground text-mini truncate font-mono">
                       {f.fakerProvider || f.type}
                     </span>
+                  </button>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => onSelectField(f.id)}
+                      className="text-primary hover:text-primary/80 text-mini px-1 py-0.5 font-semibold"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) =>
+                        void handleRemoveFieldDirect(f.id, f.name, e)
+                      }
+                      className="text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 rounded p-1 transition-colors"
+                      title={`Remove field "${f.name}"`}
+                      aria-label={`Remove field ${f.name}`}
+                    >
+                      <RiDeleteBin6Line
+                        className="size-3.5"
+                        aria-hidden="true"
+                      />
+                    </button>
                   </div>
-                  <span className="text-primary text-mini font-semibold">
-                    Edit →
-                  </span>
-                </button>
+                </div>
               ))}
             </div>
           )}
@@ -524,7 +611,47 @@ const RouteEditor = ({
       </div>
 
       {/* Footer */}
-      <div className="border-border/60 flex shrink-0 items-center justify-end border-t px-4 py-3">
+      <div className="border-border/60 flex shrink-0 items-center justify-between border-t px-4 py-3">
+        {confirmDelete ? (
+          <div className="flex items-center gap-1.5">
+            <Button
+              type="button"
+              variant="destructive"
+              size="xs"
+              onClick={() => void handleDeleteRoute()}
+              disabled={isDeleting || loading}
+            >
+              {isDeleting ? (
+                <RiLoader2Line className="size-3 animate-spin" />
+              ) : (
+                "Confirm Delete"
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              onClick={() => setConfirmDelete(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setConfirmDelete(true)}
+            disabled={loading}
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive text-xs"
+            aria-label="Delete this route"
+          >
+            <RiDeleteBin6Line className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Delete Route</span>
+          </Button>
+        )}
+
         <Button
           type="button"
           size="sm"
@@ -610,6 +737,7 @@ export const NodeInspector = ({
   inspectedFieldId,
   activeRoutesCount,
   onRouteUpdated,
+  onRouteDeleted,
   onOpenAdvanced,
   onCloseInspector,
 }: NodeInspectorProps): React.JSX.Element => {
@@ -653,6 +781,7 @@ export const NodeInspector = ({
         key={route.id}
         route={route}
         onRouteUpdated={onRouteUpdated}
+        onRouteDeleted={onRouteDeleted}
         onSelectField={(fieldId) => setInspectedField(fieldId)}
         onDeselect={onCloseInspector}
         onOpenAdvanced={onOpenAdvanced}

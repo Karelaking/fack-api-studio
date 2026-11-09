@@ -53,6 +53,26 @@ export async function runMigrations(): Promise<void> {
           );
         }
       }
+
+      // Check if endpoints table already has color and icon columns
+      const epCheck = await db.$client.execute("PRAGMA table_info(endpoints)");
+      const epCols = epCheck.rows.map((r) => r.name);
+      if (epCols.includes("color") && epCols.includes("icon")) {
+        const recordCheck = await db.$client.execute({
+          sql: "SELECT id FROM __drizzle_migrations WHERE created_at = ?",
+          args: [1794221098660],
+        });
+
+        if (recordCheck.rows.length === 0) {
+          await db.$client.execute({
+            sql: `INSERT INTO __drizzle_migrations ("hash", "created_at") VALUES (?, ?)`,
+            args: ["0017_late_phil_sheldon", 1794221098660],
+          });
+          dbLogger.info(
+            "Synchronized __drizzle_migrations: registered endpoints color/icon migration as applied.",
+          );
+        }
+      }
     }
 
     // 2. Run pending migrations safely
@@ -81,6 +101,25 @@ export async function runMigrations(): Promise<void> {
         );
       } else {
         dbLogger.error("Failed to apply database migration:", migrationError);
+      }
+    }
+
+    // 3. Post-migration verification: ensure endpoints table has color and icon
+    const postCheck = await db.$client.execute(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='endpoints'",
+    );
+    if (postCheck.rows.length > 0) {
+      const epInfo = await db.$client.execute("PRAGMA table_info(endpoints)");
+      const epCols = epInfo.rows.map((r) => r.name);
+      if (!epCols.includes("color")) {
+        await db.$client.execute(
+          "ALTER TABLE endpoints ADD COLUMN color text DEFAULT ''",
+        );
+      }
+      if (!epCols.includes("icon")) {
+        await db.$client.execute(
+          "ALTER TABLE endpoints ADD COLUMN icon text DEFAULT ''",
+        );
       }
     }
   } catch (error) {

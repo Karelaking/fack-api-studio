@@ -62,6 +62,8 @@ export const endpoints = sqliteTable(
     name: text("name").notNull(),
     description: text("description").default(""),
     basePath: text("base_path").notNull().default(""),
+    color: text("color").default(""),
+    icon: text("icon").default(""),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .$defaultFn(() => new Date()),

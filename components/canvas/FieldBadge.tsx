@@ -96,12 +96,13 @@ export const FieldBadge = ({
         type="button"
         onClick={handleRemove}
         className={cn(
-          "text-muted-foreground/60 hover:text-destructive ml-0.5 shrink-0 rounded transition-all",
-          "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
+          "text-muted-foreground/70 hover:text-destructive hover:bg-destructive/15 focus-visible:ring-ring ml-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm transition-all focus-visible:ring-2 focus-visible:outline-hidden",
+          "opacity-70 group-hover:opacity-100 focus-visible:opacity-100",
         )}
+        title={`Remove field "${field.name}"`}
         aria-label={`Remove field ${field.name}`}
       >
-        <RiCloseLine className="h-2.5 w-2.5" aria-hidden="true" />
+        <RiCloseLine className="size-3" aria-hidden="true" />
       </button>
     </div>
   );

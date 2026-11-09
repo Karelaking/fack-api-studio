@@ -21,15 +21,26 @@ import {
   RiFileCopyLine,
   RiCheckLine,
   RiSendPlaneLine,
+  RiDeleteBinLine,
+  RiLoader2Line,
 } from "@remixicon/react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { DraftMark } from "./preview-nodes";
 import { FieldBadge } from "./FieldBadge";
 import { parseSchemaToFields } from "@/lib/schema-synthesizer";
-import { removeFieldFromRoute } from "@/lib/actions/canvas-dnd";
+import {
+  removeFieldFromRoute,
+  clearFieldsFromRoute,
+} from "@/lib/actions/canvas-dnd";
+import { deleteRoute } from "@/lib/actions/routes";
 import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
 
 export interface RouteNodeData {
@@ -47,6 +58,7 @@ export interface RouteNodeData {
   onToggleEnabled: (id: string, isEnabled: boolean) => void;
   onSelectRoute: (id: string) => void;
   onOpenEdit: (id: string) => void;
+  onDeleteRoute?: (id: string) => void;
   mockUrl: string;
   /** Present when this node is part of an unapplied agent draft. */
   draft?: DraftMark;
@@ -85,6 +97,8 @@ export const RouteNode = ({
 
   const [isCopied, setIsCopied] = React.useState(false);
   const [showAllFields, setShowAllFields] = React.useState(false);
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   const fields = React.useMemo(() => {
     try {
@@ -104,15 +118,50 @@ export const RouteNode = ({
 
   const handleRemoveField = async (fieldId: string): Promise<void> => {
     try {
-      await removeFieldFromRoute(data.id, fieldId);
+      const updatedRoute = await removeFieldFromRoute(data.id, fieldId);
       window.dispatchEvent(
         new CustomEvent("canvas-field-removed", {
-          detail: { routeId: data.id, fieldId },
+          detail: { routeId: data.id, fieldId, updatedRoute },
         }),
       );
       toast.success("Field removed");
     } catch {
       toast.error("Failed to remove field");
+    }
+  };
+
+  const handleClearAllFields = async (e: React.MouseEvent): Promise<void> => {
+    e.stopPropagation();
+    try {
+      const updatedRoute = await clearFieldsFromRoute(data.id);
+      window.dispatchEvent(
+        new CustomEvent("canvas-field-removed", {
+          detail: { routeId: data.id, updatedRoute },
+        }),
+      );
+      toast.success("All schema fields cleared");
+    } catch {
+      toast.error("Failed to clear fields");
+    }
+  };
+
+  const handleDeleteRoute = async (e: React.MouseEvent): Promise<void> => {
+    e.stopPropagation();
+    setIsDeleting(true);
+    try {
+      await deleteRoute(data.id);
+      data.onDeleteRoute?.(data.id);
+      window.dispatchEvent(
+        new CustomEvent("canvas-route-deleted", {
+          detail: { routeId: data.id },
+        }),
+      );
+      toast.success("Route deleted");
+      setDeleteOpen(false);
+    } catch {
+      toast.error("Failed to delete route");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -345,9 +394,9 @@ export const RouteNode = ({
           </span>
         </div>
 
-        {/* Action Toolbar: Edit Button + Enable Switch */}
+        {/* Action Toolbar: Edit Button + Delete Button + Enable Switch */}
         <div
-          className="flex items-center gap-1.5"
+          className="flex items-center gap-1"
           onPointerDown={(e) => e.stopPropagation()}
         >
           <Button
@@ -364,11 +413,76 @@ export const RouteNode = ({
           >
             <RiPencilLine className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
+
+          {/* Quick Delete Popover */}
+          <Popover open={deleteOpen} onOpenChange={setDeleteOpen}>
+            <PopoverTrigger
+              render={
+                <Button
+                  type="button"
+                  size="icon-xs"
+                  variant="ghost"
+                  className="canvas-touch-target hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                  title="Delete Route"
+                  aria-label={`Delete route ${data.method} ${data.path}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                />
+              }
+            >
+              <RiDeleteBinLine className="h-3.5 w-3.5" aria-hidden="true" />
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              side="bottom"
+              className="w-56 p-3 shadow-md"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <div className="space-y-2">
+                <p className="text-foreground text-xs font-semibold">
+                  Delete route?
+                </p>
+                <p className="text-muted-foreground text-mini leading-snug">
+                  This will remove{" "}
+                  <span className="text-foreground font-mono font-medium">
+                    {data.path}
+                  </span>{" "}
+                  from the canvas.
+                </p>
+                <div className="flex items-center justify-end gap-1.5 pt-1">
+                  <Button
+                    type="button"
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => setDeleteOpen(false)}
+                    disabled={isDeleting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    size="xs"
+                    variant="destructive"
+                    onClick={handleDeleteRoute}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <RiLoader2Line className="h-3 w-3 animate-spin" />
+                    ) : (
+                      "Delete"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
           <Switch
             checked={data.isEnabled}
             onCheckedChange={handleToggle}
             aria-label="Toggle Route Enabled"
-            className="canvas-touch-switch"
+            className="canvas-touch-switch ml-0.5"
           />
         </div>
       </div>
@@ -410,14 +524,28 @@ export const RouteNode = ({
           {data.mockUrl}
         </span>
 
-        {/* Schema Header with Field Count */}
+        {/* Schema Header with Field Count & Clear Action */}
         <div className="mt-1 flex items-center justify-between px-0.5">
           <span className="text-muted-foreground text-micro font-bold tracking-wider uppercase">
             Response Schema
           </span>
-          <span className="text-muted-foreground/70 text-mini font-mono">
-            {fields.length} {fields.length === 1 ? "field" : "fields"}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground/70 text-mini font-mono">
+              {fields.length} {fields.length === 1 ? "field" : "fields"}
+            </span>
+            {fields.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAllFields}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="text-muted-foreground hover:text-destructive text-micro font-medium transition-colors"
+                title="Clear all fields from schema"
+                aria-label="Clear all fields from schema"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Field Badges Container */}

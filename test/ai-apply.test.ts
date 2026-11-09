@@ -57,6 +57,8 @@ describe("AI API Architect — Generation & Canvas Layout Coordination", () => {
         name: "Users",
         description: "User endpoints",
         basePath: "/users",
+        color: null,
+        icon: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         routes: [
@@ -104,6 +106,8 @@ describe("AI API Architect — Generation & Canvas Layout Coordination", () => {
         name: "Products",
         description: "Product catalog",
         basePath: "/products",
+        color: null,
+        icon: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         routes: [
