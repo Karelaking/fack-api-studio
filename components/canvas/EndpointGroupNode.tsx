@@ -27,9 +27,9 @@ interface EndpointGroupNodeProps {
 }
 
 /**
- * Premium Custom Bounding Container Node for Endpoints.
- * Uses a grid background style, glass header, and dashed glowing border to group routes cleanly.
- * Supports custom colors and Pikaicons (pikaicons.com) integration with 1-click customization dialog.
+ * Premium Architectural Bounding Container Node for Endpoints.
+ * Features a docked glassmorphic header strip, custom Pikaicons branding badge,
+ * live route counter, and dynamic accent theme integration following Fack Studio's Specimen Sheet design system.
  */
 export const EndpointGroupNode = ({
   data,
@@ -72,87 +72,86 @@ export const EndpointGroupNode = ({
   return (
     <div
       className={cn(
-        "relative h-full w-full rounded-xl border-2 border-dashed p-4 transition-all duration-300",
-        "bg-card/60 dark:bg-muted/5",
-        selected
-          ? "border-primary/70 bg-card/95 dark:bg-muted/10 shadow-primary/10 shadow-lg"
-          : "border-border/80 hover:border-muted-foreground/40",
-        data.draft &&
-          "agent-draft-enter border-primary/50 bg-primary/5 ring-primary/15 ring-2",
+        "group/endpoint-group relative h-full w-full rounded-2xl border transition-all duration-200",
+        "bg-card/40 dark:bg-card/20 backdrop-blur-2xs",
+        data.draft
+          ? "border-primary/50 border-dashed bg-primary/5 ring-2 ring-primary/15 agent-draft-enter"
+          : selected
+            ? "border-primary/80 ring-2 ring-primary/30 shadow-lg shadow-primary/5"
+            : "border-border/80 hover:border-border hover:ring-1 hover:ring-foreground/5",
       )}
       style={{
         ...(data.draft
           ? { animationDelay: `${data.draft.order * 70}ms` }
           : undefined),
-        ...(customColor
+        ...(customColor && !data.draft
           ? {
               borderColor: selected
                 ? customColor
-                : `color-mix(in oklch, ${customColor} 50%, transparent)`,
+                : `color-mix(in oklch, ${customColor} 45%, transparent)`,
               boxShadow: selected
-                ? `0 0 16px color-mix(in oklch, ${customColor} 25%, transparent)`
+                ? `0 10px 25px -5px color-mix(in oklch, ${customColor} 20%, transparent)`
                 : undefined,
             }
           : undefined),
       }}
+      aria-label={`Endpoint group ${data.label}, base path ${data.basePath || "/"}`}
     >
-      {data.draft ? (
-        <span className="border-primary/40 bg-primary/10 text-primary text-mini absolute top-3 right-3 z-10 rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase">
-          Draft
-        </span>
-      ) : null}
-
-      {/* Consistent dot pattern matching React Flow background */}
-      <div className="absolute inset-0 -z-10 opacity-20 dark:opacity-10">
-        <div
-          className="h-full w-full rounded-lg"
-          style={{
-            backgroundImage: `
-            radial-gradient(circle, var(--muted-foreground) 1px, transparent 1px)
-          `,
-            backgroundSize: "20px 20px",
-          }}
-        />
-      </div>
-
       {/* NodeResizer for scaling bounding containers */}
       <NodeResizer
         minWidth={280}
         minHeight={160}
         isVisible={selected}
-        lineClassName={customColor ? undefined : "border-primary"}
+        lineClassName={customColor ? undefined : "border-primary/60"}
+        lineStyle={customColor ? { borderColor: customColor } : undefined}
         handleClassName={cn(
-          "h-3.5 w-3.5 rounded-full border-2 bg-background shadow-xs hover:scale-110 transition-transform",
-          customColor ? "" : "border-primary",
+          "h-3 w-3 rounded-full border-2 bg-background shadow-xs hover:scale-125 transition-transform",
+          customColor ? undefined : "border-primary",
         )}
+        handleStyle={customColor ? { borderColor: customColor } : undefined}
       />
 
-      {/* Group Header: Icon, Name, Base Path, and Customizer Button */}
-      <div className="border-border/60 mb-4 flex shrink-0 items-center justify-between border-b pb-2">
-        <div className="flex min-w-0 items-center gap-2">
-          {/* Custom Hugeicon Badge */}
+      {/* Docked Header Strip: Identity, Base Path, Route Counter, and Customizer Button */}
+      <div
+        className={cn(
+          "flex shrink-0 items-center justify-between gap-2.5 rounded-t-[calc(1rem-1px)] border-b px-3.5 py-2.5 transition-colors",
+          "border-border/60 bg-card/70 dark:bg-card/45 backdrop-blur-xs",
+        )}
+        style={{
+          borderBottomColor: customColor
+            ? `color-mix(in oklch, ${customColor} 25%, transparent)`
+            : undefined,
+          backgroundColor: customColor
+            ? `color-mix(in oklch, ${customColor} 6%, var(--color-card, oklch(1 0 0 / 70%)))`
+            : undefined,
+        }}
+      >
+        {/* Left: Icon Badge + Label + Base Path */}
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          {/* Custom Pikaicon Squircle Badge */}
           <div
-            className="flex size-7 shrink-0 items-center justify-center rounded-lg border transition-all"
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg border shadow-2xs transition-all"
             style={{
               borderColor: customColor
-                ? `color-mix(in oklch, ${customColor} 50%, transparent)`
+                ? `color-mix(in oklch, ${customColor} 40%, transparent)`
                 : "var(--color-border)",
               backgroundColor: customColor
-                ? `color-mix(in oklch, ${customColor} 18%, transparent)`
+                ? `color-mix(in oklch, ${customColor} 15%, transparent)`
                 : "var(--color-primary)/10",
               color: customColor || "var(--color-primary)",
             }}
           >
             <PikaiconRenderer
               name={data.icon || "FolderIcon"}
-              size={15}
+              size={16}
               color={customColor}
             />
           </div>
 
-          <div className="flex min-w-0 flex-col">
+          <div className="flex min-w-0 flex-col justify-center gap-0.5">
+            {/* Title & Accent Color Dot */}
             <div className="flex items-center gap-1.5">
-              <span className="text-foreground text-mini truncate font-extrabold tracking-wider uppercase">
+              <span className="text-foreground truncate text-xs font-bold tracking-tight">
                 {data.label}
               </span>
               {customColor && (
@@ -163,31 +162,56 @@ export const EndpointGroupNode = ({
                 />
               )}
             </div>
+
+            {/* Base Path Pill */}
             <span className="text-muted-foreground text-micro truncate font-mono">
               {data.basePath || "/"}
             </span>
           </div>
         </div>
 
-        {/* Action Button: Customize Group Color & Icon */}
-        {!data.draft && data.id && (
-          <Button
-            type="button"
-            size="icon-xs"
-            variant="ghost"
-            onClick={handleOpenCustomizer}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="hover:bg-muted text-muted-foreground hover:text-foreground shrink-0 rounded-md transition-colors"
-            title="Customize Group Color & Icon"
-            aria-label={`Customize endpoint group ${data.label}`}
-          >
-            <PikaIcon
-              icon={PikaCore.PaintBrushIcon}
-              size={14}
-              aria-hidden="true"
-            />
-          </Button>
-        )}
+        {/* Right: Route Count Badge / Draft Badge + Customizer Action */}
+        <div
+          className="flex shrink-0 items-center gap-1.5"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          {data.draft ? (
+            <span className="border-primary/40 bg-primary/10 text-primary text-micro rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase">
+              Draft
+            </span>
+          ) : (
+            data.routesCount !== undefined && (
+              <span
+                className={cn(
+                  "border-border/60 bg-muted/40 text-muted-foreground text-micro font-mono inline-flex items-center rounded-md border px-1.5 py-0.5 font-medium transition-colors",
+                  data.routesCount === 0 && "text-muted-foreground/60",
+                )}
+                title={`${data.routesCount} routes in group`}
+              >
+                {data.routesCount} {data.routesCount === 1 ? "route" : "routes"}
+              </span>
+            )
+          )}
+
+          {!data.draft && data.id && (
+            <Button
+              type="button"
+              size="icon-xs"
+              variant="ghost"
+              onClick={handleOpenCustomizer}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="hover:bg-muted text-muted-foreground hover:text-foreground shrink-0 rounded-md transition-colors"
+              title="Customize Group Color & Icon"
+              aria-label={`Customize endpoint group ${data.label}`}
+            >
+              <PikaIcon
+                icon={PikaCore.PaintBrushIcon}
+                size={14}
+                aria-hidden="true"
+              />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Customizer Dialog */}
