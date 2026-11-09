@@ -30,6 +30,10 @@ colors:
   method-put: "oklch(0.482 0.18 85)"
   method-patch: "oklch(0.488 0.18 55)"
   method-delete: "oklch(0.442 0.245 27.325)"
+  canvas-dot: "oklch(0.72 0.02 260)"
+  canvas-minimap-node: "oklch(0.5 0.2 260)"
+  canvas-minimap-group: "oklch(0.9 0.01 260)"
+  canvas-mask: "oklch(0.96 0.005 260 / 70%)"
 typography:
   display:
     fontFamily: "var(--font-bricolage), 'Bricolage Grotesque', sans-serif"
@@ -153,8 +157,9 @@ scale, and radius vocabulary.
 
 Motion is functional and brief. Entrances are the one authored moment (hero
 lines rise, dashboard cards settle, agent drafts fade in sequence); everything
-else is a 100–200ms state change. Nothing loops, and every animation has a
-reduced-motion resting state.
+else is a 100–200ms state change. Ambient status pings and pulses are the only
+permitted loops, and they always carry `motion-reduce:animate-none` so the
+reduced-motion state is a static dot. Nothing else loops.
 
 **Key Characteristics:**
 
@@ -202,6 +207,13 @@ even in light and dark themes.
   canvas nodes, method chips, filters, and request logs. The hue is the method's
   identity; it is never reassigned for decoration.
 
+### Canvas Chrome
+
+- **`--canvas-dot`**, **`--canvas-minimap-node`**, **`--canvas-minimap-group`**,
+  **`--canvas-mask`**: React Flow's dot grid, minimap nodes, endpoint-group
+  blocks, and the viewport mask. They live in the theme tokens so the canvas
+  follows light/dark instead of carrying hex values in component code.
+
 ### Named Rules
 
 **The One Signal Rule.** Indigo is reserved for primary action, selection, focus,
@@ -239,6 +251,10 @@ codes, parameters.
   `0.8125rem`; dense devtool rows use `0.75rem`.
 - **Label** (700, `0.6875rem`, 1.3, 0.05em, uppercase): Micro-labels, section
   eyebrows, metadata keys, and method chips.
+- **Mini** (700, `0.625rem`, 1.3, 0.05em, uppercase): Dense metadata inside
+  logs, chips, and inspector rows where `Label` would crowd the line.
+- **Micro** (700, `0.5625rem`, 1.3, 0.05em, uppercase): The floor: timestamps,
+  counters, and badge text that must fit a single dense row.
 - **Code** (500, `0.75rem`, 1.5): Endpoint paths, JSON keys, mock URLs, query
   parameters, and status codes.
 
@@ -248,8 +264,9 @@ codes, parameters.
 appears in the dashboard, canvas, dialogs, or settings — those surfaces stay
 Inter so the product reads as one continuous tool.
 
-**The Micro-Label Rule.** Metadata is uppercase, 10–11px, bold, and tracked wide
-(`0.05em`). If a label needs a sentence, it is body copy, not a label.
+**The Micro-Label Rule.** Metadata is uppercase, 9–11px (`micro`/`mini`/
+`caption`), bold, and tracked wide (`0.05em`). If a label needs a sentence, it is
+body copy, not a label.
 
 ## Layout
 
@@ -338,6 +355,9 @@ pills are only for badges, avatars, and marketing CTAs.
   buttons in destructive dialogs.
 - **Sizes:** `xs 24px`, `sm 28px`, `default/lg 32/36px`, square `icon` variants
   from 24–36px. Focus is a 3px ring at 50% ring color plus a ring-colored border.
+- **Touch:** Under `pointer: coarse`, square `icon` variants grow to a minimum
+  `44px` hit target (`pointer-coarse:min-h-11 pointer-coarse:min-w-11`) while the
+  glyph stays the same size.
 
 ### Chips / Badges
 

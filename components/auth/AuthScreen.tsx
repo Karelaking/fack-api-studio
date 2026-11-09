@@ -55,7 +55,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps): React.JSX.Element => {
         </main>
 
         <footer className="px-5 pb-8 sm:px-8">
-          <p className="text-muted-foreground mx-auto max-w-sm text-center text-[11px] leading-relaxed">
+          <p className="text-muted-foreground text-caption mx-auto max-w-sm text-center leading-relaxed">
             Self-hosted, open source and MIT licensed.
           </p>
         </footer>

@@ -259,10 +259,10 @@ export function ProjectSettings({
                     setCopiedEndpoint,
                   )
                 }
-                className="text-muted-foreground hover:text-foreground h-6 gap-1 px-1.5 text-[11px]"
+                className="text-muted-foreground hover:text-foreground text-caption h-6 gap-1 px-1.5"
               >
                 {copiedEndpoint ? (
-                  <RiCheckLine className="h-3 w-3 text-emerald-500" />
+                  <RiCheckLine className="text-success h-3 w-3" />
                 ) : (
                   <RiFileCopyLine className="h-3 w-3" />
                 )}
@@ -467,7 +467,7 @@ export function ProjectSettings({
                           <span className="text-foreground block text-xs font-semibold">
                             Enable Mock Caching
                           </span>
-                          <span className="text-muted-foreground block text-[11px] leading-relaxed">
+                          <span className="text-muted-foreground text-caption block leading-relaxed">
                             Store responses in LRU cache to guarantee sub-5ms
                             latency.
                           </span>
@@ -491,7 +491,7 @@ export function ProjectSettings({
                           <span className="text-foreground block text-xs font-semibold">
                             Capture Request History
                           </span>
-                          <span className="text-muted-foreground block text-[11px] leading-relaxed">
+                          <span className="text-muted-foreground text-caption block leading-relaxed">
                             {isLogsDbConfigured
                               ? "Store incoming mock payloads in PostgreSQL."
                               : "Disabled: LOGS_POSTGRES_URL environment variable missing."}
@@ -539,7 +539,7 @@ export function ProjectSettings({
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <RiFlashlightLine className="h-5 w-5 text-amber-500" />
+                      <RiFlashlightLine className="text-warning h-5 w-5" />
                       <CardTitle className="text-base font-semibold">
                         Chaos Monkey Simulation
                       </CardTitle>
@@ -638,7 +638,7 @@ export function ProjectSettings({
                         <dt className="text-muted-foreground font-medium">
                           Status
                         </dt>
-                        <dd className="font-semibold text-emerald-500">
+                        <dd className="text-success font-semibold">
                           Armed &amp; Injecting
                         </dd>
                       </div>
@@ -731,7 +731,7 @@ export function ProjectSettings({
                           className="h-9 shrink-0 gap-1 text-xs"
                         >
                           {copiedKey ? (
-                            <RiCheckLine className="h-4 w-4 text-emerald-500" />
+                            <RiCheckLine className="text-success h-4 w-4" />
                           ) : (
                             <RiFileCopyLine className="h-4 w-4" />
                           )}
@@ -777,7 +777,7 @@ export function ProjectSettings({
                         className="h-9 shrink-0 gap-1 text-xs"
                       >
                         {copiedPull ? (
-                          <RiCheckLine className="h-4 w-4 text-emerald-500" />
+                          <RiCheckLine className="text-success h-4 w-4" />
                         ) : (
                           <RiFileCopyLine className="h-4 w-4" />
                         )}
@@ -816,7 +816,7 @@ export function ProjectSettings({
                         className="h-9 shrink-0 gap-1 text-xs"
                       >
                         {copiedDev ? (
-                          <RiCheckLine className="h-4 w-4 text-emerald-500" />
+                          <RiCheckLine className="text-success h-4 w-4" />
                         ) : (
                           <RiFileCopyLine className="h-4 w-4" />
                         )}

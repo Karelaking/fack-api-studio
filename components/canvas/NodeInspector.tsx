@@ -149,7 +149,7 @@ const FieldEditor = ({
             <h2 className="text-foreground text-xs font-semibold">
               Field Property Editor
             </h2>
-            <span className="text-muted-foreground font-mono text-[10px]">
+            <span className="text-muted-foreground text-mini font-mono">
               {route.method} {route.path}
             </span>
           </div>
@@ -162,7 +162,7 @@ const FieldEditor = ({
         <div className="space-y-1.5">
           <label
             htmlFor="field-name"
-            className="text-muted-foreground block text-[10px] font-bold tracking-wider uppercase"
+            className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
           >
             Field Name
           </label>
@@ -179,7 +179,7 @@ const FieldEditor = ({
 
         {/* Data Type */}
         <div className="space-y-1.5">
-          <span className="text-muted-foreground block text-[10px] font-bold tracking-wider uppercase">
+          <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
             Data Type
           </span>
           <fieldset
@@ -194,7 +194,7 @@ const FieldEditor = ({
                 onClick={() => setType(t)}
                 disabled={loading}
                 className={cn(
-                  "h-7 min-w-[2.5rem] rounded-md border px-2.5 font-mono text-[11px] font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                  "h-7 min-w-10 rounded-md border px-2.5 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                   type === t
                     ? "border-primary bg-primary text-primary-foreground shadow-xs"
                     : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -208,7 +208,7 @@ const FieldEditor = ({
 
         {/* Faker Provider */}
         <div className="space-y-1.5">
-          <span className="text-muted-foreground block text-[10px] font-bold tracking-wider uppercase">
+          <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
             Mock Data Provider
           </span>
           <FakerProviderSelect
@@ -217,7 +217,7 @@ const FieldEditor = ({
             disabled={loading || type === "object" || type === "array"}
           />
           {selectedProvider && (
-            <p className="text-muted-foreground font-mono text-[10px] leading-snug">
+            <p className="text-muted-foreground text-mini font-mono leading-snug">
               Example:{" "}
               <span className="text-foreground">
                 {selectedProvider.example}
@@ -386,7 +386,7 @@ const RouteEditor = ({
       <div className="scrollbar-subtle min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
         {/* Method */}
         <div className="space-y-1.5">
-          <span className="text-muted-foreground block text-[10px] font-bold tracking-wider uppercase">
+          <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
             HTTP Method
           </span>
           <div className="flex flex-wrap gap-1">
@@ -399,7 +399,7 @@ const RouteEditor = ({
                   onClick={() => setMethod(m)}
                   aria-pressed={isSelected}
                   className={cn(
-                    "rounded-md px-2.5 py-1.5 font-mono text-[11px] font-bold tracking-wider uppercase transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                    "rounded-md px-2.5 py-1.5 font-mono text-caption font-bold tracking-wider uppercase transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                     isSelected
                       ? "bg-foreground text-background shadow-xs"
                       : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -416,7 +416,7 @@ const RouteEditor = ({
         <div className="space-y-1.5">
           <label
             htmlFor="route-path"
-            className="text-muted-foreground block text-[10px] font-bold tracking-wider uppercase"
+            className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
           >
             Path
           </label>
@@ -436,7 +436,7 @@ const RouteEditor = ({
           <div className="space-y-1.5">
             <label
               htmlFor="route-status"
-              className="text-muted-foreground block text-[10px] font-bold tracking-wider uppercase"
+              className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
             >
               Status Code
             </label>
@@ -453,7 +453,7 @@ const RouteEditor = ({
           <div className="space-y-1.5">
             <label
               htmlFor="route-latency"
-              className="text-muted-foreground block text-[10px] font-bold tracking-wider uppercase"
+              className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
             >
               Delay (ms)
             </label>
@@ -472,14 +472,14 @@ const RouteEditor = ({
         {/* Attached Fields */}
         <div className="border-border/50 space-y-2 border-t pt-3">
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-[10px] font-bold tracking-wider uppercase">
+            <span className="text-muted-foreground text-mini font-bold tracking-wider uppercase">
               Route Fields ({fields.length})
             </span>
           </div>
 
           {fields.length === 0 ? (
             <div className="bg-muted/30 border-border/60 rounded-md border p-3 text-center">
-              <p className="text-muted-foreground text-[11px] leading-snug">
+              <p className="text-muted-foreground text-caption leading-snug">
                 No mock fields on this route yet. Drag a provider from the left
                 sidebar onto this route.
               </p>
@@ -497,11 +497,11 @@ const RouteEditor = ({
                     <span className="text-foreground truncate font-mono text-xs font-semibold">
                       {f.name}
                     </span>
-                    <span className="text-muted-foreground truncate font-mono text-[10px]">
+                    <span className="text-muted-foreground text-mini truncate font-mono">
                       {f.fakerProvider || f.type}
                     </span>
                   </div>
-                  <span className="text-primary text-[10px] font-semibold">
+                  <span className="text-primary text-mini font-semibold">
                     Edit →
                   </span>
                 </button>
@@ -573,20 +573,20 @@ const IdleInspector = ({
         <h3 className="text-foreground text-xs font-semibold">
           No Node Selected
         </h3>
-        <p className="text-muted-foreground mt-1.5 max-w-56 text-[11px] leading-relaxed">
+        <p className="text-muted-foreground text-caption mt-1.5 max-w-56 leading-relaxed">
           Click a route&apos;s pencil button to inspect and edit its properties,
           or click a field badge to edit that field&apos;s type and mock
           provider.
         </p>
 
         <div className="bg-muted/30 border-border/50 mt-6 w-full rounded-lg border p-3 text-left">
-          <div className="flex items-center justify-between text-[11px]">
+          <div className="text-caption flex items-center justify-between">
             <span className="text-muted-foreground">Active Canvas Routes</span>
             <span className="text-foreground font-mono font-semibold">
               {activeRoutesCount}
             </span>
           </div>
-          <div className="text-muted-foreground mt-2 flex items-center gap-1.5 text-[10px]">
+          <div className="text-muted-foreground text-mini mt-2 flex items-center gap-1.5">
             <RiSparklingLine className="text-primary size-3 shrink-0" />
             <span>Drag providers from the left sidebar onto any route.</span>
           </div>

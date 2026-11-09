@@ -107,7 +107,7 @@ export const FieldEditor = ({
             {isArray && field.arrayItemType && ` (${field.arrayItemType})`}
           </span>
           {field.nullable && (
-            <span className="text-muted-foreground/70 text-[10px] font-bold tracking-wider uppercase">
+            <span className="text-muted-foreground/70 text-mini font-bold tracking-wider uppercase">
               NULL
             </span>
           )}

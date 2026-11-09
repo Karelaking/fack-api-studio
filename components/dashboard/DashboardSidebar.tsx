@@ -72,7 +72,7 @@ const SelectedRouteDetails = ({
         <p className="text-foreground text-xs font-semibold">
           No Route Selected
         </p>
-        <p className="text-muted-foreground mt-1 max-w-44 text-[11px] leading-snug">
+        <p className="text-muted-foreground text-caption mt-1 max-w-44 leading-snug">
           Click any route node on the canvas to inspect its mock URL and query
           parameters.
         </p>
@@ -480,7 +480,7 @@ export const DashboardSidebar = ({
                           <RiRouteLine className="size-4" />
                           {selectedRoute && (
                             <span
-                              className="border-sidebar absolute top-1 right-1 size-2 rounded-full border-2 bg-emerald-500"
+                              className="border-sidebar bg-success absolute top-1 right-1 size-2 rounded-full border-2"
                               aria-hidden="true"
                             />
                           )}
@@ -606,7 +606,7 @@ export const DashboardSidebar = ({
                       : "Route Inspector"}
                   </span>
                   {activeProject && (
-                    <span className="bg-muted text-muted-foreground max-w-28 truncate rounded px-1.5 py-0.5 font-mono text-[10px]">
+                    <span className="bg-muted text-muted-foreground text-mini max-w-28 truncate rounded px-1.5 py-0.5 font-mono">
                       {activeProject.name}
                     </span>
                   )}
@@ -643,7 +643,7 @@ export const DashboardSidebar = ({
               </div>
 
               {/* Drawer Footer with Version */}
-              <div className="border-border/50 text-muted-foreground flex h-9 shrink-0 items-center justify-between border-t px-3 font-mono text-[11px]">
+              <div className="border-border/50 text-muted-foreground text-caption flex h-9 shrink-0 items-center justify-between border-t px-3 font-mono">
                 <span>Fack API Studio</span>
                 <span>v{appVersion}</span>
               </div>
@@ -670,12 +670,12 @@ export const DashboardSidebar = ({
                 <RiDatabase2Line className="text-primary size-4" />
                 <span>Providers Dock</span>
                 {selectedRoute ? (
-                  <span className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-600 dark:text-emerald-400">
-                    <span className="size-1.5 rounded-full bg-emerald-500" />
+                  <span className="border-success/30 bg-success/10 text-success text-mini flex items-center gap-1 rounded-full border px-1.5 py-0.5 font-mono">
+                    <span className="bg-success size-1.5 rounded-full" />
                     {selectedRoute.method} {selectedRoute.path}
                   </span>
                 ) : (
-                  <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 font-mono text-[10px]">
+                  <span className="bg-muted text-muted-foreground text-mini rounded-full px-1.5 py-0.5 font-mono">
                     250
                   </span>
                 )}
@@ -727,7 +727,7 @@ export const DashboardSidebar = ({
                     <span>Route</span>
                     {selectedRoute && (
                       <span
-                        className="size-1.5 animate-pulse rounded-full bg-emerald-500"
+                        className="bg-success size-1.5 animate-pulse rounded-full motion-reduce:animate-none"
                         aria-hidden="true"
                       />
                     )}
@@ -767,9 +767,9 @@ export const DashboardSidebar = ({
               </div>
 
               {/* Floating Dock Footer */}
-              <div className="border-border/50 text-muted-foreground bg-muted/20 flex h-8 shrink-0 items-center justify-between border-t px-3 font-mono text-[10px]">
+              <div className="border-border/50 text-muted-foreground bg-muted/20 text-mini flex h-8 shrink-0 items-center justify-between border-t px-3 font-mono">
                 <div className="flex items-center gap-1.5">
-                  <span className="size-1.5 rounded-full bg-emerald-500" />
+                  <span className="bg-success size-1.5 rounded-full" />
                   <span>Floating Canvas Dock</span>
                 </div>
                 <span>

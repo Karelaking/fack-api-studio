@@ -171,7 +171,7 @@ export function SidebarProvidersSection({
             Mock Providers
           </h2>
         </div>
-        <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums">
+        <span className="bg-muted text-muted-foreground text-mini rounded-full px-2 py-0.5 font-mono font-semibold tabular-nums">
           {totalVisible}
         </span>
       </SidebarGroupLabel>
@@ -181,7 +181,7 @@ export function SidebarProvidersSection({
         {selectedRoute ? (
           <div className="border-primary/25 bg-primary/8 flex flex-col gap-1.5 rounded-lg border p-2.5">
             <div className="flex items-center justify-between gap-1.5">
-              <span className="text-muted-foreground text-[10px] font-bold tracking-wider uppercase">
+              <span className="text-muted-foreground text-mini font-bold tracking-wider uppercase">
                 Target Route
               </span>
               <button
@@ -192,7 +192,7 @@ export function SidebarProvidersSection({
                     new CustomEvent("route-selected", { detail: null }),
                   );
                 }}
-                className="text-muted-foreground hover:text-foreground hover:bg-primary/10 focus-visible:ring-ring min-h-7 min-w-10 rounded-md px-2 py-1 text-[10px] font-medium transition-all focus-visible:ring-2 focus-visible:ring-offset-1 active:scale-95"
+                className="text-muted-foreground hover:text-foreground hover:bg-primary/10 focus-visible:ring-ring text-mini min-h-7 min-w-10 rounded-md px-2 py-1 font-medium transition-all focus-visible:ring-2 focus-visible:ring-offset-1 active:scale-95"
                 aria-label="Deselect target route"
               >
                 Clear
@@ -200,7 +200,7 @@ export function SidebarProvidersSection({
             </div>
             <div className="flex items-center gap-1.5">
               <span
-                className="shrink-0 rounded px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wider uppercase"
+                className="text-micro shrink-0 rounded px-1.5 py-0.5 font-mono font-bold tracking-wider uppercase"
                 style={{
                   color: `var(--method-${selectedRoute.method.toLowerCase()})`,
                   backgroundColor: `color-mix(in oklch, var(--method-${selectedRoute.method.toLowerCase()}) 12%, transparent)`,
@@ -212,13 +212,13 @@ export function SidebarProvidersSection({
                 {selectedRoute.path}
               </span>
             </div>
-            <p className="text-muted-foreground text-[10px] leading-tight">
+            <p className="text-muted-foreground text-mini leading-tight">
               Click any provider card to add, or drag onto the route on canvas.
             </p>
           </div>
         ) : (
           <div className="bg-muted/40 border-border/50 rounded-lg border px-2.5 py-2">
-            <p className="text-muted-foreground text-[11px] leading-snug">
+            <p className="text-muted-foreground text-caption leading-snug">
               Drag any provider node onto a route card, or click a route to
               target it.
             </p>
@@ -249,7 +249,7 @@ export function SidebarProvidersSection({
                     "your filter"
                   )}
                 </p>
-                <p className="text-muted-foreground/75 mt-1 text-[11px]">
+                <p className="text-muted-foreground/75 text-caption mt-1">
                   Try searching with a different keyword or reset filters.
                 </p>
                 <button
@@ -258,7 +258,7 @@ export function SidebarProvidersSection({
                     handleQueryChange("");
                     setActiveCategory("");
                   }}
-                  className="bg-muted hover:bg-muted/80 text-foreground focus-visible:ring-ring mt-3 inline-flex min-h-7 items-center rounded-md px-3 py-1 text-[11px] font-semibold transition-all focus-visible:ring-2 focus-visible:ring-offset-1 active:scale-95"
+                  className="bg-muted hover:bg-muted/80 text-foreground focus-visible:ring-ring text-caption mt-3 inline-flex min-h-7 items-center rounded-md px-3 py-1 font-semibold transition-all focus-visible:ring-2 focus-visible:ring-offset-1 active:scale-95"
                 >
                   Clear all filters
                 </button>
@@ -267,11 +267,11 @@ export function SidebarProvidersSection({
               visibleCategories.map((category) => (
                 <section key={category.name} aria-label={category.name}>
                   <div className="mb-1.5 flex items-center justify-between px-0.5">
-                    <h3 className="text-muted-foreground text-[10px] font-bold tracking-wider uppercase">
+                    <h3 className="text-muted-foreground text-mini font-bold tracking-wider uppercase">
                       {category.name}
                     </h3>
                     <span
-                      className="text-muted-foreground font-mono text-[10px]"
+                      className="text-muted-foreground text-mini font-mono"
                       aria-hidden="true"
                     >
                       {category.providers.length}

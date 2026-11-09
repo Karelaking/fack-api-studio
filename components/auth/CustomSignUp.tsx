@@ -359,7 +359,7 @@ export const CustomSignUp = (): React.JSX.Element => {
                     )}
                   </button>
                 </div>
-                <p className="text-muted-foreground text-[11px] leading-tight">
+                <p className="text-muted-foreground text-caption leading-tight">
                   Must be at least 8 characters long.
                 </p>
               </div>
@@ -383,7 +383,7 @@ export const CustomSignUp = (): React.JSX.Element => {
               </Button>
             </form>
 
-            <p className="text-muted-foreground/80 text-center text-[11px] leading-relaxed">
+            <p className="text-muted-foreground/80 text-caption text-center leading-relaxed">
               By continuing, you agree to our Terms of Service and Privacy
               Policy.
             </p>
@@ -432,7 +432,7 @@ export const CustomSignUp = (): React.JSX.Element => {
             )}
 
             {resendSuccess && (
-              <output className="animate-in fade-in flex items-start gap-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-600 dark:text-emerald-400">
+              <output className="animate-in fade-in border-success/30 bg-success/10 text-success flex items-start gap-2.5 rounded-lg border p-3 text-xs">
                 <CheckCircle2
                   className="mt-0.5 size-4 shrink-0"
                   aria-hidden="true"

@@ -566,7 +566,7 @@ export function ProjectGrid({
                             <div className="flex items-center justify-between text-xs">
                               {/* M3 Tonal Assist Chip */}
                               <span
-                                className="inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[11px] font-semibold tracking-wider transition-transform group-hover:scale-[1.02]"
+                                className="text-caption inline-flex items-center rounded-md px-2 py-0.5 font-mono font-semibold tracking-wider transition-transform group-hover:scale-[1.02]"
                                 style={{
                                   backgroundColor: config.bgTint,
                                   color: config.color,
@@ -581,7 +581,7 @@ export function ProjectGrid({
                                 <span className="text-foreground text-xs font-semibold">
                                   {count}
                                 </span>
-                                <span className="text-muted-foreground/70 text-[11px]">
+                                <span className="text-muted-foreground/70 text-caption">
                                   {percent}%
                                 </span>
                               </div>

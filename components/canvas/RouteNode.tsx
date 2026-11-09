@@ -237,7 +237,7 @@ export const RouteNode = ({
         <span
           aria-hidden="true"
           className={cn(
-            "absolute top-2 right-2 z-10 rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase",
+            "absolute top-2 right-2 z-10 rounded-full border px-2 py-0.5 text-mini font-bold tracking-wider uppercase",
             data.draft.changeType === "delete"
               ? "border-destructive/40 bg-destructive/10 text-destructive"
               : data.draft.changeType === "update"
@@ -255,7 +255,7 @@ export const RouteNode = ({
       {data.draft?.hasConflict ? (
         <span
           aria-hidden="true"
-          className="border-warning/40 bg-warning/10 text-warning absolute top-2 right-18 z-10 rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase"
+          className="border-warning/40 bg-warning/10 text-warning text-mini absolute top-2 right-18 z-10 rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase"
         >
           Conflict
         </span>
@@ -365,7 +365,7 @@ export const RouteNode = ({
                   e.stopPropagation();
                   setShowAllFields(true);
                 }}
-                className="text-muted-foreground hover:text-primary border-border/60 hover:border-primary/40 rounded-md border border-dashed px-1.5 py-0.5 text-[10px] font-medium transition-colors"
+                className="text-muted-foreground hover:text-primary border-border/60 hover:border-primary/40 text-mini rounded-md border border-dashed px-1.5 py-0.5 font-medium transition-colors"
                 aria-label={`Show ${hiddenCount} more fields`}
               >
                 +{hiddenCount} more
@@ -385,7 +385,7 @@ export const RouteNode = ({
               className="text-primary h-3 w-3 shrink-0"
               aria-hidden="true"
             />
-            <span className="text-primary text-[10px] font-medium">
+            <span className="text-primary text-mini font-medium">
               Drop to add field
             </span>
           </div>
@@ -393,7 +393,7 @@ export const RouteNode = ({
 
         {/* Empty state: invite the user to drop a provider */}
         {fields.length === 0 && !isOver && !data.draft && (
-          <p className="text-muted-foreground/60 mt-1.5 text-[10px] leading-snug">
+          <p className="text-muted-foreground/60 text-mini mt-1.5 leading-snug">
             Drag a provider from the left panel to add fields.
           </p>
         )}

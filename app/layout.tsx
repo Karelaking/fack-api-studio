@@ -138,6 +138,12 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="bg-background text-foreground flex min-h-full flex-col">
+        <a
+          href="#main-content"
+          className="bg-background text-foreground focus:ring-ring/50 sr-only rounded-md px-4 py-2 font-medium shadow-lg focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:ring-3 focus:outline-none"
+        >
+          Skip to main content
+        </a>
         <NuqsAdapter>
           <ThemeProvider
             attribute="class"

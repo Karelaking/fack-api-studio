@@ -192,7 +192,7 @@ export function AgentComposer(): React.JSX.Element {
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center p-3">
-      <div className="bg-card/95 border-border/60 pointer-events-auto flex max-h-[70%] w-full max-w-3xl flex-col gap-3 overflow-y-auto rounded-2xl border p-3 shadow-2xl backdrop-blur">
+      <div className="bg-card/95 border-border/60 scrollbar-subtle pointer-events-auto flex max-h-[70%] w-full max-w-3xl flex-col gap-3 overflow-y-auto rounded-2xl border p-3 shadow-2xl backdrop-blur">
         <header className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <RiSparkling2Fill className="text-primary size-4 shrink-0" />
@@ -249,7 +249,7 @@ export function AgentComposer(): React.JSX.Element {
                     {step.label}
                   </span>
                   {step.detail ? (
-                    <span className="text-muted-foreground/70 truncate text-[11px]">
+                    <span className="text-muted-foreground/70 text-caption truncate">
                       {step.detail}
                     </span>
                   ) : null}
@@ -306,7 +306,7 @@ export function AgentComposer(): React.JSX.Element {
                 {changeSet.summary.fieldsCount} fields
               </span>
               {result?.modelUsed ? (
-                <span className="border-primary/20 bg-primary/5 text-muted-foreground rounded-full border px-2.5 py-1 text-[11px] font-medium">
+                <span className="border-primary/20 bg-primary/5 text-muted-foreground text-caption rounded-full border px-2.5 py-1 font-medium">
                   {result.provider === "openrouter"
                     ? "OpenRouter"
                     : (result.provider ?? "Engine")}{" "}

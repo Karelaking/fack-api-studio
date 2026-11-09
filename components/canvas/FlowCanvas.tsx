@@ -647,7 +647,7 @@ function FlowCanvasInner({
           gap={20}
           size={1.5}
           className="opacity-70 dark:opacity-40"
-          color={resolvedTheme === "dark" ? "#52525b" : "#94a3b8"}
+          color="var(--canvas-dot)"
         />
         <Controls className="bg-card! border-border! shadow-xs!" />
         <MiniMap
@@ -655,15 +655,11 @@ function FlowCanvasInner({
           pannable
           nodeColor={(node) => {
             if (node.type === "endpointGroup") {
-              return resolvedTheme === "dark" ? "#27272a" : "#e2e8f0";
+              return "var(--canvas-minimap-group)";
             }
-            return resolvedTheme === "dark" ? "#6366f1" : "#4f46e5";
+            return "var(--canvas-minimap-node)";
           }}
-          maskColor={
-            resolvedTheme === "dark"
-              ? "rgba(0, 0, 0, 0.6)"
-              : "rgba(241, 245, 249, 0.7)"
-          }
+          maskColor="var(--canvas-mask)"
           className="bg-card! border-border! h-18.75! w-25! shadow-xs! sm:h-27.5! sm:w-37.5! md:h-37.5! md:w-50!"
         />
       </ReactFlow>

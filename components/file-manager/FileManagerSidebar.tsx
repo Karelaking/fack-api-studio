@@ -228,7 +228,7 @@ export function FileManagerSidebar({
             </Link>
             <Badge
               variant="secondary"
-              className="px-1.5 py-0 text-[10px] font-medium group-data-[collapsible=icon]:hidden"
+              className="text-mini px-1.5 py-0 font-medium group-data-[collapsible=icon]:hidden"
             >
               <RiHardDrive2Line className="mr-1 h-3 w-3" />
               Local
@@ -322,15 +322,15 @@ export function FileManagerSidebar({
                             }
                             className={`size-2 shrink-0 rounded-full ${
                               project.isDirty
-                                ? "animate-pulse bg-amber-500"
-                                : "bg-emerald-500"
+                                ? "bg-warning animate-pulse motion-reduce:animate-none"
+                                : "bg-success"
                             }`}
                           />
                           <div className="flex min-w-0 flex-col">
                             <span className="truncate text-xs font-semibold">
                               {project.name}
                             </span>
-                            <span className="text-muted-foreground truncate text-[10px]">
+                            <span className="text-muted-foreground text-mini truncate">
                               {project.routeCount} routes ·{" "}
                               {project.endpointCount} endpoints
                             </span>
@@ -400,7 +400,7 @@ export function FileManagerSidebar({
                           <span className="truncate font-medium">
                             {recent.fileName}
                           </span>
-                          <span className="text-muted-foreground truncate text-[10px]">
+                          <span className="text-muted-foreground text-mini truncate">
                             {recent.projectName}
                           </span>
                         </div>
@@ -462,7 +462,7 @@ export function FileManagerSidebar({
       <SidebarFooter>
         <div className="border-border/50 flex w-full items-center justify-between border-t p-3">
           <div className="text-muted-foreground flex items-center gap-1.5 font-mono text-xs">
-            <RiHardDrive2Line className="size-3.5 text-emerald-500" />
+            <RiHardDrive2Line className="text-success size-3.5" />
             <span>Local Mode</span>
           </div>
           <ThemeToggle />

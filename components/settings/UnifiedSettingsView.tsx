@@ -585,7 +585,7 @@ export const UnifiedSettingsView = ({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <RiShieldCheckLine className="h-5 w-5 text-emerald-500" />
+              <RiShieldCheckLine className="text-success h-5 w-5" />
               <CardTitle className="text-base font-semibold">
                 Architecture &amp; Node Status
               </CardTitle>
@@ -612,7 +612,7 @@ export const UnifiedSettingsView = ({
               <dt className="text-muted-foreground font-medium">
                 SQLite Engine
               </dt>
-              <dd className="font-semibold text-emerald-600 dark:text-emerald-400">
+              <dd className="text-success font-semibold">
                 WAL Mode · 64MB Cache
               </dd>
             </div>
@@ -717,7 +717,7 @@ export const UnifiedSettingsView = ({
               <dt className="text-muted-foreground font-medium">
                 Database Target
               </dt>
-              <dd className="flex items-center gap-1.5 font-mono text-[11px]">
+              <dd className="text-caption flex items-center gap-1.5 font-mono">
                 <span className="max-w-[220px] truncate" title={status.target}>
                   {status.target}
                 </span>
@@ -730,7 +730,7 @@ export const UnifiedSettingsView = ({
                   title="Copy path"
                 >
                   {copiedDbPath ? (
-                    <RiCheckLine className="h-3.5 w-3.5 text-emerald-500" />
+                    <RiCheckLine className="text-success h-3.5 w-3.5" />
                   ) : (
                     <RiFileCopyLine className="h-3.5 w-3.5" />
                   )}
@@ -742,7 +742,7 @@ export const UnifiedSettingsView = ({
                 Data Directory
               </dt>
               <dd
-                className="max-w-[240px] truncate font-mono text-[11px]"
+                className="text-caption max-w-[240px] truncate font-mono"
                 title={status.dataDir}
               >
                 {status.dataDir}
@@ -824,14 +824,14 @@ export const UnifiedSettingsView = ({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <RiFlashlightLine className="h-5 w-5 text-amber-500" />
+              <RiFlashlightLine className="text-warning h-5 w-5" />
               <CardTitle className="text-base font-semibold">
                 LRU Memory Caching Tier
               </CardTitle>
             </div>
             <Badge
               variant="outline"
-              className="border-emerald-500/30 text-xs text-emerald-500"
+              className="border-success/30 text-success text-xs"
             >
               Sub-5ms Latency
             </Badge>
@@ -862,12 +862,12 @@ export const UnifiedSettingsView = ({
               <dt className="text-muted-foreground font-medium">
                 Penetration Defense
               </dt>
-              <dd className="font-semibold text-emerald-600 dark:text-emerald-400">
+              <dd className="text-success font-semibold">
                 Zero-Overhead Active
               </dd>
             </div>
           </dl>
-          <p className="text-muted-foreground pt-1 text-[11px] leading-relaxed">
+          <p className="text-muted-foreground text-caption pt-1 leading-relaxed">
             Prevents database cache penetration on high-frequency 404 scans and
             rapid iteration loops.
           </p>
@@ -962,7 +962,7 @@ export const UnifiedSettingsView = ({
                     className="text-primary flex items-center gap-1 text-xs font-medium hover:underline"
                   >
                     {copiedMockBase ? (
-                      <RiCheckLine className="h-3.5 w-3.5 text-emerald-500" />
+                      <RiCheckLine className="text-success h-3.5 w-3.5" />
                     ) : (
                       <RiFileCopyLine className="h-3.5 w-3.5" />
                     )}
@@ -1012,7 +1012,7 @@ export const UnifiedSettingsView = ({
                   <span className="block text-xs font-semibold">
                     Mock Response Caching
                   </span>
-                  <span className="text-muted-foreground block text-[11px]">
+                  <span className="text-muted-foreground text-caption block">
                     Cache responses in bounded LRU memory for instant latency.
                   </span>
                 </div>
@@ -1028,7 +1028,7 @@ export const UnifiedSettingsView = ({
                   <span className="block text-xs font-semibold">
                     Capture Request History
                   </span>
-                  <span className="text-muted-foreground block text-[11px]">
+                  <span className="text-muted-foreground text-caption block">
                     {isLogsDbConfigured
                       ? "Persist payloads and status codes in PostgreSQL."
                       : "Disabled: LOGS_POSTGRES_URL environment variable missing."}
@@ -1047,7 +1047,7 @@ export const UnifiedSettingsView = ({
                   <span className="text-xs font-semibold">
                     Active Chaos Profile
                   </span>
-                  <Badge variant="outline" className="text-[10px]">
+                  <Badge variant="outline" className="text-mini">
                     {activeScenarioObj ? activeScenarioObj.name : "Disabled"}
                   </Badge>
                 </div>
@@ -1103,7 +1103,7 @@ export const UnifiedSettingsView = ({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <RiFlashlightLine className="h-5 w-5 text-amber-500" />
+              <RiFlashlightLine className="text-warning h-5 w-5" />
               <CardTitle className="text-base font-semibold">
                 Chaos Monkey Simulation
               </CardTitle>
@@ -1193,7 +1193,7 @@ export const UnifiedSettingsView = ({
               </div>
               <div className="flex items-center justify-between py-2.5">
                 <dt className="text-muted-foreground font-medium">Status</dt>
-                <dd className="font-semibold text-emerald-600 dark:text-emerald-400">
+                <dd className="text-success font-semibold">
                   Armed &amp; Injecting
                 </dd>
               </div>
@@ -1289,7 +1289,7 @@ export const UnifiedSettingsView = ({
                   className="h-9 shrink-0 gap-1 text-xs"
                 >
                   {copiedKey ? (
-                    <RiCheckLine className="h-4 w-4 text-emerald-500" />
+                    <RiCheckLine className="text-success h-4 w-4" />
                   ) : (
                     <RiFileCopyLine className="h-4 w-4" />
                   )}
@@ -1334,7 +1334,7 @@ export const UnifiedSettingsView = ({
                 className="h-9 shrink-0 gap-1 text-xs"
               >
                 {copiedDev ? (
-                  <RiCheckLine className="h-4 w-4 text-emerald-500" />
+                  <RiCheckLine className="text-success h-4 w-4" />
                 ) : (
                   <RiFileCopyLine className="h-4 w-4" />
                 )}
@@ -1372,7 +1372,7 @@ export const UnifiedSettingsView = ({
                 className="h-9 shrink-0 gap-1 text-xs"
               >
                 {copiedCurl ? (
-                  <RiCheckLine className="h-4 w-4 text-emerald-500" />
+                  <RiCheckLine className="text-success h-4 w-4" />
                 ) : (
                   <RiFileCopyLine className="h-4 w-4" />
                 )}
@@ -1564,7 +1564,7 @@ export const UnifiedSettingsView = ({
             {/* Active Project Switcher Capsule */}
             {projects.length > 0 && (
               <div className="space-y-1.5 border-b pb-4">
-                <span className="text-muted-foreground block text-[11px] font-medium tracking-wide">
+                <span className="text-muted-foreground text-caption block font-medium tracking-wide">
                   Active Project
                 </span>
                 <Select
@@ -1609,7 +1609,7 @@ export const UnifiedSettingsView = ({
                 {/* Category Group 1: Workspace Scope */}
                 {filteredCategories.some((c) => c.scope === "workspace") && (
                   <div className="space-y-1">
-                    <span className="text-muted-foreground block px-2 text-[11px] font-medium tracking-wide">
+                    <span className="text-muted-foreground text-caption block px-2 font-medium tracking-wide">
                       Workspace Scope
                     </span>
                     {filteredCategories
@@ -1657,7 +1657,7 @@ export const UnifiedSettingsView = ({
                 {/* Category Group 2: Project Scope */}
                 {filteredCategories.some((c) => c.scope === "project") && (
                   <div className="space-y-1">
-                    <span className="text-muted-foreground block px-2 text-[11px] font-medium tracking-wide">
+                    <span className="text-muted-foreground text-caption block px-2 font-medium tracking-wide">
                       Project: {activeProject?.name ?? "None"}
                     </span>
                     {filteredCategories
@@ -1714,7 +1714,7 @@ export const UnifiedSettingsView = ({
             )}
 
             {/* Rail Footer Status Badge */}
-            <div className="text-muted-foreground flex items-center justify-between border-t pt-4 text-[11px]">
+            <div className="text-muted-foreground text-caption flex items-center justify-between border-t pt-4">
               <span>{badgeLabel}</span>
               <span className="font-mono">
                 {formatBytes(status.dbSizeBytes)}
@@ -1825,8 +1825,8 @@ export const UnifiedSettingsView = ({
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="bg-success absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 motion-reduce:animate-none" />
+                  <span className="bg-success relative inline-flex h-2 w-2 rounded-full" />
                 </span>
                 <span className="text-sm font-semibold">
                   Cluster System Healthy

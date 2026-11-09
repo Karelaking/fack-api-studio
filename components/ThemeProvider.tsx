@@ -2,13 +2,22 @@
 
 import * as React from "react";
 
-type Theme = "light" | "dark" | "system";
-type ResolvedTheme = "light" | "dark";
+export type Theme = "light" | "dark" | "system";
+export type ResolvedTheme = "light" | "dark";
 
-interface ThemeContextValue {
+export type ThemeTransitionOrigin =
+  | React.MouseEvent
+  | MouseEvent
+  | { clientX: number; clientY: number }
+  | HTMLElement
+  | null
+  | undefined;
+
+export interface ThemeContextValue {
   theme: Theme;
   resolvedTheme: ResolvedTheme;
-  setTheme: (theme: Theme) => void;
+  setTheme: (theme: Theme, origin?: ThemeTransitionOrigin) => void;
+  toggleTheme: (origin?: ThemeTransitionOrigin) => void;
 }
 
 interface ThemeProviderProps {
@@ -34,6 +43,54 @@ function applyThemeClass(theme: ResolvedTheme): void {
   const root = document.documentElement;
   root.classList.toggle("dark", theme === "dark");
   root.style.colorScheme = theme;
+}
+
+/**
+ * Resolves the origin coordinates for the light-bulb circular view transition.
+ * Prioritizes direct pointer coordinates, falls back to the on-screen toggle button,
+ * and defaults to the viewport center.
+ */
+function getOriginCoordinates(origin?: ThemeTransitionOrigin): {
+  x: number;
+  y: number;
+} {
+  if (origin) {
+    if ("clientX" in origin && typeof origin.clientX === "number") {
+      return { x: origin.clientX, y: origin.clientY };
+    }
+    if (
+      "getBoundingClientRect" in origin &&
+      typeof origin.getBoundingClientRect === "function"
+    ) {
+      const rect = origin.getBoundingClientRect();
+      return {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      };
+    }
+  }
+
+  // Fallback: search for [data-theme-toggle] in the active DOM
+  if (typeof document !== "undefined") {
+    const toggleEl = document.querySelector<HTMLElement>("[data-theme-toggle]");
+    if (toggleEl) {
+      const rect = toggleEl.getBoundingClientRect();
+      return {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      };
+    }
+  }
+
+  // Final fallback: center of viewport
+  if (typeof window !== "undefined") {
+    return {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+    };
+  }
+
+  return { x: 0, y: 0 };
 }
 
 /**
@@ -66,7 +123,7 @@ function isTheme(value: string | undefined | null): value is Theme {
 }
 
 const ThemeHotkeyListener = (): React.JSX.Element | null => {
-  const { resolvedTheme, setTheme } = useTheme();
+  const { toggleTheme } = useTheme();
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
@@ -88,13 +145,13 @@ const ThemeHotkeyListener = (): React.JSX.Element | null => {
         e.shiftKey
       ) {
         e.preventDefault();
-        setTheme(resolvedTheme === "dark" ? "light" : "dark");
+        toggleTheme();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [resolvedTheme, setTheme]);
+  }, [toggleTheme]);
 
   return null;
 };
@@ -125,12 +182,141 @@ export const ThemeProvider = ({
   const resolvedTheme: ResolvedTheme =
     theme === "system" ? (enableSystem ? systemTheme : "light") : theme;
 
+  const activeTransitionRef = React.useRef<ViewTransition | null>(null);
+  const isTransitioningRef = React.useRef(false);
+
+  const setThemeWithTransition = React.useCallback(
+    async (nextTheme: Theme, origin?: ThemeTransitionOrigin): Promise<void> => {
+      const targetResolvedTheme: ResolvedTheme =
+        nextTheme === "system"
+          ? enableSystem
+            ? getSystemTheme()
+            : "light"
+          : nextTheme;
+
+      try {
+        localStorage.setItem(storageKey, nextTheme);
+      } catch {
+        // Ignore quota/private browsing storage errors
+      }
+
+      // If the visual theme doesn't change, simply record the state
+      if (targetResolvedTheme === resolvedTheme) {
+        setThemeState(nextTheme);
+        return;
+      }
+
+      const isReducedMotion =
+        typeof window !== "undefined"
+          ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          : false;
+
+      // When View Transitions API is not available or reduced motion is preferred, swap immediately
+      if (
+        typeof document === "undefined" ||
+        !("startViewTransition" in document) ||
+        isReducedMotion
+      ) {
+        if (attribute === "class") {
+          applyThemeWithTransitionGuard(
+            targetResolvedTheme,
+            disableTransitionOnChange,
+          );
+        }
+        setThemeState(nextTheme);
+        return;
+      }
+
+      // Skip previous in-flight transition to prevent stutter on rapid clicks
+      if (activeTransitionRef.current) {
+        try {
+          activeTransitionRef.current.skipTransition();
+        } catch {
+          // Ignore
+        }
+      }
+
+      const { x, y } = getOriginCoordinates(origin);
+      const endRadius = Math.hypot(
+        Math.max(x, window.innerWidth - x),
+        Math.max(y, window.innerHeight - y),
+      );
+
+      const isGoingToDark = targetResolvedTheme === "dark";
+
+      isTransitioningRef.current = true;
+      document.documentElement.classList.add("theme-transitioning");
+
+      try {
+        const transition = document.startViewTransition(() => {
+          applyThemeClass(targetResolvedTheme);
+          setThemeState(nextTheme);
+        });
+
+        activeTransitionRef.current = transition;
+
+        await transition.ready;
+
+        // The Light view is always the authored element that expands or contracts:
+        // - Dark -> Light (Bulb Turning ON): New view (light) expands from 0 to endRadius
+        // - Light -> Dark (Bulb Turning OFF): Old view (light) contracts from endRadius to 0
+        const keyframes = isGoingToDark
+          ? [
+              `circle(${endRadius}px at ${x}px ${y}px)`,
+              `circle(0px at ${x}px ${y}px)`,
+            ]
+          : [
+              `circle(0px at ${x}px ${y}px)`,
+              `circle(${endRadius}px at ${x}px ${y}px)`,
+            ];
+
+        const pseudoElement = isGoingToDark
+          ? "::view-transition-old(root)"
+          : "::view-transition-new(root)";
+
+        const anim = document.documentElement.animate(
+          {
+            clipPath: keyframes,
+          },
+          {
+            duration: 480,
+            easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+            pseudoElement,
+          } as KeyframeAnimationOptions,
+        );
+
+        await anim.finished;
+      } catch {
+        applyThemeClass(targetResolvedTheme);
+        setThemeState(nextTheme);
+      } finally {
+        isTransitioningRef.current = false;
+        activeTransitionRef.current = null;
+        document.documentElement.classList.remove("theme-transitioning");
+      }
+    },
+    [
+      attribute,
+      disableTransitionOnChange,
+      enableSystem,
+      resolvedTheme,
+      storageKey,
+    ],
+  );
+
+  const toggleTheme = React.useCallback(
+    (origin?: ThemeTransitionOrigin): void => {
+      const nextTheme: Theme = resolvedTheme === "dark" ? "light" : "dark";
+      void setThemeWithTransition(nextTheme, origin);
+    },
+    [resolvedTheme, setThemeWithTransition],
+  );
+
   React.useEffect(() => {
-    if (attribute === "class") {
+    if (attribute === "class" && !isTransitioningRef.current) {
       applyThemeWithTransitionGuard(resolvedTheme, disableTransitionOnChange);
     }
-    localStorage.setItem(storageKey, theme);
-  }, [attribute, disableTransitionOnChange, resolvedTheme, storageKey, theme]);
+  }, [attribute, disableTransitionOnChange, resolvedTheme]);
 
   React.useEffect(() => {
     if (!enableSystem || theme !== "system") {
@@ -151,9 +337,12 @@ export const ThemeProvider = ({
     () => ({
       theme,
       resolvedTheme,
-      setTheme: setThemeState,
+      setTheme: (newTheme: Theme, origin?: ThemeTransitionOrigin) => {
+        void setThemeWithTransition(newTheme, origin);
+      },
+      toggleTheme,
     }),
-    [resolvedTheme, theme],
+    [resolvedTheme, setThemeWithTransition, theme, toggleTheme],
   );
 
   return (

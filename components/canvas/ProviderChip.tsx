@@ -107,7 +107,7 @@ export const ProviderChip = React.memo(
           </span>
 
           {/* Example value preview */}
-          <span className="text-muted-foreground line-clamp-1 font-mono text-[10px] leading-tight">
+          <span className="text-muted-foreground text-mini line-clamp-1 font-mono leading-tight">
             {provider.example.length > 22
               ? `${provider.example.slice(0, 22)}…`
               : provider.example}
@@ -117,7 +117,7 @@ export const ProviderChip = React.memo(
           {isRouteSelected && (
             <span
               aria-hidden="true"
-              className="bg-primary/15 text-primary absolute top-1.5 right-1.5 translate-x-1 rounded px-1 py-0.5 text-[9px] font-bold tracking-wider uppercase opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100"
+              className="bg-primary/15 text-primary text-micro absolute top-1.5 right-1.5 translate-x-1 rounded px-1 py-0.5 font-bold tracking-wider uppercase opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100"
             >
               + Add
             </span>
@@ -129,10 +129,10 @@ export const ProviderChip = React.memo(
           sideOffset={8}
         >
           <p className="font-semibold">{provider.label}</p>
-          <p className="text-muted-foreground font-mono text-[11px]">
+          <p className="text-muted-foreground text-caption font-mono">
             {provider.value}
           </p>
-          <p className="text-muted-foreground mt-1 text-[11px]">
+          <p className="text-muted-foreground text-caption mt-1">
             Example: <span className="text-foreground">{provider.example}</span>
           </p>
         </TooltipContent>

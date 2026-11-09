@@ -150,7 +150,7 @@ export const ProviderPaletteSearch = ({
             tabIndex={activeCategory === "" ? 0 : -1}
             onClick={() => onCategoryChange("")}
             className={cn(
-              "h-7 shrink-0 rounded-md px-2.5 text-[11px] font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+              "h-7 shrink-0 rounded-md px-2.5 text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
               activeCategory === ""
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -173,7 +173,7 @@ export const ProviderPaletteSearch = ({
               tabIndex={activeCategory === cat.name ? 0 : -1}
               onClick={() => onCategoryChange(cat.name)}
               className={cn(
-                "h-7 shrink-0 rounded-md px-2.5 text-[11px] font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                "h-7 shrink-0 rounded-md px-2.5 text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 activeCategory === cat.name
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",

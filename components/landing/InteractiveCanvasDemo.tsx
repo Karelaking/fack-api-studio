@@ -149,6 +149,25 @@ const RESPONSE_TABS: ReadonlyArray<{ id: ResponseTab; label: string }> = [
   { id: "typescript", label: "TypeScript DTO" },
 ];
 
+const emptySubscribe = (): (() => void) => () => {};
+
+/**
+ * The demo prints a request URL. Derive the host from the deployment instead of
+ * hard-coding a production domain, so the sample stays honest wherever the app
+ * runs. The server snapshot uses the configured public URL; the client snapshot
+ * prefers the browser origin.
+ */
+function useDemoOrigin(): string {
+  return React.useSyncExternalStore(
+    emptySubscribe,
+    (): string =>
+      typeof window === "undefined"
+        ? (process.env.NEXT_PUBLIC_APP_URL ?? "")
+        : window.location.origin,
+    (): string => process.env.NEXT_PUBLIC_APP_URL ?? "",
+  );
+}
+
 /**
  * Interactive endpoint builder and response console.
  *
@@ -170,6 +189,7 @@ export const InteractiveCanvasDemo = (): React.JSX.Element => {
     "2026-08-01T12:00:00.000Z",
   );
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const demoOrigin = useDemoOrigin();
 
   const handleTabKeyDown = (
     event: React.KeyboardEvent<HTMLDivElement>,
@@ -278,9 +298,9 @@ export const InteractiveCanvasDemo = (): React.JSX.Element => {
   }, [fields, statusCode, method, generatedAt]);
 
   const generatedCurl = useMemo((): string => {
-    return `curl -X ${method} "https://fackapi.studio${routePath}" \\
+    return `curl -X ${method} "${demoOrigin}${routePath}" \\
   -H "Accept: application/json"`;
-  }, [method, routePath]);
+  }, [method, routePath, demoOrigin]);
 
   const generatedTs = useMemo((): string => {
     const activeProps = fields.filter((f: FieldItem): boolean => f.enabled);
@@ -423,7 +443,7 @@ export type ApiResponse = {
                 </span>
               </span>
 
-              <div className="grid max-h-52 grid-cols-1 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2">
+              <div className="scrollbar-subtle grid max-h-52 grid-cols-1 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2">
                 {fields.map((f: FieldItem) => (
                   <button
                     key={f.id}
@@ -451,7 +471,7 @@ export type ApiResponse = {
                       </span>
                       <span className="truncate font-bold">{f.key}</span>
                     </span>
-                    <span className="text-info max-w-30 truncate text-[9.5px] font-normal">
+                    <span className="text-info text-micro max-w-30 truncate font-normal">
                       {f.fakerProvider.replace("faker.", "")}
                     </span>
                   </button>
@@ -635,20 +655,21 @@ export type ApiResponse = {
               <div className="flex min-w-0 items-center gap-2">
                 <span
                   className={cn(
-                    "shrink-0 rounded border px-1.5 py-0.5 text-[9px] font-bold",
+                    "shrink-0 rounded border px-1.5 py-0.5 text-micro font-bold",
                     METHOD_TONE[method],
                   )}
                 >
                   {method}
                 </span>
                 <span className="text-foreground truncate font-bold">
-                  https://fackapi.studio{routePath}
+                  {demoOrigin}
+                  {routePath}
                 </span>
               </div>
 
               <span
                 className={cn(
-                  "inline-flex shrink-0 items-center justify-center rounded border px-2 py-0.5 text-[9px]",
+                  "inline-flex shrink-0 items-center justify-center rounded border px-2 py-0.5 text-micro",
                   statusCode === 200 || statusCode === 201
                     ? "border-success/30 bg-success/10 text-success"
                     : "border-danger/30 bg-danger/10 text-danger",
@@ -663,7 +684,7 @@ export type ApiResponse = {
               role="tabpanel"
               aria-labelledby={`demo-tab-${activeTab}`}
               tabIndex={0}
-              className="border-border/60 bg-muted/30 focus-visible:ring-ring/50 relative min-h-77.5 flex-1 overflow-x-auto rounded-2xl border p-5 font-mono text-xs shadow-sm focus-visible:ring-3 focus-visible:outline-none"
+              className="border-border/60 bg-muted/30 focus-visible:ring-ring/50 scrollbar-subtle relative min-h-77.5 flex-1 overflow-x-auto rounded-2xl border p-5 font-mono text-xs shadow-sm focus-visible:ring-3 focus-visible:outline-none"
             >
               <pre className="text-foreground font-mono text-xs leading-relaxed whitespace-pre">
                 {currentCode}

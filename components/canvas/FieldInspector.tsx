@@ -141,7 +141,7 @@ function FieldInspectorForm({
         <div className="space-y-1.5">
           <label
             htmlFor="field-name"
-            className="text-muted-foreground block text-[10px] font-bold tracking-wider uppercase"
+            className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
           >
             Field Name
           </label>
@@ -158,7 +158,7 @@ function FieldInspectorForm({
 
         {/* Data Type */}
         <div className="space-y-1.5">
-          <span className="text-muted-foreground block text-[10px] font-bold tracking-wider uppercase">
+          <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
             Data Type
           </span>
           <fieldset
@@ -173,7 +173,7 @@ function FieldInspectorForm({
                 onClick={() => setType(t)}
                 disabled={loading}
                 className={cn(
-                  "h-6 rounded-md border px-2 font-mono text-[10px] font-semibold transition-colors",
+                  "h-6 rounded-md border px-2 font-mono text-mini font-semibold transition-colors",
                   type === t
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -187,7 +187,7 @@ function FieldInspectorForm({
 
         {/* Faker Provider */}
         <div className="space-y-1.5">
-          <span className="text-muted-foreground block text-[10px] font-bold tracking-wider uppercase">
+          <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
             Mock Data Provider
           </span>
           <FakerProviderSelect
@@ -196,7 +196,7 @@ function FieldInspectorForm({
             disabled={loading || type === "object" || type === "array"}
           />
           {selectedProvider && (
-            <p className="text-muted-foreground font-mono text-[10px] leading-snug">
+            <p className="text-muted-foreground text-mini font-mono leading-snug">
               Example:{" "}
               <span className="text-foreground">
                 {selectedProvider.example}

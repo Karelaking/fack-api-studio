@@ -71,7 +71,7 @@ export const HeadersEditor = ({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xs font-semibold">Custom Response Headers</h3>
-          <p className="text-muted-foreground text-[10px]">
+          <p className="text-muted-foreground text-mini">
             Injected into mock responses on matching requests.
           </p>
         </div>
@@ -83,7 +83,7 @@ export const HeadersEditor = ({
 
       {/* Quick Header Presets */}
       <div className="space-y-1">
-        <span className="text-muted-foreground block text-[9.5px] font-bold tracking-wider uppercase">
+        <span className="text-muted-foreground text-micro block font-bold tracking-wider uppercase">
           Quick Presets
         </span>
         <div className="flex flex-wrap gap-1">
@@ -92,7 +92,7 @@ export const HeadersEditor = ({
               key={preset.key}
               type="button"
               onClick={() => handleAddPreset(preset.key, preset.value)}
-              className="bg-muted/40 hover:bg-muted border-border text-foreground hover:border-muted-foreground/30 flex cursor-pointer items-center gap-1 border px-2 py-0.5 font-mono text-[9.5px] transition-colors"
+              className="bg-muted/40 hover:bg-muted border-border text-foreground hover:border-muted-foreground/30 text-micro flex cursor-pointer items-center gap-1 border px-2 py-0.5 font-mono transition-colors"
             >
               <RiAddLine className="text-muted-foreground h-2.5 w-2.5" />
               <span>{preset.key}</span>
@@ -105,7 +105,7 @@ export const HeadersEditor = ({
       {headers.length === 0 ? (
         <div className="bg-muted/20 border-border/80 flex flex-col items-center justify-center space-y-1.5 border border-dashed p-6 text-center">
           <span className="text-xs font-semibold">No custom headers</span>
-          <p className="text-muted-foreground max-w-64 text-[10px] leading-normal">
+          <p className="text-muted-foreground text-mini max-w-64 leading-normal">
             Default `Content-Type: application/json` is automatically included.
             Click a preset above or add a custom header.
           </p>
@@ -121,7 +121,7 @@ export const HeadersEditor = ({
       ) : (
         <div className="space-y-1.5">
           {/* Table column titles */}
-          <div className="text-muted-foreground flex items-center gap-1.5 px-0.5 text-[9px] font-bold tracking-wider uppercase">
+          <div className="text-muted-foreground text-micro flex items-center gap-1.5 px-0.5 font-bold tracking-wider uppercase">
             <span className="flex-1">Header Key</span>
             <span className="flex-1">Value</span>
             <span className="w-8" />

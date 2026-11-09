@@ -95,7 +95,7 @@ export const FieldBadge = ({
         type="button"
         onClick={handleClickBadge}
         className={cn(
-          "text-left font-mono text-[10px] font-medium transition-colors",
+          "text-left font-mono text-mini font-medium transition-colors",
           isInspected ? "text-primary" : "text-foreground",
           "hover:text-primary",
         )}
@@ -107,7 +107,7 @@ export const FieldBadge = ({
 
       {/* Provider shortname */}
       {provider && (
-        <span className="text-muted-foreground font-mono text-[9px]">
+        <span className="text-muted-foreground text-micro font-mono">
           {provider.label}
         </span>
       )}

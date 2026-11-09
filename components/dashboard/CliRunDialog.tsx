@@ -127,7 +127,7 @@ export const CliRunDialog = ({
                 <RiKey2Line className="h-4 w-4" />
                 <span>Project Decryption Key</span>
               </label>
-              <span className="text-muted-foreground text-[11px]">
+              <span className="text-muted-foreground text-caption">
                 AES-256-GCM secret
               </span>
             </div>
@@ -161,7 +161,7 @@ export const CliRunDialog = ({
               >
                 {copiedKey ? (
                   <>
-                    <RiCheckLine className="mr-1.5 h-4 w-4 text-green-500" />
+                    <RiCheckLine className="text-success mr-1.5 h-4 w-4" />
                     <span>Copied</span>
                   </>
                 ) : (
@@ -182,7 +182,7 @@ export const CliRunDialog = ({
 
             <div className="border-border/60 bg-muted/30 space-y-1.5 rounded-lg border p-3">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground font-mono text-[11px]">
+                <span className="text-muted-foreground text-caption font-mono">
                   Step 1: Pull encrypted bundle
                 </span>
                 <button
@@ -192,7 +192,7 @@ export const CliRunDialog = ({
                 >
                   {copiedPull ? (
                     <>
-                      <RiCheckLine className="h-3.5 w-3.5 text-green-500" />
+                      <RiCheckLine className="text-success h-3.5 w-3.5" />
                       <span>Copied</span>
                     </>
                   ) : (
@@ -203,7 +203,7 @@ export const CliRunDialog = ({
                   )}
                 </button>
               </div>
-              <pre className="text-foreground/90 selection:bg-primary/20 overflow-x-auto font-mono text-xs">
+              <pre className="text-foreground/90 selection:bg-primary/20 scrollbar-subtle overflow-x-auto font-mono text-xs">
                 <code>
                   {cliDetails?.pullCommand ||
                     `fack pull ${projectSlug} --key <KEY>`}
@@ -213,7 +213,7 @@ export const CliRunDialog = ({
 
             <div className="border-border/60 bg-muted/30 space-y-1.5 rounded-lg border p-3">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground font-mono text-[11px]">
+                <span className="text-muted-foreground text-caption font-mono">
                   Step 2: Start local mock server
                 </span>
                 <button
@@ -223,7 +223,7 @@ export const CliRunDialog = ({
                 >
                   {copiedDev ? (
                     <>
-                      <RiCheckLine className="h-3.5 w-3.5 text-green-500" />
+                      <RiCheckLine className="text-success h-3.5 w-3.5" />
                       <span>Copied</span>
                     </>
                   ) : (
@@ -234,7 +234,7 @@ export const CliRunDialog = ({
                   )}
                 </button>
               </div>
-              <pre className="text-foreground/90 overflow-x-auto font-mono text-xs">
+              <pre className="text-foreground/90 scrollbar-subtle overflow-x-auto font-mono text-xs">
                 <code>fack dev</code>
               </pre>
             </div>

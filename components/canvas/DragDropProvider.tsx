@@ -112,7 +112,7 @@ export const DragDropProvider = ({
       <DragOverlay dropAnimation={null}>
         {activeProviderLabel ? (
           <div className="bg-card border-primary/40 shadow-primary/10 rounded-lg border px-2.5 py-2 shadow-lg">
-            <span className="text-foreground text-[11px] font-semibold">
+            <span className="text-foreground text-caption font-semibold">
               {activeProviderLabel}
             </span>
           </div>
