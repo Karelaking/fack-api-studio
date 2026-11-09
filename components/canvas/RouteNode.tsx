@@ -649,26 +649,23 @@ export const RouteNode = ({
       </div>
 
       {/* Footer: Telemetry & Rules status bar + Quick Test Trigger */}
-      <div className="border-border/40 bg-muted/15 flex items-center justify-between border-t px-3.5 py-2">
+      <div className="border-border/50 bg-muted/20 flex min-h-9 items-center justify-between border-t px-3.5 py-1.5">
         {/* Left: Metadata badges */}
         <div className="flex flex-wrap items-center gap-1.5">
           {hasLatency ? (
             <span
-              className="border-border/50 bg-muted/60 text-muted-foreground text-mini inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono font-medium"
+              className="border-warning/30 bg-warning/10 text-warning text-mini inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono font-medium"
               title={`Simulated Latency: ${data.latencyMin}-${data.latencyMax}ms`}
             >
-              <RiTimeLine
-                className="text-warning h-3 w-3 shrink-0"
-                aria-hidden="true"
-              />
+              <RiTimeLine className="h-3 w-3 shrink-0" aria-hidden="true" />
               {data.latencyMin === data.latencyMax
                 ? `${data.latencyMin}ms`
                 : `${data.latencyMin}-${data.latencyMax}ms`}
             </span>
           ) : (
             <span
-              className="border-border/40 bg-muted/30 text-muted-foreground/60 text-micro inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono"
-              title="Instant response"
+              className="border-border/40 bg-muted/30 text-muted-foreground/70 text-mini inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono"
+              title="Instant response (0ms simulated latency)"
             >
               <RiTimeLine className="h-3 w-3 shrink-0" aria-hidden="true" />
               0ms
@@ -677,7 +674,7 @@ export const RouteNode = ({
 
           {hasErrors && (
             <span
-              className="border-destructive/30 bg-destructive/10 text-destructive text-mini inline-flex animate-pulse items-center gap-1 rounded border px-1.5 py-0.5 font-mono font-semibold motion-reduce:animate-none"
+              className="border-destructive/30 bg-destructive/10 text-destructive text-mini inline-flex h-5 animate-pulse items-center gap-1 rounded border px-1.5 font-mono font-semibold motion-reduce:animate-none"
               title={`Simulated Error Rate: ${data.errorRate}%`}
             >
               <RiAlertLine className="h-3 w-3 shrink-0" aria-hidden="true" />
@@ -687,11 +684,11 @@ export const RouteNode = ({
 
           {headersKeysCount > 0 && (
             <span
-              className="border-border/50 bg-muted/60 text-muted-foreground text-mini inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono font-medium"
-              title={`${headersKeysCount} Custom Headers`}
+              className="border-info/30 bg-info/10 text-info text-mini inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono font-medium"
+              title={`${headersKeysCount} Custom Header${headersKeysCount === 1 ? "" : "s"}`}
             >
               <RiEqualizerLine
-                className="text-info h-3 w-3 shrink-0"
+                className="h-3 w-3 shrink-0"
                 aria-hidden="true"
               />
               {headersKeysCount} {headersKeysCount === 1 ? "Hdr" : "Hdrs"}
@@ -700,11 +697,11 @@ export const RouteNode = ({
 
           {rulesCount > 0 && (
             <span
-              className="border-border/50 bg-muted/60 text-muted-foreground text-mini inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono font-medium"
-              title={`${rulesCount} Conditional Rules`}
+              className="border-primary/30 bg-primary/10 text-primary text-mini inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono font-medium"
+              title={`${rulesCount} Conditional Rule${rulesCount === 1 ? "" : "s"}`}
             >
               <RiGitBranchLine
-                className="text-primary h-3 w-3 shrink-0"
+                className="h-3 w-3 shrink-0"
                 aria-hidden="true"
               />
               {rulesCount} {rulesCount === 1 ? "Rule" : "Rules"}
@@ -717,11 +714,19 @@ export const RouteNode = ({
           type="button"
           onClick={handleTestEndpoint}
           onPointerDown={(e) => e.stopPropagation()}
-          className="text-muted-foreground hover:text-primary hover:bg-primary/10 text-micro inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium transition-colors"
-          title="Open live mock response in new tab"
-          aria-label="Test mock endpoint"
+          className={cn(
+            "group/test inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-background/90 px-2 py-0.5",
+            "text-mini font-semibold text-foreground/80 shadow-2xs transition-all",
+            "hover:border-primary/50 hover:bg-primary/10 hover:text-primary active:scale-95 cursor-pointer",
+            "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+          )}
+          title={`Open live mock response in new tab (${data.mockUrl})`}
+          aria-label={`Test mock endpoint ${data.method} ${data.path}`}
         >
-          <RiSendPlaneLine className="h-3 w-3 shrink-0" aria-hidden="true" />
+          <RiSendPlaneLine
+            className="text-muted-foreground group-hover/test:text-primary h-3 w-3 shrink-0 transition-transform duration-150 group-hover/test:translate-x-0.5"
+            aria-hidden="true"
+          />
           <span>Test</span>
         </button>
       </div>
