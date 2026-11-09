@@ -99,6 +99,7 @@ export const RouteNode = ({
   const [showAllFields, setShowAllFields] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [clearConfirming, setClearConfirming] = React.useState(false);
 
   const fields = React.useMemo(() => {
     try {
@@ -132,6 +133,13 @@ export const RouteNode = ({
 
   const handleClearAllFields = async (e: React.MouseEvent): Promise<void> => {
     e.stopPropagation();
+    if (!clearConfirming) {
+      setClearConfirming(true);
+      // Auto-reset the confirm state after 3 seconds with no action.
+      window.setTimeout(() => setClearConfirming(false), 3000);
+      return;
+    }
+    setClearConfirming(false);
     try {
       const updatedRoute = await clearFieldsFromRoute(data.id);
       window.dispatchEvent(
@@ -538,11 +546,24 @@ export const RouteNode = ({
                 type="button"
                 onClick={handleClearAllFields}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="text-muted-foreground hover:text-destructive text-micro font-medium transition-colors"
-                title="Clear all fields from schema"
-                aria-label="Clear all fields from schema"
+                className={cn(
+                  "text-micro font-medium transition-colors",
+                  clearConfirming
+                    ? "text-destructive font-semibold animate-pulse"
+                    : "text-muted-foreground hover:text-destructive",
+                )}
+                title={
+                  clearConfirming
+                    ? "Click again to confirm clearing all fields"
+                    : "Clear all fields from schema"
+                }
+                aria-label={
+                  clearConfirming
+                    ? "Confirm clear all fields"
+                    : "Clear all fields from schema"
+                }
               >
-                Clear
+                {clearConfirming ? "Confirm?" : "Clear"}
               </button>
             )}
           </div>
@@ -551,7 +572,12 @@ export const RouteNode = ({
         {/* Field Badges Container */}
         {fields.length > 0 && (
           <div
-            className="flex flex-wrap gap-1"
+            className={cn(
+              "flex flex-wrap gap-1",
+              showAllFields &&
+                hiddenCount > 0 &&
+                "max-h-36 overflow-y-auto pr-0.5",
+            )}
             onPointerDown={(e) => e.stopPropagation()}
           >
             {visibleFields.map((field) => (

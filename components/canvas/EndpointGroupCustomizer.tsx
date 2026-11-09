@@ -53,14 +53,13 @@ const PRESET_COLORS: readonly {
   oklchHue: string;
 }[] = [
   { label: "Default Indigo", value: "var(--primary)", oklchHue: "#4f46e5" },
-  { label: "Emerald Green", value: "var(--method-get)", oklchHue: "#10b981" },
   { label: "Sky Blue", value: "var(--info)", oklchHue: "#0284c7" },
   { label: "Amber Orange", value: "var(--warning)", oklchHue: "#f59e0b" },
   { label: "Fuchsia Pink", value: "var(--chart-4)", oklchHue: "#d946ef" },
   { label: "Coral Rose", value: "var(--chart-3)", oklchHue: "#f43f5e" },
   { label: "Teal Cyan", value: "var(--chart-5)", oklchHue: "#14b8a6" },
-  { label: "Warm Orange", value: "var(--method-patch)", oklchHue: "#ea580c" },
-  { label: "Crimson Red", value: "var(--destructive)", oklchHue: "#e11d48" },
+  { label: "Warm Orange", value: "var(--chart-2)", oklchHue: "#f97316" },
+  { label: "Violet Purple", value: "var(--chart-1)", oklchHue: "#8b5cf6" },
   {
     label: "Neutral Slate",
     value: "var(--muted-foreground)",

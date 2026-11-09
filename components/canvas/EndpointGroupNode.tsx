@@ -85,8 +85,12 @@ export function EndpointGroupNode({
           : undefined),
         ...(customColor
           ? {
-              borderColor: selected ? customColor : `${customColor}80`,
-              boxShadow: selected ? `0 0 16px ${customColor}25` : undefined,
+              borderColor: selected
+                ? customColor
+                : `color-mix(in oklch, ${customColor} 50%, transparent)`,
+              boxShadow: selected
+                ? `0 0 16px color-mix(in oklch, ${customColor} 25%, transparent)`
+                : undefined,
             }
           : undefined),
       }}
@@ -130,10 +134,10 @@ export function EndpointGroupNode({
             className="flex size-7 shrink-0 items-center justify-center rounded-lg border transition-all"
             style={{
               borderColor: customColor
-                ? `${customColor}50`
+                ? `color-mix(in oklch, ${customColor} 50%, transparent)`
                 : "var(--color-border)",
               backgroundColor: customColor
-                ? `${customColor}18`
+                ? `color-mix(in oklch, ${customColor} 18%, transparent)`
                 : "var(--color-primary)/10",
               color: customColor || "var(--color-primary)",
             }}

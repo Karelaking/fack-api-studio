@@ -681,7 +681,7 @@ function FlowCanvasInner({
         fitViewOptions={FIT_VIEW_OPTIONS}
         minZoom={MIN_ZOOM}
         colorMode={resolvedTheme}
-        deleteKeyCode={["Backspace", "Delete"]}
+        deleteKeyCode={null}
       >
         <Background
           variant={BackgroundVariant.Dots}
