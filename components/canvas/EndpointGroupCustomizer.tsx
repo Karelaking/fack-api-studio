@@ -151,6 +151,39 @@ const CATEGORY_ICONS: Record<string, readonly string[]> = {
 
 const PAGE_SIZE = 96;
 
+interface IconCellProps {
+  iconName: string;
+  isSelected: boolean;
+  onSelect: (name: string) => void;
+}
+
+/**
+ * Individual memoized Hugeicon cell button in the customizer grid.
+ */
+const IconCell = React.memo(
+  ({ iconName, isSelected, onSelect }: IconCellProps): React.JSX.Element => {
+    return (
+      <button
+        type="button"
+        onClick={() => onSelect(iconName)}
+        title={iconName}
+        aria-label={iconName}
+        className={cn(
+          "size-9 rounded-md flex items-center justify-center transition-all cursor-pointer relative",
+          "border border-transparent hover:border-border hover:bg-muted/80",
+          isSelected
+            ? "bg-primary/20 text-primary border-primary ring-2 ring-primary ring-offset-1 ring-offset-background shadow-xs font-bold"
+            : "text-muted-foreground hover:text-foreground",
+        )}
+      >
+        <HugeiconRenderer name={iconName} size={18} />
+      </button>
+    );
+  },
+);
+
+IconCell.displayName = "IconCell";
+
 /**
  * Endpoint Group Customization Modal Dialog.
  *
@@ -215,6 +248,10 @@ export function EndpointGroupCustomizer({
     setActiveCategoryTab(tabId);
     setVisibleCount(PAGE_SIZE);
   };
+
+  const handleSelectIcon = React.useCallback((selectedName: string): void => {
+    setIcon(selectedName);
+  }, []);
 
   const handleSave = async (): Promise<void> => {
     if (!name.trim()) {
@@ -456,26 +493,14 @@ export function EndpointGroupCustomizer({
                 </div>
               ) : (
                 <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8 md:grid-cols-9">
-                  {displayedIcons.map((iconName) => {
-                    const isSelected = icon === iconName;
-                    return (
-                      <button
-                        key={iconName}
-                        type="button"
-                        onClick={() => setIcon(iconName)}
-                        title={iconName}
-                        className={cn(
-                          "size-9 rounded-md flex items-center justify-center transition-all cursor-pointer relative",
-                          "border border-transparent hover:border-border hover:bg-muted/80",
-                          isSelected
-                            ? "bg-primary/20 text-primary border-primary ring-2 ring-primary ring-offset-1 ring-offset-background shadow-xs font-bold"
-                            : "text-muted-foreground hover:text-foreground",
-                        )}
-                      >
-                        <HugeiconRenderer name={iconName} size={18} />
-                      </button>
-                    );
-                  })}
+                  {displayedIcons.map((iconName) => (
+                    <IconCell
+                      key={iconName}
+                      iconName={iconName}
+                      isSelected={icon === iconName}
+                      onSelect={handleSelectIcon}
+                    />
+                  ))}
                 </div>
               )}
 
@@ -517,7 +542,7 @@ export function EndpointGroupCustomizer({
                     disabled={loading}
                   >
                     {loading ? (
-                      <RiLoader2Line className="mr-1 size-3 animate-spin" />
+                      <RiLoader2Line className="mr-1 size-3 animate-spin motion-reduce:animate-none" />
                     ) : (
                       <RiDeleteBinLine className="mr-1 size-3" />
                     )}
@@ -565,7 +590,7 @@ export function EndpointGroupCustomizer({
             disabled={loading || !name.trim()}
           >
             {loading && (
-              <RiLoader2Line className="mr-1.5 size-3.5 animate-spin" />
+              <RiLoader2Line className="mr-1.5 size-3.5 animate-spin motion-reduce:animate-none" />
             )}
             Save Changes
           </Button>

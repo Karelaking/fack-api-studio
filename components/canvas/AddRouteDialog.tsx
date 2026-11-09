@@ -361,7 +361,7 @@ export const AddRouteDialog = ({
               {isSubmitting ? (
                 <>
                   <RiLoader2Line
-                    className="h-4 w-4 animate-spin"
+                    className="h-4 w-4 animate-spin motion-reduce:animate-none"
                     aria-hidden="true"
                   />
                   <span>Creating...</span>

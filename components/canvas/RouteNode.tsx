@@ -476,7 +476,7 @@ export const RouteNode = ({
                     disabled={isDeleting}
                   >
                     {isDeleting ? (
-                      <RiLoader2Line className="h-3 w-3 animate-spin" />
+                      <RiLoader2Line className="h-3 w-3 animate-spin motion-reduce:animate-none" />
                     ) : (
                       "Delete"
                     )}
@@ -537,7 +537,7 @@ export const RouteNode = ({
           <span className="text-muted-foreground text-micro font-bold tracking-wider uppercase">
             Response Schema
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" aria-live="polite">
             <span className="text-muted-foreground/70 text-mini font-mono">
               {fields.length} {fields.length === 1 ? "field" : "fields"}
             </span>
@@ -549,7 +549,7 @@ export const RouteNode = ({
                 className={cn(
                   "text-micro font-medium transition-colors",
                   clearConfirming
-                    ? "text-destructive font-semibold animate-pulse"
+                    ? "text-destructive font-semibold animate-pulse motion-reduce:animate-none"
                     : "text-muted-foreground hover:text-destructive",
                 )}
                 title={
@@ -576,7 +576,7 @@ export const RouteNode = ({
               "flex flex-wrap gap-1",
               showAllFields &&
                 hiddenCount > 0 &&
-                "max-h-36 overflow-y-auto pr-0.5",
+                "max-h-36 overflow-y-auto pr-0.5 scrollbar-subtle",
             )}
             onPointerDown={(e) => e.stopPropagation()}
           >

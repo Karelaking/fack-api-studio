@@ -274,7 +274,7 @@ const FieldEditor = ({
         >
           {loading ? (
             <RiLoader2Line
-              className="h-3.5 w-3.5 animate-spin"
+              className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
               aria-hidden="true"
             />
           ) : (
@@ -293,7 +293,7 @@ const FieldEditor = ({
         >
           {loading ? (
             <RiLoader2Line
-              className="h-3.5 w-3.5 animate-spin"
+              className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
               aria-hidden="true"
             />
           ) : (
@@ -622,7 +622,7 @@ const RouteEditor = ({
               disabled={isDeleting || loading}
             >
               {isDeleting ? (
-                <RiLoader2Line className="size-3 animate-spin" />
+                <RiLoader2Line className="size-3 animate-spin motion-reduce:animate-none" />
               ) : (
                 "Confirm Delete"
               )}
@@ -662,7 +662,7 @@ const RouteEditor = ({
         >
           {loading ? (
             <RiLoader2Line
-              className="h-3.5 w-3.5 animate-spin"
+              className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
               aria-hidden="true"
             />
           ) : (

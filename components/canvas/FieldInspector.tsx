@@ -248,7 +248,7 @@ function FieldInspectorForm({
         >
           {loading ? (
             <RiLoader2Line
-              className="h-3.5 w-3.5 animate-spin"
+              className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
               aria-hidden="true"
             />
           ) : (
@@ -267,7 +267,7 @@ function FieldInspectorForm({
         >
           {loading ? (
             <RiLoader2Line
-              className="h-3.5 w-3.5 animate-spin"
+              className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
               aria-hidden="true"
             />
           ) : (
