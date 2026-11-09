@@ -337,25 +337,26 @@ export const UnifiedSettingsView = ({
 
   // Load CLI details when active project changes
   React.useEffect(() => {
-    let isMounted = true;
     const targetId = activeProject?.id;
     if (!targetId) {
       return;
     }
 
+    const controller = new AbortController();
+
     const loadCli = async (): Promise<void> => {
       try {
         setLoadingCli(true);
         const res = await getProjectCliDetails(targetId);
-        if (isMounted) {
+        if (!controller.signal.aborted) {
           setCliDetails(res);
         }
       } catch {
-        if (isMounted) {
+        if (!controller.signal.aborted) {
           setCliDetails(undefined);
         }
       } finally {
-        if (isMounted) {
+        if (!controller.signal.aborted) {
           setLoadingCli(false);
         }
       }
@@ -364,7 +365,7 @@ export const UnifiedSettingsView = ({
     void loadCli();
 
     return () => {
-      isMounted = false;
+      controller.abort();
     };
   }, [activeProject?.id]);
 

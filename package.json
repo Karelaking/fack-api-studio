@@ -111,7 +111,10 @@
       "vp lint --fix",
       "vp fmt"
     ],
-    "*.{json,md,yml,yaml,css}": [
+    "*.{json,md,css}": [
+      "vp fmt"
+    ],
+    "!(pnpm-lock).{yml,yaml}": [
       "vp fmt"
     ]
   },
