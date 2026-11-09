@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import { NodeResizer } from "@xyflow/react";
-import { RiPaletteLine } from "@remixicon/react";
+import * as PikaCore from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { HugeiconRenderer } from "./HugeiconRenderer";
+import { PikaiconRenderer } from "./HugeiconRenderer";
 import { EndpointGroupCustomizer } from "./EndpointGroupCustomizer";
 import type { Endpoint } from "@/db/schema";
 
@@ -28,12 +29,12 @@ interface EndpointGroupNodeProps {
 /**
  * Premium Custom Bounding Container Node for Endpoints.
  * Uses a grid background style, glass header, and dashed glowing border to group routes cleanly.
- * Supports custom colors and Hugeicons integration with 1-click customization dialog.
+ * Supports custom colors and Pikaicons (pikaicons.com) integration with 1-click customization dialog.
  */
-export function EndpointGroupNode({
+export const EndpointGroupNode = ({
   data,
   selected,
-}: EndpointGroupNodeProps): React.JSX.Element {
+}: EndpointGroupNodeProps): React.JSX.Element => {
   const [isCustomizerOpen, setIsCustomizerOpen] = React.useState(false);
 
   const hasCustomColor = Boolean(data.color && data.color.trim() !== "");
@@ -142,8 +143,8 @@ export function EndpointGroupNode({
               color: customColor || "var(--color-primary)",
             }}
           >
-            <HugeiconRenderer
-              name={data.icon || "Folder01Icon"}
+            <PikaiconRenderer
+              name={data.icon || "FolderIcon"}
               size={15}
               color={customColor}
             />
@@ -180,7 +181,11 @@ export function EndpointGroupNode({
             title="Customize Group Color & Icon"
             aria-label={`Customize endpoint group ${data.label}`}
           >
-            <RiPaletteLine className="size-3.5" aria-hidden="true" />
+            <PikaIcon
+              icon={PikaCore.PaintBrushIcon}
+              size={14}
+              aria-hidden="true"
+            />
           </Button>
         )}
       </div>
@@ -204,6 +209,6 @@ export function EndpointGroupNode({
       )}
     </div>
   );
-}
+};
 
 export default React.memo(EndpointGroupNode);

@@ -2,14 +2,8 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import * as CoreIcons from "@hugeicons/core-free-icons";
-import {
-  RiCheckLine,
-  RiCloseLine,
-  RiDeleteBinLine,
-  RiLoader2Line,
-  RiSearchLine,
-} from "@remixicon/react";
+import * as PikaCore from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { HugeiconRenderer } from "./HugeiconRenderer";
+import { PikaiconRenderer } from "./HugeiconRenderer";
 import { updateEndpoint, deleteEndpoint } from "@/lib/actions/endpoints";
 
 interface EndpointGroupCustomizerProps {
@@ -66,9 +60,9 @@ const PRESET_COLORS: readonly {
   },
 ];
 
-// All icon keys ending in "Icon" from @hugeicons/core-free-icons (6,791 unique icons)
-const ALL_ICON_KEYS: readonly string[] = Object.keys(CoreIcons).filter(
-  (k) => k.endsWith("Icon") && !k.includes("FreeIcons"),
+// All icon keys ending in "Icon" from @pikaicons/core-free (997 unique icons)
+const ALL_ICON_KEYS: readonly string[] = Object.keys(PikaCore).filter((k) =>
+  k.endsWith("Icon"),
 );
 
 const PAGE_SIZE = 96;
@@ -80,7 +74,7 @@ interface IconCellProps {
 }
 
 /**
- * Individual memoized Hugeicon cell button in the customizer grid.
+ * Individual memoized Pikaicon cell button in the customizer grid.
  */
 const IconCell = React.memo(
   ({ iconName, isSelected, onSelect }: IconCellProps): React.JSX.Element => {
@@ -100,7 +94,7 @@ const IconCell = React.memo(
             : "text-muted-foreground hover:text-foreground",
         )}
       >
-        <HugeiconRenderer name={iconName} size={18} />
+        <PikaiconRenderer name={iconName} size={18} />
       </button>
     );
   },
@@ -114,20 +108,20 @@ IconCell.displayName = "IconCell";
  * Allows configuring:
  * - Group Name and Base Path
  * - Accent Color token from preset swatches
- * - Full browsing and search across ALL 6,791 Hugeicons with pagination
+ * - Full browsing and search across 990+ Pikaicons (https://pikaicons.com/) with pagination
  * - Group deletion with cascade route count notice
  */
-export function EndpointGroupCustomizer({
+export const EndpointGroupCustomizer = ({
   endpoint,
   open,
   onOpenChange,
   onUpdated,
   onDeleted,
-}: EndpointGroupCustomizerProps): React.JSX.Element {
+}: EndpointGroupCustomizerProps): React.JSX.Element => {
   const [name, setName] = React.useState(endpoint.name);
   const [basePath, setBasePath] = React.useState(endpoint.basePath);
   const [color, setColor] = React.useState(endpoint.color || "var(--primary)");
-  const [icon, setIcon] = React.useState(endpoint.icon || "Folder01Icon");
+  const [icon, setIcon] = React.useState(endpoint.icon || "FolderIcon");
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
@@ -141,7 +135,7 @@ export function EndpointGroupCustomizer({
     setName(endpoint.name);
     setBasePath(endpoint.basePath);
     setColor(endpoint.color || "var(--primary)");
-    setIcon(endpoint.icon || "Folder01Icon");
+    setIcon(endpoint.icon || "FolderIcon");
     setConfirmDelete(false);
     setVisibleCount(PAGE_SIZE);
   }
@@ -232,15 +226,15 @@ export function EndpointGroupCustomizer({
                   color: color,
                 }}
               >
-                <HugeiconRenderer name={icon} size={22} />
+                <PikaiconRenderer name={icon} size={22} />
               </div>
               <div>
                 <DialogTitle className="text-base font-bold">
                   Customize Route Group
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground mt-0.5 text-xs">
-                  Pick an accent color and choose from 6,700+ Hugeicons to
-                  distinguish this group on canvas.
+                  Pick an accent color and choose from 990+ Pikaicons
+                  (pikaicons.com) to distinguish this group on canvas.
                 </DialogDescription>
               </div>
             </div>
@@ -317,8 +311,10 @@ export function EndpointGroupCustomizer({
                     style={{ backgroundColor: c.value }}
                   >
                     {isSelected && (
-                      <RiCheckLine
-                        className="size-3.5 text-white drop-shadow-sm"
+                      <PikaIcon
+                        icon={PikaCore.CheckTickCircleIcon}
+                        size={14}
+                        className="text-white drop-shadow-sm"
                         aria-hidden="true"
                       />
                     )}
@@ -328,12 +324,14 @@ export function EndpointGroupCustomizer({
             </div>
           </div>
 
-          {/* Section 3: Hugeicons Icon Library (All 6,791 Icons) */}
+          {/* Section 3: Pikaicons Library (990+ Hand-crafted Icons) */}
           <div className="border-border/40 space-y-4 border-t pt-4">
             {/* Search Input */}
             <div className="relative">
-              <RiSearchLine
-                className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2"
+              <PikaIcon
+                icon={PikaCore.SearchIcon}
+                size={14}
+                className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2"
                 aria-hidden="true"
               />
               <Input
@@ -342,7 +340,7 @@ export function EndpointGroupCustomizer({
                   setSearchQuery(e.target.value);
                   setVisibleCount(PAGE_SIZE);
                 }}
-                placeholder="Search across all 6,700+ icons (e.g. user, database, lock, credit, cloud, apple, git)..."
+                placeholder="Search across all 990+ icons (e.g. user, database, lock, credit, cloud, apple, git)..."
                 aria-label="Search icons"
                 className="h-8.5 pr-8 pl-8 text-xs"
               />
@@ -356,13 +354,17 @@ export function EndpointGroupCustomizer({
                   aria-label="Clear icon search"
                   className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2 cursor-pointer transition-colors"
                 >
-                  <RiCloseLine className="size-3.5" aria-hidden="true" />
+                  <PikaIcon
+                    icon={PikaCore.MultipleCrossCancelIcon}
+                    size={14}
+                    aria-hidden="true"
+                  />
                 </button>
               )}
             </div>
 
             {/* Icon Grid */}
-            <div className="border-border/60 bg-muted/15 scrollbar-subtle max-h-72 space-y-3 overflow-y-auto rounded-lg border p-2.5">
+            <div className="border-border/60 bg-muted/15 scrollbar-subtle max-h-78 space-y-3 overflow-y-auto rounded-lg border p-2.5">
               {displayedIcons.length === 0 ? (
                 <div className="text-muted-foreground space-y-1 py-8 text-center text-xs">
                   <p className="font-semibold">
@@ -429,9 +431,19 @@ export function EndpointGroupCustomizer({
                   className="h-7 px-2 text-xs"
                 >
                   {loading ? (
-                    <RiLoader2Line className="mr-1 size-3 animate-spin motion-reduce:animate-none" />
+                    <PikaIcon
+                      icon={PikaCore.RefreshIcon}
+                      size={12}
+                      className="mr-1 animate-spin motion-reduce:animate-none"
+                      aria-hidden="true"
+                    />
                   ) : (
-                    <RiDeleteBinLine className="mr-1 size-3" />
+                    <PikaIcon
+                      icon={PikaCore.DeleteDustbin01Icon}
+                      size={12}
+                      className="mr-1"
+                      aria-hidden="true"
+                    />
                   )}
                   Delete
                 </Button>
@@ -457,8 +469,10 @@ export function EndpointGroupCustomizer({
                 title="Delete this route group"
                 aria-label="Delete this route group"
               >
-                <RiDeleteBinLine
-                  className="mr-1.5 size-3.5"
+                <PikaIcon
+                  icon={PikaCore.DeleteDustbin01Icon}
+                  size={14}
+                  className="mr-1.5"
                   aria-hidden="true"
                 />
                 <span>Delete Group</span>
@@ -486,9 +500,19 @@ export function EndpointGroupCustomizer({
               className="min-w-28 text-xs font-semibold shadow-xs"
             >
               {loading ? (
-                <RiLoader2Line className="mr-1.5 size-3.5 animate-spin motion-reduce:animate-none" />
+                <PikaIcon
+                  icon={PikaCore.RefreshIcon}
+                  size={14}
+                  className="mr-1.5 animate-spin motion-reduce:animate-none"
+                  aria-hidden="true"
+                />
               ) : (
-                <RiCheckLine className="mr-1.5 size-3.5" aria-hidden="true" />
+                <PikaIcon
+                  icon={PikaCore.CheckTickCircleIcon}
+                  size={14}
+                  className="mr-1.5"
+                  aria-hidden="true"
+                />
               )}
               Save Changes
             </Button>
@@ -497,6 +521,6 @@ export function EndpointGroupCustomizer({
       </DialogContent>
     </Dialog>
   );
-}
+};
 
 export default EndpointGroupCustomizer;

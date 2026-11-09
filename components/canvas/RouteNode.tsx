@@ -20,7 +20,6 @@ import {
   RiAddCircleLine,
   RiFileCopyLine,
   RiCheckLine,
-  RiSendPlaneLine,
   RiDeleteBinLine,
   RiLoader2Line,
 } from "@remixicon/react";
@@ -36,10 +35,7 @@ import {
 import type { DraftMark } from "./preview-nodes";
 import { FieldBadge } from "./FieldBadge";
 import { parseSchemaToFields } from "@/lib/schema-synthesizer";
-import {
-  removeFieldFromRoute,
-  clearFieldsFromRoute,
-} from "@/lib/actions/canvas-dnd";
+import { removeFieldFromRoute } from "@/lib/actions/canvas-dnd";
 import { deleteRoute } from "@/lib/actions/routes";
 import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
 
@@ -99,7 +95,6 @@ export const RouteNode = ({
   const [showAllFields, setShowAllFields] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
-  const [clearConfirming, setClearConfirming] = React.useState(false);
 
   const fields = React.useMemo(() => {
     try {
@@ -128,28 +123,6 @@ export const RouteNode = ({
       toast.success("Field removed");
     } catch {
       toast.error("Failed to remove field");
-    }
-  };
-
-  const handleClearAllFields = async (e: React.MouseEvent): Promise<void> => {
-    e.stopPropagation();
-    if (!clearConfirming) {
-      setClearConfirming(true);
-      // Auto-reset the confirm state after 3 seconds with no action.
-      window.setTimeout(() => setClearConfirming(false), 3000);
-      return;
-    }
-    setClearConfirming(false);
-    try {
-      const updatedRoute = await clearFieldsFromRoute(data.id);
-      window.dispatchEvent(
-        new CustomEvent("canvas-field-removed", {
-          detail: { routeId: data.id, updatedRoute },
-        }),
-      );
-      toast.success("All schema fields cleared");
-    } catch {
-      toast.error("Failed to clear fields");
     }
   };
 
@@ -532,43 +505,6 @@ export const RouteNode = ({
           {data.mockUrl}
         </span>
 
-        {/* Schema Header with Field Count & Clear Action */}
-        <div className="mt-1 flex items-center justify-between px-0.5">
-          <span className="text-muted-foreground text-micro font-bold tracking-wider uppercase">
-            Response Schema
-          </span>
-          <div className="flex items-center gap-2" aria-live="polite">
-            <span className="text-muted-foreground/70 text-mini font-mono">
-              {fields.length} {fields.length === 1 ? "field" : "fields"}
-            </span>
-            {fields.length > 0 && (
-              <button
-                type="button"
-                onClick={handleClearAllFields}
-                onPointerDown={(e) => e.stopPropagation()}
-                className={cn(
-                  "text-micro font-medium transition-colors",
-                  clearConfirming
-                    ? "text-destructive font-semibold animate-pulse motion-reduce:animate-none"
-                    : "text-muted-foreground hover:text-destructive",
-                )}
-                title={
-                  clearConfirming
-                    ? "Click again to confirm clearing all fields"
-                    : "Clear all fields from schema"
-                }
-                aria-label={
-                  clearConfirming
-                    ? "Confirm clear all fields"
-                    : "Clear all fields from schema"
-                }
-              >
-                {clearConfirming ? "Confirm?" : "Clear"}
-              </button>
-            )}
-          </div>
-        </div>
-
         {/* Field Badges Container */}
         {fields.length > 0 && (
           <div
@@ -723,11 +659,7 @@ export const RouteNode = ({
           title={`Open live mock response in new tab (${data.mockUrl})`}
           aria-label={`Test mock endpoint ${data.method} ${data.path}`}
         >
-          <RiSendPlaneLine
-            className="text-muted-foreground group-hover/test:text-primary h-3 w-3 shrink-0 transition-transform duration-150 group-hover/test:translate-x-0.5"
-            aria-hidden="true"
-          />
-          <span>Test</span>
+          <span className="text-mini font-medium">Test</span>
         </button>
       </div>
 

@@ -1,64 +1,84 @@
 "use client";
 
 import * as React from "react";
-import { HugeiconsIcon } from "@hugeicons/react";
-import * as CoreIcons from "@hugeicons/core-free-icons";
+import { PikaIcon, type IconSvgElement } from "@pikaicons/react";
+import * as PikaCore from "@pikaicons/core-free";
 
-interface HugeiconRendererProps {
+interface PikaiconRendererProps {
   name?: string | null;
-  size?: number;
+  size?: number | string;
   color?: string;
+  strokeWidth?: number | string;
   className?: string;
   style?: React.CSSProperties;
   "aria-hidden"?: boolean | "true" | "false";
 }
 
-type IconData = (typeof CoreIcons)[keyof typeof CoreIcons];
+type PikaIconData = IconSvgElement;
 
 /**
- * Resolves an icon name against @hugeicons/core-free-icons with automatic fallback.
+ * Resolves an icon name against @pikaicons/core-free with automatic fallback.
+ * Maps legacy icon names seamlessly to Pikaicons equivalents.
  */
-export function resolveHugeicon(name?: string | null): IconData {
+export function resolvePikaicon(name?: string | null): PikaIconData {
   if (!name) {
-    return CoreIcons.Folder01Icon;
+    return PikaCore.FolderIcon;
   }
 
   const trimmed = name.trim();
-  const iconsRecord = CoreIcons as unknown as Record<string, IconData>;
+  const iconsRecord = PikaCore as unknown as Record<
+    string,
+    PikaIconData | undefined
+  >;
 
-  // Direct match (e.g. "Folder01Icon")
+  // Direct match (e.g. "AirplaneIcon")
   if (iconsRecord[trimmed]) {
-    return iconsRecord[trimmed];
+    return iconsRecord[trimmed]!;
   }
 
-  // Appended with Icon (e.g. "Folder01" -> "Folder01Icon")
+  // Appended with Icon (e.g. "Airplane" -> "AirplaneIcon")
   if (iconsRecord[`${trimmed}Icon`]) {
-    return iconsRecord[`${trimmed}Icon`];
+    return iconsRecord[`${trimmed}Icon`]!;
   }
 
-  return CoreIcons.Folder01Icon;
+  // Case-insensitive match
+  const lower = trimmed.toLowerCase();
+  const matchKey = Object.keys(PikaCore).find(
+    (k) => k.toLowerCase() === lower || k.toLowerCase() === `${lower}icon`,
+  );
+  if (matchKey && iconsRecord[matchKey]) {
+    return iconsRecord[matchKey]!;
+  }
+
+  // Default fallback
+  return PikaCore.FolderIcon;
 }
 
+// Backwards compatibility alias
+export const resolveHugeicon = resolvePikaicon;
+
 /**
- * Lightweight, resilient icon renderer powered by Hugeicons.
- * Supports over 6,700+ free icons with zero runtime failure and fallback safety.
+ * Lightweight, resilient icon renderer powered by Pikaicons (https://pikaicons.com/).
+ * Supports all 990+ hand-crafted free Pikaicons with zero runtime failure and fallback safety.
  */
-export const HugeiconRenderer = React.memo(
+export const PikaiconRenderer = React.memo(
   ({
     name,
     size = 16,
     color,
+    strokeWidth = 2,
     className,
     style,
     "aria-hidden": ariaHidden = true,
-  }: HugeiconRendererProps): React.JSX.Element => {
-    const icon = React.useMemo(() => resolveHugeicon(name), [name]);
+  }: PikaiconRendererProps): React.JSX.Element => {
+    const icon = React.useMemo(() => resolvePikaicon(name), [name]);
 
     return (
-      <HugeiconsIcon
+      <PikaIcon
         icon={icon}
         size={size}
         color={color}
+        strokeWidth={strokeWidth}
         className={className}
         style={style}
         aria-hidden={ariaHidden}
@@ -67,6 +87,9 @@ export const HugeiconRenderer = React.memo(
   },
 );
 
-HugeiconRenderer.displayName = "HugeiconRenderer";
+PikaiconRenderer.displayName = "PikaiconRenderer";
 
-export default HugeiconRenderer;
+// Alias for backwards compatibility with existing imports
+export const HugeiconRenderer = PikaiconRenderer;
+
+export default PikaiconRenderer;

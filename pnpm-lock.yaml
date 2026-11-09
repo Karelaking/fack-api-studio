@@ -75,6 +75,12 @@ importers:
       '@openrouter/ai-sdk-provider':
         specifier: ^3.1.0
         version: 3.1.0(ai@7.0.107(zod@4.6.5))(zod@4.6.5)
+      '@pikaicons/core-free':
+        specifier: ^0.1.0
+        version: 0.1.0
+      '@pikaicons/react':
+        specifier: ^0.1.0
+        version: 0.1.0(react@19.3.0)
       '@radix-ui/react-slot':
         specifier: ^1.4.0
         version: 1.4.0(@types/react@19.3.0)(react@19.3.0)
@@ -2235,6 +2241,14 @@ packages:
   '@oxlint/plugins@1.79.0':
     resolution: {integrity: sha512-S0uyoxakDINJ4DPgqxGlEEvrdSMeQb7Z2lKVjxoY2gwsbZbfg2Xr8Klfeo5ZeraHmmdBCELFUHkSe6KEmBpMvg==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+
+  '@pikaicons/core-free@0.1.0':
+    resolution: {integrity: sha512-Ded8lc6xMpc6/Od4R/LulxBB2444lsUGMEW/7hMylS2RoGW5Ep5UuoT2DHV732AaiDhQtDPzyI9ISWzo1q4DuA==}
+
+  '@pikaicons/react@0.1.0':
+    resolution: {integrity: sha512-nsYPlDDKFCp34oRuVGGVTddOf+7iQpDR3Gue96ofLm6/TRsnRQpYkLhNZ0DrGcwXFe19WBhVKk+FaW9bHdEwwA==}
+    peerDependencies:
+      react: '>=17'
 
   '@pnpm/config.env-replace@1.1.0':
     resolution: {integrity: sha512-htyl8TWnKL7K/ESFa1oW2UB5lVDxuF5DpM7tBi6Hu2LNL3mWkIzNLG6N4zoCUP1lCKNxWy/3iu8mS8MvToGd6w==}
@@ -8739,6 +8753,12 @@ snapshots:
     optional: true
 
   '@oxlint/plugins@1.79.0': {}
+
+  '@pikaicons/core-free@0.1.0': {}
+
+  '@pikaicons/react@0.1.0(react@19.3.0)':
+    dependencies:
+      react: 19.3.0
 
   '@pnpm/config.env-replace@1.1.0': {}
 

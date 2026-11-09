@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/v4";
-import { RiLoader2Line } from "@remixicon/react";
+import * as PikaCore from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { createRoute } from "@/lib/actions/routes";
 import { httpMethods } from "@/lib/validators";
 import type { Endpoint, Route } from "@/db/schema";
@@ -360,7 +361,8 @@ export const AddRouteDialog = ({
             >
               {isSubmitting ? (
                 <>
-                  <RiLoader2Line
+                  <PikaIcon
+                    icon={PikaCore.RefreshIcon}
                     className="h-4 w-4 animate-spin motion-reduce:animate-none"
                     aria-hidden="true"
                   />
