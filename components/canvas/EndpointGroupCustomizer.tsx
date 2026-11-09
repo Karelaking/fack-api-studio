@@ -72,83 +72,6 @@ const ALL_ICON_KEYS: readonly string[] = Object.keys(CoreIcons).filter(
   (k) => k.endsWith("Icon") && !k.includes("FreeIcons"),
 );
 
-interface CategoryConfig {
-  id: string;
-  label: string;
-  match?: (k: string) => boolean;
-}
-
-const CATEGORIES: readonly CategoryConfig[] = [
-  { id: "all", label: "All (6,791)" },
-  {
-    id: "tech",
-    label: "Code & APIs",
-    match: (k: string) =>
-      /(code|web|browser|server|cloud|database|terminal|api|cpu|git|file|folder|network|link|domain|wifi|data|bug|app|system|docker|bot|ai|robot|binary|chip)/i.test(
-        k,
-      ),
-  },
-  {
-    id: "auth",
-    label: "Users & Security",
-    match: (k: string) =>
-      /(user|profile|account|group|team|person|avatar|people|member|contact|admin|lock|shield|key|protect|security|safe|guard|password|auth|fingerprint|face|privacy|firewall|badge|cert|passport)/i.test(
-        k,
-      ),
-  },
-  {
-    id: "commerce",
-    label: "Commerce & Pay",
-    match: (k: string) =>
-      /(shop|cart|bag|pay|card|money|cash|coin|wallet|bank|invoice|receipt|discount|tag|price|sale|store|dollar|crypto|currency|bill|finance|payment)/i.test(
-        k,
-      ),
-  },
-  {
-    id: "data",
-    label: "Data & Storage",
-    match: (k: string) =>
-      /(data|database|server|table|chart|graph|analytics|pie|bar|line|trend|metric|archive|storage|harddrive|sync|restore|backup|filter)/i.test(
-        k,
-      ),
-  },
-  {
-    id: "comm",
-    label: "Messages & Social",
-    match: (k: string) =>
-      /(mail|chat|message|notification|bell|phone|send|comment|share|inbox|email|call|bubble|sms)/i.test(
-        k,
-      ),
-  },
-  {
-    id: "media",
-    label: "Media & Design",
-    match: (k: string) =>
-      /(image|video|music|camera|audio|play|movie|sound|photo|gallery|film|speaker|mic|media|palette|brush|color|pen|vector|layer|crop|canvas)/i.test(
-        k,
-      ),
-  },
-  {
-    id: "tools",
-    label: "Tools & System",
-    match: (k: string) =>
-      /(settings|gear|sliders|wrench|tool|config|switch|toggle|power|refresh|clock|time|calendar|flag|pin|location|globe|compass|satellite)/i.test(
-        k,
-      ),
-  },
-];
-
-const CATEGORY_ICONS: Record<string, readonly string[]> = {
-  all: ALL_ICON_KEYS,
-  tech: ALL_ICON_KEYS.filter(CATEGORIES[1].match!),
-  auth: ALL_ICON_KEYS.filter(CATEGORIES[2].match!),
-  commerce: ALL_ICON_KEYS.filter(CATEGORIES[3].match!),
-  data: ALL_ICON_KEYS.filter(CATEGORIES[4].match!),
-  comm: ALL_ICON_KEYS.filter(CATEGORIES[5].match!),
-  media: ALL_ICON_KEYS.filter(CATEGORIES[6].match!),
-  tools: ALL_ICON_KEYS.filter(CATEGORIES[7].match!),
-};
-
 const PAGE_SIZE = 96;
 
 interface IconCellProps {
@@ -190,7 +113,7 @@ IconCell.displayName = "IconCell";
  * Allows configuring:
  * - Group Name and Base Path
  * - Accent Color token from preset swatches
- * - Full browsing and search across ALL 6,791 Hugeicons with pagination and category filtering
+ * - Full browsing and search across ALL 6,791 Hugeicons with pagination
  * - Group deletion with cascade route count notice
  */
 export function EndpointGroupCustomizer({
@@ -205,8 +128,6 @@ export function EndpointGroupCustomizer({
   const [color, setColor] = React.useState(endpoint.color || "var(--primary)");
   const [icon, setIcon] = React.useState(endpoint.icon || "Folder01Icon");
 
-  const [activeCategoryTab, setActiveCategoryTab] =
-    React.useState<string>("all");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
   const [loading, setLoading] = React.useState(false);
@@ -224,14 +145,14 @@ export function EndpointGroupCustomizer({
     setVisibleCount(PAGE_SIZE);
   }
 
-  // Filter full catalog based on active search or active category
+  // Filter full catalog based on active search query
   const filteredIcons = React.useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (query) {
       return ALL_ICON_KEYS.filter((k) => k.toLowerCase().includes(query));
     }
-    return CATEGORY_ICONS[activeCategoryTab] || ALL_ICON_KEYS;
-  }, [searchQuery, activeCategoryTab]);
+    return ALL_ICON_KEYS;
+  }, [searchQuery]);
 
   // Keep pagination bounded to filtered result count
   const displayedIcons = React.useMemo(() => {
@@ -242,11 +163,6 @@ export function EndpointGroupCustomizer({
 
   const handleLoadMore = (): void => {
     setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredIcons.length));
-  };
-
-  const handleTabChange = (tabId: string): void => {
-    setActiveCategoryTab(tabId);
-    setVisibleCount(PAGE_SIZE);
   };
 
   const handleSelectIcon = React.useCallback((selectedName: string): void => {
@@ -444,27 +360,6 @@ export function EndpointGroupCustomizer({
               )}
             </div>
 
-            {/* Category Filter Pills */}
-            {!searchQuery && (
-              <div className="flex flex-wrap gap-1">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => handleTabChange(cat.id)}
-                    className={cn(
-                      "px-2.5 py-1 rounded-md text-mini font-medium transition-colors",
-                      activeCategoryTab === cat.id
-                        ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                        : "bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted",
-                    )}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
             {/* Counter info */}
             <div className="text-micro text-muted-foreground flex items-center justify-between px-0.5 font-mono">
               <span>
@@ -487,8 +382,8 @@ export function EndpointGroupCustomizer({
                   </p>
                   <p className="text-micro text-muted-foreground/80">
                     Try another keyword like &quot;folder&quot;,
-                    &quot;chart&quot;, &quot;user&quot;, or click
-                    &quot;All&quot;.
+                    &quot;database&quot;, &quot;chart&quot;, or
+                    &quot;user&quot;.
                   </p>
                 </div>
               ) : (
