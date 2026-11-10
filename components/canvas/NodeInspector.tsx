@@ -333,7 +333,7 @@ const FieldPropertyEditor = ({
             <h2 className="text-foreground text-xs font-semibold">
               Field Property Editor
             </h2>
-            <span className="text-muted-foreground text-mini font-mono">
+            <span className="text-muted-foreground font-mono text-xs">
               {route.method} {route.path}
             </span>
           </div>
@@ -346,7 +346,7 @@ const FieldPropertyEditor = ({
         <div className="space-y-1.5">
           <label
             htmlFor="field-name"
-            className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
+            className="text-muted-foreground block text-xs font-bold tracking-wider uppercase"
           >
             Field Name
           </label>
@@ -363,7 +363,7 @@ const FieldPropertyEditor = ({
 
         {/* Data Type */}
         <div className="space-y-1.5">
-          <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+          <span className="text-muted-foreground block text-xs font-bold tracking-wider uppercase">
             Data Type
           </span>
           <fieldset
@@ -378,7 +378,7 @@ const FieldPropertyEditor = ({
                 onClick={() => setType(t)}
                 disabled={loading}
                 className={cn(
-                  "h-7 min-w-10 rounded-md border px-2.5 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                  "h-7 min-w-10 rounded-md border px-2.5 font-mono text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                   type === t
                     ? "border-primary bg-primary text-primary-foreground shadow-xs"
                     : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -392,7 +392,7 @@ const FieldPropertyEditor = ({
 
         {/* Field Value Source */}
         <div className="space-y-1.5">
-          <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+          <span className="text-muted-foreground block text-xs font-bold tracking-wider uppercase">
             Field Value Source
           </span>
           <div className="grid grid-cols-3 gap-1.5">
@@ -402,7 +402,7 @@ const FieldPropertyEditor = ({
               onClick={() => setSourceType("pathParam")}
               disabled={loading}
               className={cn(
-                "h-7 rounded-md border px-1 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                "h-7 rounded-md border px-1 font-mono text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 sourceType === "pathParam"
                   ? "border-primary bg-primary text-primary-foreground shadow-xs"
                   : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -416,7 +416,7 @@ const FieldPropertyEditor = ({
               onClick={() => setSourceType("faker")}
               disabled={loading}
               className={cn(
-                "h-7 rounded-md border px-1 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                "h-7 rounded-md border px-1 font-mono text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 sourceType === "faker"
                   ? "border-primary bg-primary text-primary-foreground shadow-xs"
                   : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -430,7 +430,7 @@ const FieldPropertyEditor = ({
               onClick={() => setSourceType("static")}
               disabled={loading}
               className={cn(
-                "h-7 rounded-md border px-1 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                "h-7 rounded-md border px-1 font-mono text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 sourceType === "static"
                   ? "border-primary bg-primary text-primary-foreground shadow-xs"
                   : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -445,12 +445,12 @@ const FieldPropertyEditor = ({
           <div className="space-y-1.5">
             <label
               htmlFor="field-param-name"
-              className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
+              className="text-muted-foreground block text-xs font-bold tracking-wider uppercase"
             >
               Select Route Parameter
             </label>
             {availableParams.length === 0 ? (
-              <div className="border-warning/20 bg-warning/10 text-warning text-mini rounded-md border p-2">
+              <div className="border-warning/20 bg-warning/10 text-warning rounded-md border p-2 text-xs">
                 No parameters found in route path. Add a segment like{" "}
                 <span className="font-mono font-bold">/:id</span> to the route
                 path.
@@ -470,7 +470,7 @@ const FieldPropertyEditor = ({
                 ))}
               </select>
             )}
-            <p className="text-muted-foreground text-mini leading-snug">
+            <p className="text-muted-foreground text-xs leading-snug">
               Requests matching this route will return the dynamic URL value in
               this field.
             </p>
@@ -479,7 +479,7 @@ const FieldPropertyEditor = ({
           <div className="space-y-1.5">
             <label
               htmlFor="field-static-val"
-              className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
+              className="text-muted-foreground block text-xs font-bold tracking-wider uppercase"
             >
               Static Value
             </label>
@@ -492,14 +492,14 @@ const FieldPropertyEditor = ({
               className="h-8 font-mono text-xs"
               disabled={loading}
             />
-            <p className="text-muted-foreground text-mini leading-snug">
+            <p className="text-muted-foreground text-xs leading-snug">
               Returns a fixed, hard-coded scalar value on every response.
             </p>
           </div>
         ) : (
           /* Faker Provider */
           <div className="space-y-1.5">
-            <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+            <span className="text-muted-foreground block text-xs font-bold tracking-wider uppercase">
               Mock Data Provider
             </span>
             <FakerProviderSelect
@@ -508,7 +508,7 @@ const FieldPropertyEditor = ({
               disabled={loading || type === "object" || type === "array"}
             />
             {selectedProvider && (
-              <p className="text-muted-foreground text-mini font-mono leading-snug">
+              <p className="text-muted-foreground font-mono text-xs leading-snug">
                 Example:{" "}
                 <span className="text-foreground">
                   {selectedProvider.example}
@@ -1600,7 +1600,7 @@ const RouteEditor = ({
           <TabsTrigger
             value="route"
             size="compact"
-            className="text-caption gap-1 px-1.5 py-1 font-medium transition-all"
+            className="gap-1 px-1.5 py-1 text-xs font-medium transition-all"
             title="Route, Status & Headers (⌥1)"
           >
             <RiSettings2Line className="size-3.5 shrink-0" aria-hidden="true" />
@@ -1614,7 +1614,7 @@ const RouteEditor = ({
           <TabsTrigger
             value="schema"
             size="compact"
-            className="text-caption gap-1 px-1.5 py-1 font-medium transition-all"
+            className="gap-1 px-1.5 py-1 text-xs font-medium transition-all"
             title="Response Schema & Types (⌥2)"
           >
             <RiFileCodeLine className="size-3.5 shrink-0" aria-hidden="true" />
@@ -1626,7 +1626,7 @@ const RouteEditor = ({
           <TabsTrigger
             value="behavior"
             size="compact"
-            className="text-caption gap-1 px-1.5 py-1 font-medium transition-all"
+            className="gap-1 px-1.5 py-1 text-xs font-medium transition-all"
             title="Chaos Simulation & Rules (⌥3)"
           >
             <RiPulseLine className="size-3.5 shrink-0" aria-hidden="true" />
@@ -1644,7 +1644,7 @@ const RouteEditor = ({
           <TabsTrigger
             value="try"
             size="compact"
-            className="text-caption gap-1 px-1.5 py-1 font-medium transition-all"
+            className="gap-1 px-1.5 py-1 text-xs font-medium transition-all"
             title="Try Live Request (⌥4)"
           >
             <RiPlayLine className="size-3.5 shrink-0" aria-hidden="true" />
@@ -1961,7 +1961,7 @@ const RouteEditor = ({
           <div className="bg-muted/40 border-border/60 flex items-center gap-2 rounded-md border p-2">
             <span
               className={cn(
-                "rounded border px-2 py-0.5 font-mono text-caption font-bold uppercase",
+                "rounded border px-2 py-0.5 font-mono text-xs font-bold uppercase",
                 METHOD_STYLES[method]?.border,
                 METHOD_STYLES[method]?.bg,
                 METHOD_STYLES[method]?.text,
@@ -1978,7 +1978,7 @@ const RouteEditor = ({
           {detectedParams.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+                <span className="text-muted-foreground block text-xs font-bold tracking-wider uppercase">
                   Parameter Values
                 </span>
                 {detectedParams.some(
@@ -1987,7 +1987,7 @@ const RouteEditor = ({
                   <button
                     type="button"
                     onClick={handleRerollAllFapi}
-                    className="text-primary hover:text-primary/80 text-mini flex items-center gap-1 font-mono font-medium transition-colors"
+                    className="text-primary hover:text-primary/80 flex items-center gap-1 font-mono text-xs font-medium transition-colors"
                     title="Reroll all FAPI runtime random values"
                   >
                     <RiShuffleLine className="size-3" />
@@ -2096,7 +2096,7 @@ const RouteEditor = ({
                               size="xs"
                               onClick={() => handleRerollParam(p.name)}
                               disabled={isTryingRequest}
-                              className="text-mini h-8 shrink-0 px-2"
+                              className="h-8 shrink-0 px-2 text-xs"
                               title="Generate new random value now"
                             >
                               <RiShuffleLine className="size-3.5" />
@@ -2104,7 +2104,7 @@ const RouteEditor = ({
                             </Button>
                           </div>
 
-                          <div className="bg-muted/40 border-border/50 text-mini flex items-center justify-between rounded border px-2 py-1 font-mono">
+                          <div className="bg-muted/40 border-border/50 flex items-center justify-between rounded border px-2 py-1 font-mono text-xs">
                             <span className="text-muted-foreground text-xs">
                               Runtime value:
                             </span>
@@ -2124,10 +2124,10 @@ const RouteEditor = ({
 
           {/* URL Preview with Copy */}
           <div className="space-y-1.5">
-            <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+            <span className="text-muted-foreground block text-xs font-bold tracking-wider uppercase">
               Mock Request URL
             </span>
-            <div className="bg-muted/40 border-border/60 text-muted-foreground text-mini flex items-center justify-between gap-2 rounded-md border p-2 font-mono break-all">
+            <div className="bg-muted/40 border-border/60 text-muted-foreground flex items-center justify-between gap-2 rounded-md border p-2 font-mono text-xs break-all">
               <span className="truncate">{constructedTryUrl}</span>
               <Button
                 type="button"
@@ -2139,7 +2139,7 @@ const RouteEditor = ({
                   );
                   toast.success("URL copied to clipboard");
                 }}
-                className="text-mini h-6 shrink-0 gap-1 px-1.5"
+                className="h-6 shrink-0 gap-1 px-1.5 text-xs"
                 title="Copy full mock URL"
               >
                 <PikaIcon
@@ -2179,11 +2179,11 @@ const RouteEditor = ({
           {/* Response Console */}
           {tryResponse && (
             <div className="border-border/70 bg-card space-y-1.5 rounded-md border p-2.5">
-              <div className="text-mini flex items-center justify-between">
+              <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <span
                     className={cn(
-                      "rounded border px-1.5 py-0.5 font-mono text-caption font-bold",
+                      "rounded border px-1.5 py-0.5 font-mono text-xs font-bold",
                       tryResponse.status >= 200 && tryResponse.status < 300
                         ? "bg-success/15 text-success border-success/30"
                         : "bg-destructive/15 text-destructive border-destructive/30",
@@ -2191,7 +2191,7 @@ const RouteEditor = ({
                   >
                     {tryResponse.status} {tryResponse.statusText}
                   </span>
-                  <span className="text-muted-foreground text-mini font-mono">
+                  <span className="text-muted-foreground font-mono text-xs">
                     {tryResponse.timeMs}ms
                   </span>
                 </div>
@@ -2203,7 +2203,7 @@ const RouteEditor = ({
                     void navigator.clipboard.writeText(tryResponse.body);
                     toast.success("Response body copied to clipboard");
                   }}
-                  className="text-mini h-6 gap-1 px-1.5"
+                  className="h-6 gap-1 px-1.5 text-xs"
                   title="Copy response body"
                 >
                   <PikaIcon
@@ -2216,7 +2216,7 @@ const RouteEditor = ({
               </div>
               <pre
                 aria-label="Response payload"
-                className="bg-muted/60 text-foreground text-caption scrollbar-subtle max-h-48 overflow-auto rounded p-2.5 font-mono"
+                className="bg-muted/60 text-foreground scrollbar-subtle max-h-48 overflow-auto rounded p-2.5 font-mono text-xs"
               >
                 {tryResponse.body}
               </pre>
@@ -2343,20 +2343,20 @@ const IdleInspector = ({
         <h3 className="text-foreground text-xs font-semibold">
           No Node Selected
         </h3>
-        <p className="text-muted-foreground text-caption mt-1.5 max-w-56 leading-relaxed">
+        <p className="text-muted-foreground mt-1.5 max-w-56 text-xs leading-relaxed">
           Click a route&apos;s pencil button to inspect and edit its properties,
           or click a field badge to edit that field&apos;s type and mock
           provider.
         </p>
 
         <div className="bg-muted/30 border-border/50 mt-6 w-full rounded-lg border p-3 text-left">
-          <div className="text-caption flex items-center justify-between">
+          <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Active Canvas Routes</span>
             <span className="text-foreground font-mono font-semibold">
               {activeRoutesCount}
             </span>
           </div>
-          <div className="text-muted-foreground text-mini mt-2 flex items-center gap-1.5">
+          <div className="text-muted-foreground mt-2 flex items-center gap-1.5 text-xs">
             <PikaIcon
               icon={PikaCore.SparkleAi01Icon}
               size={12}

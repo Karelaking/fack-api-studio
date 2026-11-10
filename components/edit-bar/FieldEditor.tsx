@@ -132,7 +132,7 @@ export const FieldEditor = ({
             </span>
           )}
           {field.nullable && (
-            <span className="text-muted-foreground/70 text-mini font-bold tracking-wider uppercase">
+            <span className="text-muted-foreground/70 text-xs font-semibold tracking-wider uppercase">
               NULL
             </span>
           )}

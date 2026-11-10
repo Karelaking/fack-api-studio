@@ -598,7 +598,7 @@ export const DashboardSidebar = ({
               )}
             >
               {/* Drawer Sub-Header */}
-              <div className="border-border/50 flex h-12 shrink-0 items-center justify-between border-b px-3">
+              <div className="border-border/50 flex h-14 shrink-0 items-center justify-between border-b px-3">
                 <div className="flex min-w-0 items-center gap-1.5">
                   <span className="text-foreground text-xs font-semibold">
                     {activeTab === "providers"

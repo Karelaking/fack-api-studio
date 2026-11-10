@@ -366,7 +366,7 @@ export const EndpointGroupCustomizer = ({
                   <p className="font-semibold">
                     No icons matched &quot;{searchQuery}&quot;
                   </p>
-                  <p className="text-micro text-muted-foreground/80">
+                  <p className="text-muted-foreground/80 text-xs">
                     Try another keyword like &quot;folder&quot;,
                     &quot;database&quot;, &quot;chart&quot;, or
                     &quot;user&quot;.
@@ -411,7 +411,7 @@ export const EndpointGroupCustomizer = ({
           <div className="flex items-center">
             {confirmDelete ? (
               <div className="flex items-center gap-1.5" role="alert">
-                <span className="text-destructive text-mini font-medium">
+                <span className="text-destructive text-xs font-medium">
                   Delete
                   {endpoint.routesCount && endpoint.routesCount > 0
                     ? ` with ${endpoint.routesCount} routes`

@@ -571,8 +571,8 @@ function FlowCanvasInner({
 
   // Listen for global canvas top bar actions
   React.useEffect(() => {
-    const handleZoomIn = () => reactFlowInstance.zoomIn();
-    const handleZoomOut = () => reactFlowInstance.zoomOut();
+    const handleZoomIn = () => reactFlowInstance.zoomIn({ duration: 200 });
+    const handleZoomOut = () => reactFlowInstance.zoomOut({ duration: 200 });
     const handleFitView = () => refitViewport(reactFlowInstance);
     const handleSaveTrigger = () => handleSave();
 

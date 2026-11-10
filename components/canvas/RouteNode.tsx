@@ -424,7 +424,7 @@ export const RouteNode = ({
                 <p className="text-foreground text-xs font-semibold">
                   Delete route?
                 </p>
-                <p className="text-muted-foreground text-mini leading-snug">
+                <p className="text-muted-foreground text-xs leading-snug">
                   This will remove{" "}
                   <span className="text-foreground font-mono font-medium">
                     {data.path}
@@ -478,7 +478,7 @@ export const RouteNode = ({
         {/* Postman-style Endpoint Path Bar with 1-Click Copy */}
         <div className="bg-muted/30 border-border/40 flex items-center justify-between gap-1.5 rounded-md border px-2.5 py-1.5">
           <div className="flex min-w-0 flex-1 items-center gap-1.5">
-            <span className="text-muted-foreground text-caption font-mono font-medium select-none">
+            <span className="text-muted-foreground font-mono text-xs font-medium select-none">
               PATH
             </span>
             <span className="text-foreground truncate font-mono text-xs font-semibold select-all">
@@ -539,7 +539,7 @@ export const RouteNode = ({
                   e.stopPropagation();
                   setShowAllFields(true);
                 }}
-                className="text-muted-foreground hover:text-primary border-border/60 hover:border-primary/40 text-mini rounded-md border border-dashed px-1.5 py-0.5 font-medium transition-colors"
+                className="text-muted-foreground hover:text-primary border-border/60 hover:border-primary/40 rounded-md border border-dashed px-1.5 py-0.5 text-xs font-medium transition-colors"
                 aria-label={`Show ${hiddenCount} more fields`}
               >
                 +{hiddenCount} more
@@ -552,7 +552,7 @@ export const RouteNode = ({
                   e.stopPropagation();
                   setShowAllFields(false);
                 }}
-                className="text-muted-foreground hover:text-primary border-border/60 hover:border-primary/40 text-mini rounded-md border border-dashed px-1.5 py-0.5 font-medium transition-colors"
+                className="text-muted-foreground hover:text-primary border-border/60 hover:border-primary/40 rounded-md border border-dashed px-1.5 py-0.5 text-xs font-medium transition-colors"
                 aria-label="Show fewer fields"
               >
                 Show less
@@ -574,7 +574,7 @@ export const RouteNode = ({
               className="text-primary shrink-0 animate-pulse motion-reduce:animate-none"
               aria-hidden="true"
             />
-            <span className="text-primary text-mini font-semibold">
+            <span className="text-primary text-xs font-semibold">
               Drop here to append field
             </span>
           </div>
@@ -599,7 +599,7 @@ export const RouteNode = ({
         <div className="flex flex-wrap items-center gap-1.5">
           {hasLatency ? (
             <span
-              className="border-warning/30 bg-warning/10 text-warning text-mini inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono font-medium"
+              className="border-warning/30 bg-warning/10 text-warning inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-xs font-medium"
               title={`Simulated Latency: ${data.latencyMin}-${data.latencyMax}ms`}
             >
               <PikaIcon
@@ -614,7 +614,7 @@ export const RouteNode = ({
             </span>
           ) : (
             <span
-              className="border-border/40 bg-muted/30 text-muted-foreground text-mini inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono"
+              className="border-border/40 bg-muted/30 text-muted-foreground inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-xs"
               title="Instant response (0ms simulated latency)"
             >
               <PikaIcon
@@ -629,7 +629,7 @@ export const RouteNode = ({
 
           {hasErrors && (
             <span
-              className="border-destructive/30 bg-destructive/10 text-destructive text-mini inline-flex h-5 animate-pulse items-center gap-1 rounded border px-1.5 font-mono font-semibold motion-reduce:animate-none"
+              className="border-destructive/30 bg-destructive/10 text-destructive inline-flex h-5 animate-pulse items-center gap-1 rounded border px-1.5 font-mono text-xs font-semibold motion-reduce:animate-none"
               title={`Simulated Error Rate: ${data.errorRate}%`}
             >
               <PikaIcon
@@ -644,7 +644,7 @@ export const RouteNode = ({
 
           {headersKeysCount > 0 && (
             <span
-              className="border-info/30 bg-info/10 text-info text-mini inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono font-medium"
+              className="border-info/30 bg-info/10 text-info inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-xs font-medium"
               title={`${headersKeysCount} Custom Header${headersKeysCount === 1 ? "" : "s"}`}
             >
               <PikaIcon
@@ -659,7 +659,7 @@ export const RouteNode = ({
 
           {rulesCount > 0 && (
             <span
-              className="border-primary/30 bg-primary/10 text-primary text-mini inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono font-medium"
+              className="border-primary/30 bg-primary/10 text-primary inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-xs font-medium"
               title={`${rulesCount} Conditional Rule${rulesCount === 1 ? "" : "s"}`}
             >
               <PikaIcon
@@ -680,7 +680,7 @@ export const RouteNode = ({
           onPointerDown={(e) => e.stopPropagation()}
           className={cn(
             "group/test inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-background/90 px-2 py-0.5",
-            "text-mini font-semibold text-foreground/80 shadow-2xs transition-all",
+            "text-xs font-semibold text-foreground/80 shadow-2xs transition-all",
             "hover:border-primary/50 hover:bg-primary/10 hover:text-primary active:scale-95 cursor-pointer",
             "pointer-coarse:min-h-11 pointer-coarse:px-3.5",
             "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background",
@@ -688,7 +688,7 @@ export const RouteNode = ({
           title={`Open live mock response in new tab (${data.mockUrl})`}
           aria-label={`Test mock endpoint ${data.method} ${data.path}`}
         >
-          <span className="text-mini font-medium">Test</span>
+          <span className="text-xs font-medium">Test</span>
         </button>
       </div>
 

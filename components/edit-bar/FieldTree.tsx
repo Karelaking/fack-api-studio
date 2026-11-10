@@ -143,7 +143,7 @@ export function FieldTree(): React.JSX.Element {
           <div className="text-xs font-semibold">
             No schema fields configured
           </div>
-          <p className="text-muted-foreground text-mini max-w-64 leading-normal">
+          <p className="text-muted-foreground max-w-64 text-xs leading-normal">
             An empty schema returns `{}`. Start by adding a single blank field
             or initialize with a common starter template.
           </p>

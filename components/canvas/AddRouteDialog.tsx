@@ -215,7 +215,7 @@ export const AddRouteDialog = ({
                   <span className="font-semibold">
                     No Endpoint Groups found.
                   </span>
-                  <span className="text-muted-foreground text-mini leading-normal font-normal">
+                  <span className="text-muted-foreground text-xs leading-normal font-normal">
                     You need at least one Endpoint Group to add routes. Go to
                     the <strong>Endpoints</strong> tab to create one.
                   </span>
@@ -325,13 +325,13 @@ export const AddRouteDialog = ({
                 />
                 {detectedParameters.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span className="text-muted-foreground text-mini font-medium">
+                    <span className="text-muted-foreground text-xs font-medium">
                       Detected parameters:
                     </span>
                     {detectedParameters.map((p) => (
                       <span
                         key={p.name}
-                        className="bg-primary/10 text-primary border-primary/20 text-mini rounded-xs border px-1.5 py-0.5 font-mono font-semibold"
+                        className="bg-primary/10 text-primary border-primary/20 rounded border px-1.5 py-0.5 font-mono text-xs font-semibold"
                       >
                         :{p.name}
                       </span>
@@ -388,7 +388,7 @@ export const AddRouteDialog = ({
                 >
                   Generate Starter Schema
                 </label>
-                <span className="text-muted-foreground text-mini block leading-normal">
+                <span className="text-muted-foreground block text-xs leading-normal">
                   Include default JSON schema properties (`id`, `createdAt`,
                   `updatedAt`).
                 </span>

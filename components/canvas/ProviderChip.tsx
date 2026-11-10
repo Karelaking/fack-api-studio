@@ -165,7 +165,7 @@ export const ProviderChip = React.memo(
             {isRouteSelected ? (
               <span
                 aria-hidden="true"
-                className="bg-primary/15 text-primary text-micro inline-flex shrink-0 items-center gap-0.5 rounded px-1.5 py-0.5 font-bold tracking-wider whitespace-nowrap uppercase opacity-0 transition-[opacity,transform] duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+                className="bg-primary/15 text-primary inline-flex shrink-0 items-center gap-0.5 rounded px-1.5 py-0.5 text-xs font-bold tracking-wider whitespace-nowrap uppercase opacity-0 transition-[opacity,transform] duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
               >
                 <PikaIcon
                   icon={PikaCore.PlusIcon}
@@ -187,7 +187,7 @@ export const ProviderChip = React.memo(
 
           {/* Bottom row: Specimen example preview (full-width for maximum visibility) */}
           <div className="mt-1 flex w-full items-center overflow-hidden">
-            <span className="text-muted-foreground text-mini block w-full truncate font-mono leading-tight">
+            <span className="text-muted-foreground block w-full truncate font-mono text-xs leading-tight">
               {formatProviderPreview(provider.example)}
             </span>
           </div>
@@ -215,7 +215,7 @@ export const ProviderChip = React.memo(
               </span>
             </div>
             <span
-              className="text-micro shrink-0 rounded-full px-1.5 py-0.5 font-mono font-medium"
+              className="shrink-0 rounded-full px-1.5 py-0.5 font-mono text-xs font-medium"
               style={{
                 color: categoryColor,
                 backgroundColor: getCategoryTint(provider, 12),
@@ -226,13 +226,13 @@ export const ProviderChip = React.memo(
           </div>
 
           {/* Row 2: Callable API Method Signature */}
-          <code className="text-primary bg-muted/80 border-border/40 text-mini block w-full truncate rounded border px-2 py-1 font-mono font-medium select-all">
+          <code className="text-primary bg-muted/80 border-border/40 block w-full truncate rounded border px-2 py-1 font-mono text-xs font-medium select-all">
             faker.{provider.value}()
           </code>
 
           {/* Row 3: Specimen Output Row */}
-          <div className="bg-muted/40 border-border/40 text-mini flex w-full items-center justify-between gap-1.5 rounded border px-2 py-1 font-mono">
-            <span className="text-muted-foreground/80 text-micro shrink-0 font-sans font-semibold tracking-wider uppercase">
+          <div className="bg-muted/40 border-border/40 flex w-full items-center justify-between gap-1.5 rounded border px-2 py-1 font-mono text-xs">
+            <span className="text-muted-foreground/80 shrink-0 font-sans text-xs font-semibold tracking-wider uppercase">
               Sample
             </span>
             <span className="text-foreground truncate text-right font-medium select-all">
@@ -241,7 +241,7 @@ export const ProviderChip = React.memo(
           </div>
 
           {/* Row 4: Footer interaction shortcut */}
-          <div className="border-border/40 text-muted-foreground text-mini border-t pt-1.5">
+          <div className="border-border/40 text-muted-foreground border-t pt-1.5 text-xs">
             {isRouteSelected ? (
               <span className="text-primary flex items-center gap-1 font-medium">
                 <PikaIcon
