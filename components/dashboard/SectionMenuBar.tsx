@@ -80,7 +80,12 @@ export const SectionMenuBar = ({
 
   const switchInspectorTab = React.useCallback(
     (tab: InspectorTab) => {
-      setInspectorTab(tab);
+      if (typeof setInspectorTab === "function") {
+        setInspectorTab(tab);
+      }
+      window.dispatchEvent(
+        new CustomEvent("inspector-set-tab", { detail: { tab } }),
+      );
       toast.info(
         `Switched Inspector to ${tab.charAt(0).toUpperCase() + tab.slice(1)}`,
       );

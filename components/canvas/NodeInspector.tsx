@@ -611,9 +611,29 @@ const RouteEditor = ({
   const [tsOpen, setTsOpen] = React.useState(false);
   const [copiedJson, setCopiedJson] = React.useState(false);
 
-  // Sync with unified canvas-dnd store for active tab
-  const inspectorTab = useCanvasDndStore((s) => s.inspectorTab);
-  const setInspectorTab = useCanvasDndStore((s) => s.setInspectorTab);
+  // Sync with unified canvas-dnd store for active tab with resilient local fallback
+  const storeInspectorTab = useCanvasDndStore((s) => s.inspectorTab);
+  const storeSetInspectorTab = useCanvasDndStore((s) => s.setInspectorTab);
+
+  const [activeTab, setActiveTab] = React.useState<InspectorTab>(
+    storeInspectorTab || "config",
+  );
+  const [prevStoreTab, setPrevStoreTab] = React.useState(storeInspectorTab);
+
+  if (storeInspectorTab !== prevStoreTab) {
+    setPrevStoreTab(storeInspectorTab);
+    setActiveTab(storeInspectorTab || "config");
+  }
+
+  const handleTabChange = React.useCallback(
+    (tab: InspectorTab) => {
+      setActiveTab(tab);
+      if (typeof storeSetInspectorTab === "function") {
+        storeSetInspectorTab(tab);
+      }
+    },
+    [storeSetInspectorTab],
+  );
 
   // Route fields from Zustand schema store
   const fields = useSchemaStore((state) => state.fields);
@@ -1111,6 +1131,12 @@ const RouteEditor = ({
     const handleDeleteRouteEvent = (): void => {
       setConfirmDelete(true);
     };
+    const handleSetTabEvent = (e: Event): void => {
+      const customEvent = e as CustomEvent<{ tab: InspectorTab }>;
+      if (customEvent.detail?.tab) {
+        handleTabChange(customEvent.detail.tab);
+      }
+    };
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("route-generate-types", handleOpenTypes);
@@ -1118,6 +1144,10 @@ const RouteEditor = ({
     window.addEventListener("route-toggle-enabled", handleToggleEnabledEvent);
     window.addEventListener("route-save", handleSaveRouteEvent);
     window.addEventListener("route-delete", handleDeleteRouteEvent);
+    window.addEventListener(
+      "inspector-set-tab",
+      handleSetTabEvent as EventListener,
+    );
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
@@ -1129,8 +1159,12 @@ const RouteEditor = ({
       );
       window.removeEventListener("route-save", handleSaveRouteEvent);
       window.removeEventListener("route-delete", handleDeleteRouteEvent);
+      window.removeEventListener(
+        "inspector-set-tab",
+        handleSetTabEvent as EventListener,
+      );
     };
-  }, [handleCopySchema, handleSaveRoute, onDeselect]);
+  }, [handleCopySchema, handleSaveRoute, handleTabChange, onDeselect]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -1283,8 +1317,8 @@ const RouteEditor = ({
 
       {/* Categorized Tabs: Config, Schema, Rules, Chaos, Headers, Try */}
       <Tabs
-        value={inspectorTab}
-        onValueChange={(val) => setInspectorTab(val as InspectorTab)}
+        value={activeTab}
+        onValueChange={(val) => handleTabChange(val as InspectorTab)}
         className="flex min-h-0 min-w-0 flex-1 flex-col"
       >
         <TabsList className="bg-muted/30 border-border/60 grid shrink-0 grid-cols-6 border-b p-1">
