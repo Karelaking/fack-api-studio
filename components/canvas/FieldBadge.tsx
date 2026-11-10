@@ -69,7 +69,11 @@ export const FieldBadge = ({
         className="h-1.5 w-1.5 shrink-0 rounded-full"
         style={{
           backgroundColor:
-            field.source?.type === "pathParam" ? "oklch(0.47 0.15 245)" : color,
+            field.source?.type === "pathParam"
+              ? "oklch(0.47 0.15 245)"
+              : field.source?.type === "static"
+                ? "oklch(0.65 0.16 150)"
+                : color,
         }}
       />
 
@@ -88,10 +92,14 @@ export const FieldBadge = ({
         {field.name}
       </button>
 
-      {/* Provider shortname or URL param tag */}
+      {/* Provider shortname, URL param tag, or static value */}
       {field.source?.type === "pathParam" ? (
         <span className="text-primary text-micro font-mono font-semibold">
           :{field.source.name}
+        </span>
+      ) : field.source?.type === "static" ? (
+        <span className="text-micro max-w-20 truncate font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+          =&quot;{field.source.value}&quot;
         </span>
       ) : (
         provider && (

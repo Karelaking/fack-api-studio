@@ -56,11 +56,20 @@ export function FieldSettingsModal({
   const [type, setType] = React.useState<SchemaField["type"]>("string");
   const [nullable, setNullable] = React.useState(false);
   const [fakerProvider, setFakerProvider] = React.useState("");
-  const [sourceType, setSourceType] = React.useState<"faker" | "pathParam">(
-    initialData?.source?.type === "pathParam" ? "pathParam" : "faker",
+  const [sourceType, setSourceType] = React.useState<
+    "faker" | "pathParam" | "static"
+  >(
+    initialData?.source?.type === "pathParam"
+      ? "pathParam"
+      : initialData?.source?.type === "static"
+        ? "static"
+        : "faker",
   );
   const [paramName, setParamName] = React.useState(
-    initialData?.source?.name || "",
+    initialData?.source?.type === "pathParam" ? initialData.source.name : "",
+  );
+  const [staticValue, setStaticValue] = React.useState(
+    initialData?.source?.type === "static" ? initialData.source.value : "",
   );
   const [arrayItemType, setArrayItemType] =
     React.useState<SchemaField["arrayItemType"]>("string");
@@ -74,9 +83,20 @@ export function FieldSettingsModal({
       setNullable(initialData?.nullable || false);
       setFakerProvider(initialData?.fakerProvider || "");
       setSourceType(
-        initialData?.source?.type === "pathParam" ? "pathParam" : "faker",
+        initialData?.source?.type === "pathParam"
+          ? "pathParam"
+          : initialData?.source?.type === "static"
+            ? "static"
+            : "faker",
       );
-      setParamName(initialData?.source?.name || "");
+      setParamName(
+        initialData?.source?.type === "pathParam"
+          ? initialData.source.name
+          : "",
+      );
+      setStaticValue(
+        initialData?.source?.type === "static" ? initialData.source.value : "",
+      );
       setArrayItemType(initialData?.arrayItemType || "string");
       setArrayItemFakerProvider(initialData?.arrayItemFakerProvider || "");
     }
@@ -90,7 +110,9 @@ export function FieldSettingsModal({
       source:
         sourceType === "pathParam" && paramName.trim()
           ? { type: "pathParam", name: paramName.trim() }
-          : undefined,
+          : sourceType === "static"
+            ? { type: "static", value: staticValue }
+            : undefined,
       fakerProvider:
         sourceType === "faker" ? fakerProvider || undefined : undefined,
       arrayItemType: type === "array" ? arrayItemType : undefined,
@@ -214,7 +236,7 @@ export function FieldSettingsModal({
             <>
               <div className="grid grid-cols-4 items-center gap-4">
                 <span className="text-right text-sm font-semibold">Source</span>
-                <div className="col-span-3 grid grid-cols-2 gap-2">
+                <div className="col-span-3 grid grid-cols-3 gap-1.5">
                   <Button
                     type="button"
                     variant={sourceType === "pathParam" ? "default" : "outline"}
@@ -222,7 +244,7 @@ export function FieldSettingsModal({
                     onClick={() => setSourceType("pathParam")}
                     className="text-xs"
                   >
-                    URL Parameter
+                    URL Param
                   </Button>
                   <Button
                     type="button"
@@ -231,7 +253,16 @@ export function FieldSettingsModal({
                     onClick={() => setSourceType("faker")}
                     className="text-xs"
                   >
-                    Faker Provider
+                    FAPI Random
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={sourceType === "static" ? "default" : "outline"}
+                    size="xs"
+                    onClick={() => setSourceType("static")}
+                    className="text-xs"
+                  >
+                    Static Value
                   </Button>
                 </div>
               </div>
@@ -257,6 +288,28 @@ export function FieldSettingsModal({
                     <p className="text-muted-foreground text-mini">
                       Enter the route parameter name (e.g. &quot;id&quot; for
                       &quot;/:id&quot;).
+                    </p>
+                  </div>
+                </div>
+              ) : sourceType === "static" ? (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label
+                    htmlFor="field-static-val-modal"
+                    className="text-right text-sm font-semibold"
+                  >
+                    Static Value
+                  </label>
+                  <div className="col-span-3 space-y-1">
+                    <Input
+                      id="field-static-val-modal"
+                      value={staticValue}
+                      onChange={(e) => setStaticValue(e.target.value)}
+                      placeholder='e.g. "active", 100, true'
+                      className="font-mono text-xs"
+                    />
+                    <p className="text-muted-foreground text-mini">
+                      Returns this fixed, hard-coded scalar value on every
+                      response.
                     </p>
                   </div>
                 </div>

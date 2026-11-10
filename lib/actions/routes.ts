@@ -30,6 +30,10 @@ import {
   validateRoutePath,
   validateRouteSchemaBindings,
 } from "@/lib/services/route-param.service";
+import {
+  generateRandomFapiValue,
+  generateRandomFapiParams,
+} from "@/lib/services/fapi-random.service";
 
 const routesTrace = LoggerRegistry.getTrace("db-routes");
 
@@ -312,8 +316,49 @@ export async function deleteRoute(id: string): Promise<void> {
     }
     revalidatePath("/");
     routesTrace.traceSuccess("deleteRoute", "void");
+    return;
   } catch (error) {
     routesTrace.traceError("deleteRoute", error);
+    throw error;
+  }
+}
+
+/**
+ * Generates a dynamic random sample string from a FAPI (Faker.js) provider at runtime.
+ */
+export async function getRandomFapiValueAction(
+  providerPath: string,
+): Promise<string> {
+  routesTrace.traceCall("getRandomFapiValueAction", providerPath);
+  try {
+    const val = generateRandomFapiValue(providerPath);
+    routesTrace.traceSuccess("getRandomFapiValueAction", val);
+    return val;
+  } catch (error) {
+    routesTrace.traceError("getRandomFapiValueAction", error);
+    throw error;
+  }
+}
+
+/**
+ * Generates dynamic random runtime values for multiple route parameters configured with FAPI providers.
+ */
+export async function getRandomFapiParamsAction(
+  paramProviders: Record<string, string>,
+): Promise<Record<string, string>> {
+  routesTrace.traceCall(
+    "getRandomFapiParamsAction",
+    Object.keys(paramProviders).join(", "),
+  );
+  try {
+    const res = generateRandomFapiParams(paramProviders);
+    routesTrace.traceSuccess(
+      "getRandomFapiParamsAction",
+      `${Object.keys(res).length} params`,
+    );
+    return res;
+  } catch (error) {
+    routesTrace.traceError("getRandomFapiParamsAction", error);
     throw error;
   }
 }

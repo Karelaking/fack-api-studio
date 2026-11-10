@@ -120,7 +120,7 @@ function stripFakerKeywords(
 
   for (const [key, value] of Object.entries(obj)) {
     // Skip internal engine extension keywords
-    if (key === "x-faker" || key === "x-fack-source" || key === "faker") {
+    if (key === "x-faker" || key.startsWith("x-fack-") || key === "faker") {
       continue;
     }
 

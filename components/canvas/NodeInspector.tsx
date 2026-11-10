@@ -4,6 +4,7 @@ import * as React from "react";
 import * as PikaCore from "@pikaicons/core-free";
 import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
+import { RiShuffleLine } from "@remixicon/react";
 import { cn } from "@/lib/utils";
 import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
 import { FakerProviderSelect } from "@/components/edit-bar/FakerProviderSelect";
@@ -16,8 +17,14 @@ import {
 import {
   parseSchemaToFields,
   synthesizeSchema,
+  extractRouteParamConfigs,
   type SchemaField,
+  type RouteParamConfig,
 } from "@/lib/schema-synthesizer";
+import {
+  generateRandomFapiValue,
+  getDefaultProviderForParam,
+} from "@/lib/services/fapi-random.service";
 import {
   getEffectiveRoutePath,
   extractRoutePathParameters,
@@ -99,11 +106,22 @@ const FieldEditor = ({
     [effectivePath],
   );
 
-  const [sourceType, setSourceType] = React.useState<"faker" | "pathParam">(
-    field.source?.type === "pathParam" ? "pathParam" : "faker",
+  const [sourceType, setSourceType] = React.useState<
+    "faker" | "pathParam" | "static"
+  >(
+    field.source?.type === "pathParam"
+      ? "pathParam"
+      : field.source?.type === "static"
+        ? "static"
+        : "faker",
   );
   const [selectedParamName, setSelectedParamName] = React.useState<string>(
-    field.source?.name || availableParams[0]?.name || "",
+    field.source?.type === "pathParam"
+      ? field.source.name
+      : availableParams[0]?.name || "",
+  );
+  const [staticValue, setStaticValue] = React.useState<string>(
+    field.source?.type === "static" ? field.source.value : "",
   );
 
   const selectedProvider = fakerProvider
@@ -126,7 +144,9 @@ const FieldEditor = ({
               source:
                 sourceType === "pathParam" && selectedParamName
                   ? { type: "pathParam" as const, name: selectedParamName }
-                  : undefined,
+                  : sourceType === "static"
+                    ? { type: "static" as const, value: staticValue }
+                    : undefined,
               fakerProvider:
                 sourceType === "faker" ? fakerProvider || undefined : undefined,
               nullable,
@@ -243,20 +263,20 @@ const FieldEditor = ({
           <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
             Field Value Source
           </span>
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-3 gap-1.5">
             <button
               type="button"
               aria-pressed={sourceType === "pathParam"}
               onClick={() => setSourceType("pathParam")}
               disabled={loading}
               className={cn(
-                "h-7 rounded-md border px-2 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                "h-7 rounded-md border px-1 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 sourceType === "pathParam"
                   ? "border-primary bg-primary text-primary-foreground shadow-xs"
                   : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              URL Parameter
+              URL Param
             </button>
             <button
               type="button"
@@ -264,13 +284,27 @@ const FieldEditor = ({
               onClick={() => setSourceType("faker")}
               disabled={loading}
               className={cn(
-                "h-7 rounded-md border px-2 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                "h-7 rounded-md border px-1 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 sourceType === "faker"
                   ? "border-primary bg-primary text-primary-foreground shadow-xs"
                   : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              Faker Provider
+              FAPI Random
+            </button>
+            <button
+              type="button"
+              aria-pressed={sourceType === "static"}
+              onClick={() => setSourceType("static")}
+              disabled={loading}
+              className={cn(
+                "h-7 rounded-md border px-1 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                sourceType === "static"
+                  ? "border-primary bg-primary text-primary-foreground shadow-xs"
+                  : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              Static Value
             </button>
           </div>
         </div>
@@ -307,6 +341,27 @@ const FieldEditor = ({
             <p className="text-muted-foreground text-mini leading-snug">
               Requests matching this route will return the dynamic URL value in
               this field.
+            </p>
+          </div>
+        ) : sourceType === "static" ? (
+          <div className="space-y-1.5">
+            <label
+              htmlFor="field-static-val"
+              className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
+            >
+              Static Value
+            </label>
+            <Input
+              id="field-static-val"
+              value={staticValue}
+              onChange={(e) => setStaticValue(e.target.value)}
+              placeholder='e.g. "active", 100, true'
+              variant="mono"
+              className="h-8 text-xs"
+              disabled={loading}
+            />
+            <p className="text-muted-foreground text-mini leading-snug">
+              Returns a fixed, hard-coded scalar value on every response.
             </p>
           </div>
         ) : (
@@ -459,9 +514,6 @@ const RouteEditor = ({
     [effectivePath],
   );
 
-  const [testParamValues, setTestParamValues] = React.useState<
-    Record<string, string>
-  >({});
   const [isTryingRequest, setIsTryingRequest] = React.useState(false);
   const [tryResponse, setTryResponse] = React.useState<{
     status: number;
@@ -470,16 +522,186 @@ const RouteEditor = ({
     body: string;
   } | null>(null);
 
-  // Parse fields from schema
+  // Parse fields & saved parameter configurations from schema
   const routeResponseSchema = route.responseSchema;
-  const fields: SchemaField[] = React.useMemo(() => {
+  const parsedSchemaObj = React.useMemo(() => {
     try {
-      const parsed = JSON.parse(routeResponseSchema ?? "{}");
-      return parseSchemaToFields(parsed);
+      return JSON.parse(routeResponseSchema ?? "{}");
     } catch {
-      return [];
+      return {};
     }
   }, [routeResponseSchema]);
+
+  const fields: SchemaField[] = React.useMemo(() => {
+    return parseSchemaToFields(parsedSchemaObj);
+  }, [parsedSchemaObj]);
+
+  const savedParamConfigs = React.useMemo(() => {
+    return extractRouteParamConfigs(parsedSchemaObj);
+  }, [parsedSchemaObj]);
+
+  const [paramConfigs, setParamConfigs] = React.useState<
+    Record<string, RouteParamConfig>
+  >(() => {
+    const initial: Record<string, RouteParamConfig> = {};
+    for (const p of detectedParams) {
+      initial[p.name] = savedParamConfigs[p.name] ?? {
+        mode: "static",
+        staticValue: p.name === "id" ? "295" : `sample_${p.name}`,
+        provider: getDefaultProviderForParam(p.name),
+      };
+    }
+    return initial;
+  });
+
+  React.useEffect(() => {
+    // eslint-disable-next-line react/set-state-in-effect
+    setParamConfigs((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const p of detectedParams) {
+        if (!next[p.name]) {
+          next[p.name] = savedParamConfigs[p.name] ?? {
+            mode: "static",
+            staticValue: p.name === "id" ? "295" : `sample_${p.name}`,
+            provider: getDefaultProviderForParam(p.name),
+          };
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [detectedParams, savedParamConfigs]);
+
+  const [testParamValues, setTestParamValues] = React.useState<
+    Record<string, string>
+  >(() => {
+    const initial: Record<string, string> = {};
+    for (const p of detectedParams) {
+      const cfg = savedParamConfigs[p.name];
+      if (cfg?.mode === "fapi") {
+        initial[p.name] = generateRandomFapiValue(
+          cfg.provider || getDefaultProviderForParam(p.name),
+        );
+      } else {
+        initial[p.name] =
+          cfg?.staticValue ?? (p.name === "id" ? "295" : `sample_${p.name}`);
+      }
+    }
+    return initial;
+  });
+
+  const handleToggleParamMode = (
+    paramName: string,
+    mode: "static" | "fapi",
+  ): void => {
+    setParamConfigs((prev) => {
+      const existing = prev[paramName] ?? {
+        mode: "static",
+        staticValue: paramName === "id" ? "295" : `sample_${paramName}`,
+        provider: getDefaultProviderForParam(paramName),
+      };
+      return {
+        ...prev,
+        [paramName]: {
+          ...existing,
+          mode,
+        },
+      };
+    });
+
+    if (mode === "fapi") {
+      const provider =
+        paramConfigs[paramName]?.provider ||
+        getDefaultProviderForParam(paramName);
+      const randomVal = generateRandomFapiValue(provider);
+      setTestParamValues((prev) => ({
+        ...prev,
+        [paramName]: randomVal,
+      }));
+    } else {
+      const staticVal =
+        paramConfigs[paramName]?.staticValue ??
+        (paramName === "id" ? "295" : `sample_${paramName}`);
+      setTestParamValues((prev) => ({
+        ...prev,
+        [paramName]: staticVal,
+      }));
+    }
+  };
+
+  const handleParamStaticValueChange = (
+    paramName: string,
+    value: string,
+  ): void => {
+    setParamConfigs((prev) => ({
+      ...prev,
+      [paramName]: {
+        ...(prev[paramName] ?? {
+          mode: "static",
+          provider: getDefaultProviderForParam(paramName),
+        }),
+        mode: "static",
+        staticValue: value,
+      },
+    }));
+    setTestParamValues((prev) => ({
+      ...prev,
+      [paramName]: value,
+    }));
+  };
+
+  const handleParamProviderChange = (
+    paramName: string,
+    provider: string,
+  ): void => {
+    setParamConfigs((prev) => ({
+      ...prev,
+      [paramName]: {
+        ...(prev[paramName] ?? {
+          mode: "fapi",
+          staticValue: paramName === "id" ? "295" : `sample_${paramName}`,
+        }),
+        mode: "fapi",
+        provider,
+      },
+    }));
+    const freshVal = generateRandomFapiValue(provider);
+    setTestParamValues((prev) => ({
+      ...prev,
+      [paramName]: freshVal,
+    }));
+  };
+
+  const handleRerollParam = (paramName: string): void => {
+    const provider =
+      paramConfigs[paramName]?.provider ||
+      getDefaultProviderForParam(paramName);
+    const freshVal = generateRandomFapiValue(provider);
+    setTestParamValues((prev) => ({
+      ...prev,
+      [paramName]: freshVal,
+    }));
+    toast.success(
+      `Generated fresh random value for :${paramName}: "${freshVal}"`,
+    );
+  };
+
+  const handleRerollAllFapi = (): void => {
+    const nextVals: Record<string, string> = {};
+    for (const p of detectedParams) {
+      if (paramConfigs[p.name]?.mode === "fapi") {
+        const provider =
+          paramConfigs[p.name]?.provider || getDefaultProviderForParam(p.name);
+        nextVals[p.name] = generateRandomFapiValue(provider);
+      }
+    }
+    setTestParamValues((prev) => ({
+      ...prev,
+      ...nextVals,
+    }));
+    toast.success("Rerolled all FAPI parameter values");
+  };
 
   const handleAddParamField = async (paramName: string): Promise<void> => {
     setLoading(true);
@@ -494,7 +716,9 @@ const RouteEditor = ({
       const updatedFields = [...fields, newField];
       const updated = await updateRoute({
         id: route.id,
-        responseSchema: JSON.stringify(synthesizeSchema(updatedFields)),
+        responseSchema: JSON.stringify(
+          synthesizeSchema(updatedFields, paramConfigs),
+        ),
       });
       onRouteUpdated(updated);
       toast.success(`Field "${paramName}" added and bound to URL parameter!`);
@@ -523,7 +747,32 @@ const RouteEditor = ({
     setIsTryingRequest(true);
     const start = Date.now();
     try {
-      const res = await fetch(constructedTryUrl, {
+      // Re-generate fresh runtime random values for all parameters configured with FAPI
+      const updatedRuntimeValues = { ...testParamValues };
+      for (const p of detectedParams) {
+        if (paramConfigs[p.name]?.mode === "fapi") {
+          const provider =
+            paramConfigs[p.name]?.provider ||
+            getDefaultProviderForParam(p.name);
+          const freshVal = generateRandomFapiValue(provider);
+          updatedRuntimeValues[p.name] = freshVal;
+        }
+      }
+      setTestParamValues(updatedRuntimeValues);
+
+      let resolvedSubpath = effectivePath;
+      for (const p of detectedParams) {
+        const entered = updatedRuntimeValues[p.name]?.trim();
+        const val = entered || `example_${p.name}`;
+        resolvedSubpath = resolvedSubpath.replace(
+          new RegExp(`:${p.name}\\b`, "g"),
+          val,
+        );
+      }
+      const slug = projectSlug || "demo";
+      const targetUrl = `/api/mock/${slug}${resolvedSubpath.startsWith("/") ? resolvedSubpath : `/${resolvedSubpath}`}`;
+
+      const res = await fetch(targetUrl, {
         method,
       });
       const timeMs = Date.now() - start;
@@ -612,6 +861,7 @@ const RouteEditor = ({
         statusCode,
         latencyMin: latency,
         latencyMax: latency,
+        responseSchema: JSON.stringify(synthesizeSchema(fields, paramConfigs)),
       });
       onRouteUpdated(updated);
       toast.success("Route updated");
@@ -753,17 +1003,32 @@ const RouteEditor = ({
                       f.source.name === p.name) ||
                     f.name.toLowerCase() === p.name.toLowerCase(),
                 );
+                const cfg = paramConfigs[p.name];
+                const isFapi = cfg?.mode === "fapi";
+
                 return (
                   <div
                     key={p.name}
                     className="bg-card border-border/60 flex items-center justify-between rounded-md border p-2"
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                       <span className="text-foreground font-mono text-xs font-semibold">
                         :{p.name}
                       </span>
                       <span className="text-muted-foreground text-mini">
                         (required)
+                      </span>
+                      <span
+                        className={cn(
+                          "text-mini rounded border px-1 py-0.5 font-mono",
+                          isFapi
+                            ? "border-primary/30 bg-primary/10 text-primary"
+                            : "border-border/70 bg-muted/60 text-muted-foreground",
+                        )}
+                      >
+                        {isFapi
+                          ? `FAPI: ${cfg?.provider || "random"}`
+                          : `Static: "${testParamValues[p.name] ?? cfg?.staticValue ?? ""}"`}
                       </span>
                     </div>
                     {!isMapped ? (
@@ -773,12 +1038,12 @@ const RouteEditor = ({
                         size="xs"
                         onClick={() => void handleAddParamField(p.name)}
                         disabled={loading}
-                        className="text-mini h-6 font-mono"
+                        className="text-mini h-6 shrink-0 font-mono"
                       >
                         + Add field
                       </Button>
                     ) : (
-                      <span className="text-success text-mini font-medium">
+                      <span className="text-success text-mini shrink-0 font-medium">
                         Field mapped
                       </span>
                     )}
@@ -835,6 +1100,10 @@ const RouteEditor = ({
                         <span className="bg-primary/10 text-primary border-primary/20 text-mini rounded-xs border px-1 py-0.5 font-mono font-medium">
                           URL: :{f.source.name}
                         </span>
+                      ) : f.source?.type === "static" ? (
+                        <span className="text-mini rounded-xs border border-emerald-500/20 bg-emerald-500/10 px-1 py-0.5 font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                          =&quot;{f.source.value}&quot;
+                        </span>
                       ) : (
                         f.fakerProvider || f.type
                       )}
@@ -883,30 +1152,145 @@ const RouteEditor = ({
 
           {detectedParams.length > 0 && (
             <div className="space-y-2">
-              <span className="text-muted-foreground text-mini block">
-                Parameter test values:
-              </span>
-              <div className="grid gap-2">
-                {detectedParams.map((p) => (
-                  <div key={p.name} className="flex items-center gap-2">
-                    <span className="text-muted-foreground w-16 truncate font-mono text-xs">
-                      :{p.name}
-                    </span>
-                    <Input
-                      value={testParamValues[p.name] ?? ""}
-                      onChange={(e) =>
-                        setTestParamValues((prev) => ({
-                          ...prev,
-                          [p.name]: e.target.value,
-                        }))
-                      }
-                      placeholder={p.name === "id" ? "295" : "value"}
-                      variant="mono"
-                      className="h-7 flex-1 text-xs"
-                      disabled={isTryingRequest}
-                    />
-                  </div>
-                ))}
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-mini block font-semibold">
+                  Parameter Values:
+                </span>
+                {detectedParams.some(
+                  (p) => paramConfigs[p.name]?.mode === "fapi",
+                ) && (
+                  <button
+                    type="button"
+                    onClick={handleRerollAllFapi}
+                    className="text-primary hover:text-primary/80 text-mini flex items-center gap-1 font-mono font-medium transition-colors"
+                    title="Reroll all FAPI runtime random values"
+                  >
+                    <RiShuffleLine className="size-3" />
+                    <span>Reroll FAPI</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                {detectedParams.map((p) => {
+                  const cfg = paramConfigs[p.name] ?? {
+                    mode: "static",
+                    staticValue: p.name === "id" ? "295" : `sample_${p.name}`,
+                    provider: getDefaultProviderForParam(p.name),
+                  };
+                  const isFapi = cfg.mode === "fapi";
+
+                  return (
+                    <div
+                      key={p.name}
+                      className="bg-card border-border/70 space-y-2 rounded-md border p-2.5 shadow-2xs"
+                    >
+                      {/* Param Row Header: Name and Mode Switch */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <span className="text-foreground font-mono text-xs font-semibold">
+                            :{p.name}
+                          </span>
+                          <span className="text-muted-foreground text-micro">
+                            (param)
+                          </span>
+                        </div>
+
+                        {/* Mode Selector Toggle: Static vs FAPI */}
+                        <div className="bg-muted/80 flex items-center rounded-md p-0.5">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleToggleParamMode(p.name, "static")
+                            }
+                            className={cn(
+                              "rounded px-2 py-0.5 text-mini transition-all",
+                              !isFapi
+                                ? "bg-background text-foreground shadow-xs font-semibold"
+                                : "text-muted-foreground hover:text-foreground",
+                            )}
+                          >
+                            Static
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleToggleParamMode(p.name, "fapi")
+                            }
+                            className={cn(
+                              "rounded px-2 py-0.5 text-mini transition-all",
+                              isFapi
+                                ? "bg-primary text-primary-foreground shadow-xs font-semibold"
+                                : "text-muted-foreground hover:text-foreground",
+                            )}
+                          >
+                            FAPI Random
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Value Input Area */}
+                      {!isFapi ? (
+                        <div className="space-y-1">
+                          <Input
+                            value={testParamValues[p.name] ?? ""}
+                            onChange={(e) =>
+                              handleParamStaticValueChange(
+                                p.name,
+                                e.target.value,
+                              )
+                            }
+                            placeholder={
+                              p.name === "id" ? "295" : `sample_${p.name}`
+                            }
+                            variant="mono"
+                            className="h-7 text-xs"
+                            disabled={isTryingRequest}
+                          />
+                          <p className="text-muted-foreground text-micro font-mono">
+                            Hard-coded constant parameter value
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <div className="min-w-0 flex-1">
+                              <FakerProviderSelect
+                                value={cfg.provider}
+                                onValueChange={(val) =>
+                                  handleParamProviderChange(p.name, val)
+                                }
+                                disabled={isTryingRequest}
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="xs"
+                              onClick={() => handleRerollParam(p.name)}
+                              disabled={isTryingRequest}
+                              className="text-mini h-8 shrink-0 px-2"
+                              title="Generate new random value now"
+                            >
+                              <RiShuffleLine className="size-3.5" />
+                              <span className="sr-only">Reroll</span>
+                            </Button>
+                          </div>
+
+                          <div className="bg-muted/40 border-border/50 text-mini flex items-center justify-between rounded border px-2 py-1 font-mono">
+                            <span className="text-muted-foreground text-micro">
+                              Runtime value:
+                            </span>
+                            <span className="text-primary truncate font-semibold">
+                              {testParamValues[p.name] ||
+                                "(generated at request)"}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

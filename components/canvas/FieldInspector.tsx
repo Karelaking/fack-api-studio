@@ -71,11 +71,22 @@ function FieldInspectorForm({
     [route.path],
   );
 
-  const [sourceType, setSourceType] = React.useState<"faker" | "pathParam">(
-    field.source?.type === "pathParam" ? "pathParam" : "faker",
+  const [sourceType, setSourceType] = React.useState<
+    "faker" | "pathParam" | "static"
+  >(
+    field.source?.type === "pathParam"
+      ? "pathParam"
+      : field.source?.type === "static"
+        ? "static"
+        : "faker",
   );
   const [selectedParamName, setSelectedParamName] = React.useState<string>(
-    field.source?.name || availableParams[0]?.name || "",
+    field.source?.type === "pathParam"
+      ? field.source.name
+      : availableParams[0]?.name || "",
+  );
+  const [staticValue, setStaticValue] = React.useState<string>(
+    field.source?.type === "static" ? field.source.value : "",
   );
 
   const selectedProvider = fakerProvider
@@ -94,7 +105,9 @@ function FieldInspectorForm({
               source:
                 sourceType === "pathParam" && selectedParamName
                   ? { type: "pathParam" as const, name: selectedParamName }
-                  : undefined,
+                  : sourceType === "static"
+                    ? { type: "static" as const, value: staticValue }
+                    : undefined,
               fakerProvider:
                 sourceType === "faker" ? fakerProvider || undefined : undefined,
               nullable,
@@ -207,20 +220,20 @@ function FieldInspectorForm({
           <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
             Field Value Source
           </span>
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-3 gap-1.5">
             <button
               type="button"
               aria-pressed={sourceType === "pathParam"}
               onClick={() => setSourceType("pathParam")}
               disabled={loading}
               className={cn(
-                "h-7 rounded-md border px-2 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                "h-7 rounded-md border px-1 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 sourceType === "pathParam"
                   ? "border-primary bg-primary text-primary-foreground shadow-xs"
                   : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              URL Parameter
+              URL Param
             </button>
             <button
               type="button"
@@ -228,13 +241,27 @@ function FieldInspectorForm({
               onClick={() => setSourceType("faker")}
               disabled={loading}
               className={cn(
-                "h-7 rounded-md border px-2 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                "h-7 rounded-md border px-1 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 sourceType === "faker"
                   ? "border-primary bg-primary text-primary-foreground shadow-xs"
                   : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              Faker Provider
+              FAPI Random
+            </button>
+            <button
+              type="button"
+              aria-pressed={sourceType === "static"}
+              onClick={() => setSourceType("static")}
+              disabled={loading}
+              className={cn(
+                "h-7 rounded-md border px-1 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                sourceType === "static"
+                  ? "border-primary bg-primary text-primary-foreground shadow-xs"
+                  : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              Static Value
             </button>
           </div>
         </div>
@@ -271,6 +298,27 @@ function FieldInspectorForm({
             <p className="text-muted-foreground text-mini leading-snug">
               Requests matching this route will return the dynamic URL value in
               this field.
+            </p>
+          </div>
+        ) : sourceType === "static" ? (
+          <div className="space-y-1.5">
+            <label
+              htmlFor="field-inspector-static-value"
+              className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
+            >
+              Static Value
+            </label>
+            <Input
+              id="field-inspector-static-value"
+              value={staticValue}
+              onChange={(e) => setStaticValue(e.target.value)}
+              placeholder='e.g. "active", 100, true'
+              variant="mono"
+              className="h-8 text-xs"
+              disabled={loading}
+            />
+            <p className="text-muted-foreground text-mini leading-snug">
+              Returns a fixed, hard-coded scalar value on every response.
             </p>
           </div>
         ) : (

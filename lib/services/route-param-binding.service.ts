@@ -43,6 +43,7 @@ interface GenericSchemaProperty {
   "x-fack-source"?: {
     type?: string;
     name?: string;
+    value?: string;
   };
   [key: string]: unknown;
 }
@@ -185,22 +186,33 @@ function applyBindingsToObject(
     }
 
     const source = propDef["x-fack-source"];
-    if (source && typeof source === "object" && source.type === "pathParam") {
-      const paramName = source.name ? String(source.name).trim() : "";
-      if (
-        paramName &&
-        Object.prototype.hasOwnProperty.call(params, paramName)
-      ) {
-        const rawParamValue = extractScalarParamValue(params[paramName]);
-        if (rawParamValue !== undefined) {
-          const converted = convertScalarValue(
-            rawParamValue,
-            propDef.type,
-            paramName,
-            key,
-          );
-          target[key] = converted;
+    if (source && typeof source === "object") {
+      if (source.type === "pathParam") {
+        const paramName = source.name ? String(source.name).trim() : "";
+        if (
+          paramName &&
+          Object.prototype.hasOwnProperty.call(params, paramName)
+        ) {
+          const rawParamValue = extractScalarParamValue(params[paramName]);
+          if (rawParamValue !== undefined) {
+            const converted = convertScalarValue(
+              rawParamValue,
+              propDef.type,
+              paramName,
+              key,
+            );
+            target[key] = converted;
+          }
         }
+      } else if (source.type === "static") {
+        const staticRaw = typeof source.value === "string" ? source.value : "";
+        const converted = convertScalarValue(
+          staticRaw,
+          propDef.type,
+          "static",
+          key,
+        );
+        target[key] = converted;
       }
     }
 
@@ -250,27 +262,41 @@ function applyBindingsToArray(
   const itemSource = itemsSchema["x-fack-source"];
 
   // Case 1: The array items themselves are bound scalar values
-  if (
-    itemSource &&
-    typeof itemSource === "object" &&
-    itemSource.type === "pathParam"
-  ) {
-    const paramName = itemSource.name ? String(itemSource.name).trim() : "";
-    if (paramName && Object.prototype.hasOwnProperty.call(params, paramName)) {
-      const rawParamValue = extractScalarParamValue(params[paramName]);
-      if (rawParamValue !== undefined) {
-        const converted = convertScalarValue(
-          rawParamValue,
-          itemsSchema.type,
-          paramName,
-          `${parentFieldName}[]`,
-        );
-        for (let i = 0; i < targetArray.length; i++) {
-          targetArray[i] = converted;
+  if (itemSource && typeof itemSource === "object") {
+    if (itemSource.type === "pathParam") {
+      const paramName = itemSource.name ? String(itemSource.name).trim() : "";
+      if (
+        paramName &&
+        Object.prototype.hasOwnProperty.call(params, paramName)
+      ) {
+        const rawParamValue = extractScalarParamValue(params[paramName]);
+        if (rawParamValue !== undefined) {
+          const converted = convertScalarValue(
+            rawParamValue,
+            itemsSchema.type,
+            paramName,
+            `${parentFieldName}[]`,
+          );
+          for (let i = 0; i < targetArray.length; i++) {
+            targetArray[i] = converted;
+          }
         }
       }
+      return;
+    } else if (itemSource.type === "static") {
+      const staticRaw =
+        typeof itemSource.value === "string" ? itemSource.value : "";
+      const converted = convertScalarValue(
+        staticRaw,
+        itemsSchema.type,
+        "static",
+        `${parentFieldName}[]`,
+      );
+      for (let i = 0; i < targetArray.length; i++) {
+        targetArray[i] = converted;
+      }
+      return;
     }
-    return;
   }
 
   // Case 2: Array items are objects with properties
@@ -289,11 +315,11 @@ function applyBindingsToArray(
 // ─── Main Public API ─────────────────────────────────────────────────────────
 
 /**
- * Applies route path parameter bindings to a mock response payload.
+ * Applies route path parameter and static field bindings to a mock response payload.
  *
  * 1. Deep clones the payload so shared cached data is never mutated.
- * 2. Traverses the JSON Schema to locate fields with `x-fack-source: { type: "pathParam", name: "..." }`.
- * 3. Injects the request path parameter values into the cloned payload with strict scalar type conversion.
+ * 2. Traverses the JSON Schema to locate fields with `x-fack-source` ("pathParam" or "static").
+ * 3. Injects the bound parameter or static values into the cloned payload with strict scalar type conversion.
  *
  * @param rawPayload - Generated or stateful mock data
  * @param schema - Route response schema
@@ -306,16 +332,11 @@ export function applyRouteParameterBindings(
   schema: unknown,
   params: Record<string, string | string[]>,
 ): unknown {
-  if (!rawPayload || !schema || typeof schema !== "object" || !params) {
+  if (!rawPayload || !schema || typeof schema !== "object") {
     return rawPayload;
   }
 
-  // If there are no params in the request, return a clone without alterations
-  const paramKeys = Object.keys(params);
-  if (paramKeys.length === 0) {
-    return clonePayload(rawPayload);
-  }
-
+  const safeParams = params ?? {};
   const cloned = clonePayload(rawPayload);
   const typedSchema = schema as GenericSchemaProperty;
 
@@ -325,7 +346,7 @@ export function applyRouteParameterBindings(
     if (typedSchema.type === "array" && typedSchema.items) {
       itemsSchema = typedSchema.items;
     }
-    applyBindingsToArray(cloned, itemsSchema, params, "root");
+    applyBindingsToArray(cloned, itemsSchema, safeParams, "root");
     return cloned;
   }
 
@@ -334,7 +355,7 @@ export function applyRouteParameterBindings(
     applyBindingsToObject(
       cloned as Record<string, unknown>,
       typedSchema,
-      params,
+      safeParams,
     );
     return cloned;
   }

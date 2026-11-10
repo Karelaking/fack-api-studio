@@ -214,4 +214,58 @@ describe("Route Parameter Binding Service", () => {
     expect(request2).toEqual({ id: "200", name: "Alice" });
     expect(cachedObject.id).toBe("cached-id");
   });
+
+  it("should bind static hard-coded values into object response fields", () => {
+    const schema = {
+      type: "object",
+      properties: {
+        id: {
+          type: "integer",
+          "x-fack-source": { type: "pathParam", name: "id" },
+        },
+        status: {
+          type: "string",
+          "x-fack-source": { type: "static", value: "active" },
+        },
+        version: {
+          type: "integer",
+          "x-fack-source": { type: "static", value: "2" },
+        },
+        enabled: {
+          type: "boolean",
+          "x-fack-source": { type: "static", value: "true" },
+        },
+      },
+    };
+
+    const initial = { id: 0, status: "pending", version: 1, enabled: false };
+    const bound = applyRouteParameterBindings(initial, schema, { id: "99" });
+
+    expect(bound).toEqual({
+      id: 99,
+      status: "active",
+      version: 2,
+      enabled: true,
+    });
+  });
+
+  it("should bind static hard-coded values into array items", () => {
+    const schema = {
+      type: "object",
+      properties: {
+        tags: {
+          type: "array",
+          items: {
+            type: "string",
+            "x-fack-source": { type: "static", value: "default-tag" },
+          },
+        },
+      },
+    };
+
+    const initial = { tags: ["old1", "old2"] };
+    const bound = applyRouteParameterBindings(initial, schema, {});
+
+    expect(bound).toEqual({ tags: ["default-tag", "default-tag"] });
+  });
 });

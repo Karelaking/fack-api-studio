@@ -111,6 +111,11 @@ export const FieldEditor = ({
               URL: :{field.source.name}
             </span>
           )}
+          {field.source?.type === "static" && (
+            <span className="text-mini rounded border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+              =&quot;{field.source.value}&quot;
+            </span>
+          )}
           {field.nullable && (
             <span className="text-muted-foreground/70 text-mini font-bold tracking-wider uppercase">
               NULL

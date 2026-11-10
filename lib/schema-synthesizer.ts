@@ -17,14 +17,25 @@
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type FieldSourceType = "faker" | "pathParam";
+export type FieldSourceType = "faker" | "pathParam" | "static";
 
 export interface PathParamSource {
   type: "pathParam";
   name: string;
 }
 
-export type FieldSource = PathParamSource;
+export interface StaticValueSource {
+  type: "static";
+  value: string;
+}
+
+export type FieldSource = PathParamSource | StaticValueSource;
+
+export interface RouteParamConfig {
+  mode: "static" | "fapi";
+  staticValue?: string;
+  provider?: string;
+}
 
 /**
  * Represents a single field in the visual schema builder.
@@ -41,7 +52,7 @@ export interface SchemaField {
   nullable: boolean;
   /** Faker.js provider method path (e.g., "person.firstName") */
   fakerProvider?: string;
-  /** Custom data source binding (e.g. URL path parameter) */
+  /** Custom data source binding (e.g. URL path parameter or static value) */
   source?: FieldSource;
   /** Child fields (only for type "object") */
   children?: SchemaField[];
@@ -66,12 +77,14 @@ export interface JsonSchemaProperty {
   faker?: string;
   format?: string;
   "x-fack-source"?: FieldSource;
+  const?: unknown;
 }
 
 export interface JsonSchema {
   type: "object";
   properties: Record<string, JsonSchemaProperty>;
   required: string[];
+  "x-fack-params"?: Record<string, RouteParamConfig>;
 }
 
 // ─── Synthesizer ─────────────────────────────────────────────────────────────
@@ -108,7 +121,10 @@ export interface JsonSchema {
  * // }
  * ```
  */
-export function synthesizeSchema(fields: SchemaField[]): JsonSchema {
+export function synthesizeSchema(
+  fields: SchemaField[],
+  paramConfigs?: Record<string, RouteParamConfig>,
+): JsonSchema {
   const properties: Record<string, JsonSchemaProperty> = {};
   const required: string[] = [];
 
@@ -124,11 +140,17 @@ export function synthesizeSchema(fields: SchemaField[]): JsonSchema {
     }
   }
 
-  return {
+  const result: JsonSchema = {
     type: "object",
     properties,
     required,
   };
+
+  if (paramConfigs && Object.keys(paramConfigs).length > 0) {
+    result["x-fack-params"] = paramConfigs;
+  }
+
+  return result;
 }
 
 /**
@@ -146,6 +168,12 @@ function synthesizeField(field: SchemaField): JsonSchemaProperty {
       type: "pathParam",
       name: field.source.name,
     };
+  } else if (field.source?.type === "static") {
+    property["x-fack-source"] = {
+      type: "static",
+      value: field.source.value,
+    };
+    property["const"] = field.source.value;
   } else if (field.fakerProvider) {
     // Attach Faker.js provider annotation
     property["x-faker"] = field.fakerProvider;
@@ -196,12 +224,34 @@ function synthesizeArrayItems(field: SchemaField): JsonSchemaProperty {
       type: "pathParam",
       name: field.arrayItemSource.name,
     };
+  } else if (field.arrayItemSource?.type === "static") {
+    items["x-fack-source"] = {
+      type: "static",
+      value: field.arrayItemSource.value,
+    };
+    items["const"] = field.arrayItemSource.value;
   } else if (field.arrayItemFakerProvider) {
     items["x-faker"] = field.arrayItemFakerProvider;
     items["faker"] = field.arrayItemFakerProvider;
   }
 
   return items;
+}
+
+/**
+ * Extracts saved route parameter configurations from a JSON Schema.
+ */
+export function extractRouteParamConfigs(
+  schema: JsonSchema | Record<string, unknown> | undefined,
+): Record<string, RouteParamConfig> {
+  if (!schema || typeof schema !== "object") {
+    return {};
+  }
+  const raw = (schema as Record<string, unknown>)["x-fack-params"];
+  if (!raw || typeof raw !== "object") {
+    return {};
+  }
+  return raw as Record<string, RouteParamConfig>;
 }
 
 /**
@@ -225,17 +275,20 @@ export function parseSchemaToFields(schema: JsonSchema): SchemaField[] {
 
     let source: FieldSource | undefined = undefined;
     const sourceObj = prop["x-fack-source"] as
-      | { type?: string; name?: string }
+      | { type?: string; name?: string; value?: string }
       | undefined;
-    if (
-      sourceObj &&
-      typeof sourceObj === "object" &&
-      sourceObj.type === "pathParam"
-    ) {
-      source = {
-        type: "pathParam",
-        name: typeof sourceObj.name === "string" ? sourceObj.name : name,
-      };
+    if (sourceObj && typeof sourceObj === "object") {
+      if (sourceObj.type === "pathParam") {
+        source = {
+          type: "pathParam",
+          name: typeof sourceObj.name === "string" ? sourceObj.name : name,
+        };
+      } else if (sourceObj.type === "static") {
+        source = {
+          type: "static",
+          value: typeof sourceObj.value === "string" ? sourceObj.value : "",
+        };
+      }
     }
 
     const field: SchemaField = {
@@ -273,20 +326,26 @@ export function parseSchemaToFields(schema: JsonSchema): SchemaField[] {
       } else {
         let arrayItemSource: FieldSource | undefined = undefined;
         const arrayItemSourceObj = prop.items["x-fack-source"] as
-          | { type?: string; name?: string }
+          | { type?: string; name?: string; value?: string }
           | undefined;
-        if (
-          arrayItemSourceObj &&
-          typeof arrayItemSourceObj === "object" &&
-          arrayItemSourceObj.type === "pathParam"
-        ) {
-          arrayItemSource = {
-            type: "pathParam",
-            name:
-              typeof arrayItemSourceObj.name === "string"
-                ? arrayItemSourceObj.name
-                : name,
-          };
+        if (arrayItemSourceObj && typeof arrayItemSourceObj === "object") {
+          if (arrayItemSourceObj.type === "pathParam") {
+            arrayItemSource = {
+              type: "pathParam",
+              name:
+                typeof arrayItemSourceObj.name === "string"
+                  ? arrayItemSourceObj.name
+                  : name,
+            };
+          } else if (arrayItemSourceObj.type === "static") {
+            arrayItemSource = {
+              type: "static",
+              value:
+                typeof arrayItemSourceObj.value === "string"
+                  ? arrayItemSourceObj.value
+                  : "",
+            };
+          }
         }
 
         field.arrayItemSource = arrayItemSource;

@@ -24,7 +24,7 @@ function sanitizeOpenApiSchema(node: unknown): unknown {
   const clean: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(record)) {
-    if (key === "x-fack-source" || key === "x-faker" || key === "faker") {
+    if (key.startsWith("x-fack-") || key === "x-faker" || key === "faker") {
       continue;
     }
     clean[key] = sanitizeOpenApiSchema(value);

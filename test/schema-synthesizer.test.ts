@@ -2,6 +2,7 @@ import { describe, it, expect } from "vite-plus/test";
 import {
   synthesizeSchema,
   parseSchemaToFields,
+  extractRouteParamConfigs,
   type SchemaField,
 } from "../lib/schema-synthesizer";
 
@@ -222,5 +223,46 @@ describe("Schema Synthesizer", () => {
     expect(parsed[0].arrayItemChildren?.[0].fakerProvider).toBe(
       "internet.username",
     );
+  });
+
+  it("should synthesize and parse static source fields and route param configs", () => {
+    const staticFields: SchemaField[] = [
+      {
+        id: "s-1",
+        name: "status",
+        type: "string",
+        nullable: false,
+        source: { type: "static", value: "active" },
+      },
+      {
+        id: "s-2",
+        name: "role",
+        type: "string",
+        nullable: true,
+        source: { type: "static", value: "admin" },
+      },
+    ];
+
+    const paramConfigs = {
+      id: { mode: "fapi" as const, provider: "number.int" },
+      slug: { mode: "static" as const, staticValue: "post-1" },
+    };
+
+    const schema = synthesizeSchema(staticFields, paramConfigs);
+
+    expect(schema.properties.status).toEqual({
+      type: "string",
+      "x-fack-source": { type: "static", value: "active" },
+      const: "active",
+    });
+
+    expect(schema["x-fack-params"]).toEqual(paramConfigs);
+
+    const extractedConfigs = extractRouteParamConfigs(schema);
+    expect(extractedConfigs).toEqual(paramConfigs);
+
+    const parsed = parseSchemaToFields(schema);
+    expect(parsed[0].source).toEqual({ type: "static", value: "active" });
+    expect(parsed[1].source).toEqual({ type: "static", value: "admin" });
   });
 });
