@@ -21,6 +21,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { AuthorizeDeviceCardFrame } from "./AuthorizeDeviceCardFrame";
+import { AuthorizeDeviceRow } from "./AuthorizeDeviceRow";
 
 type Phase =
   | "idle"
@@ -182,7 +184,7 @@ export function AuthorizeDeviceForm({
 
   if (phase === "approved") {
     return (
-      <CardFrame>
+      <AuthorizeDeviceCardFrame>
         <div className="flex flex-col items-center text-center">
           <span className="bg-primary/10 text-primary flex size-12 items-center justify-center rounded-full">
             <RiShieldCheckLine className="size-6" aria-hidden="true" />
@@ -192,7 +194,7 @@ export function AuthorizeDeviceForm({
           </h1>
           <p className="text-muted-foreground mt-2 max-w-sm text-sm leading-relaxed">
             Return to the terminal where you ran{" "}
-            <code className="bg-muted rounded-sm px-1 py-0.5 font-mono text-[0.8rem]">
+            <code className="bg-muted text-caption rounded-sm px-1 py-0.5 font-mono">
               fack login
             </code>
             . It continues on its own — you can close this tab.
@@ -206,13 +208,13 @@ export function AuthorizeDeviceForm({
             </code>
           </div>
         </div>
-      </CardFrame>
+      </AuthorizeDeviceCardFrame>
     );
   }
 
   if (phase === "denied") {
     return (
-      <CardFrame>
+      <AuthorizeDeviceCardFrame>
         <div className="flex flex-col items-center text-center">
           <span className="bg-destructive/10 text-destructive flex size-12 items-center justify-center rounded-full">
             <RiCloseLine className="size-6" aria-hidden="true" />
@@ -222,18 +224,18 @@ export function AuthorizeDeviceForm({
           </h1>
           <p className="text-muted-foreground mt-2 max-w-sm text-sm leading-relaxed">
             The terminal stops waiting. No credential was issued. Run{" "}
-            <code className="bg-muted rounded-sm px-1 py-0.5 font-mono text-[0.8rem]">
+            <code className="bg-muted text-caption rounded-sm px-1 py-0.5 font-mono">
               fack login
             </code>{" "}
             again if you change your mind.
           </p>
         </div>
-      </CardFrame>
+      </AuthorizeDeviceCardFrame>
     );
   }
 
   return (
-    <CardFrame>
+    <AuthorizeDeviceCardFrame>
       <div className="flex flex-col gap-1">
         <p className="text-muted-foreground text-mini font-mono font-semibold tracking-[0.2em] uppercase">
           Terminal access
@@ -299,17 +301,17 @@ export function AuthorizeDeviceForm({
       {showReview && request ? (
         <div className="mt-6">
           <dl className="border-border/60 divide-border/60 divide-y rounded-lg border">
-            <DeviceRow
+            <AuthorizeDeviceRow
               icon={<RiComputerLine />}
               label="Device"
               value={request.deviceName}
             />
-            <DeviceRow
+            <AuthorizeDeviceRow
               icon={<RiTerminalBoxLine />}
               label="Platform"
               value={request.platform}
             />
-            <DeviceRow
+            <AuthorizeDeviceRow
               icon={<RiTimeLine />}
               label="Requested"
               value={relativeTime(request.createdAt)}
@@ -373,46 +375,6 @@ export function AuthorizeDeviceForm({
         Codes come from <code className="font-mono">fack login</code> in the
         repository you want to connect. They expire after ten minutes.
       </p>
-    </CardFrame>
-  );
-}
-
-function CardFrame({
-  children,
-}: {
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <div className="w-full max-w-110">
-      <div className="bg-card text-card-foreground ring-foreground/10 rounded-xl px-6 py-6 shadow-sm ring-1 sm:px-7 sm:py-7">
-        {children}
-      </div>
-      <p className="text-muted-foreground text-caption mt-4 text-center leading-relaxed">
-        Signed in as your Fack Studio account. Nothing is shared with the
-        terminal beyond project access.
-      </p>
-    </div>
-  );
-}
-
-function DeviceRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}): React.JSX.Element {
-  return (
-    <div className="flex items-center justify-between gap-4 px-3 py-2.5">
-      <dt className="text-muted-foreground flex items-center gap-2 text-xs">
-        <span aria-hidden="true" className="[&>svg]:size-3.5">
-          {icon}
-        </span>
-        {label}
-      </dt>
-      <dd className="text-foreground truncate font-mono text-xs">{value}</dd>
-    </div>
+    </AuthorizeDeviceCardFrame>
   );
 }

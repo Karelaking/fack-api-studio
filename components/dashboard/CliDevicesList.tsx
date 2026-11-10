@@ -12,6 +12,7 @@ import {
 import { revokeCliDeviceAction } from "@/app/(dashboard)/keys/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CliDeviceTimelineLabel } from "./CliDeviceTimelineLabel";
 
 export interface CliDeviceRow {
   id: string;
@@ -21,23 +22,6 @@ export interface CliDeviceRow {
   createdAt: string;
   lastUsedAt: string | null;
   revokedAt: string | null;
-}
-
-function TimelineLabel({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}): React.JSX.Element {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <dt className="text-muted-foreground text-mini font-mono font-semibold tracking-[0.14em] uppercase">
-        {label}
-      </dt>
-      <dd className="text-foreground text-xs">{value}</dd>
-    </div>
-  );
 }
 
 /**
@@ -122,8 +106,11 @@ export function CliDevicesList({
                 </p>
 
                 <dl className="mt-2.5 flex flex-wrap gap-x-6 gap-y-1.5">
-                  <TimelineLabel label="Authorized" value={device.createdAt} />
-                  <TimelineLabel
+                  <CliDeviceTimelineLabel
+                    label="Authorized"
+                    value={device.createdAt}
+                  />
+                  <CliDeviceTimelineLabel
                     label="Last used"
                     value={device.lastUsedAt ?? "Never"}
                   />
