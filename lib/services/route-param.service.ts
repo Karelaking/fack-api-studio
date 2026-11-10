@@ -587,3 +587,178 @@ export function remapSchemaParameters(
   traverse(cloned);
   return cloned;
 }
+
+/**
+ * Reconciles schema fields against declared route path parameters.
+ * If any fields reference parameters that are no longer declared in the route path,
+ * and there are unmapped declared parameters, automatically remaps the existing fields
+ * in-place to bind to the new parameters, updating their field names and sources.
+ *
+ * @param fields - Current schema fields
+ * @param declaredParamNames - Array of parameter names currently declared in route path
+ * @returns Object containing the updated fields array and a map of renames performed
+ */
+export function reconcileFieldParameters(
+  fields: SchemaField[],
+  declaredParamNames: string[],
+): { fields: SchemaField[]; renames: Record<string, string> } {
+  if (
+    !fields ||
+    fields.length === 0 ||
+    !declaredParamNames ||
+    declaredParamNames.length === 0
+  ) {
+    return { fields: fields ?? [], renames: {} };
+  }
+
+  // 1. Identify which declared parameters already have a matching field
+  const mappedDeclared = new Set<string>();
+  for (const f of fields) {
+    if (
+      f.source?.type === "pathParam" &&
+      declaredParamNames.includes(f.source.name)
+    ) {
+      mappedDeclared.add(f.source.name);
+    }
+  }
+
+  // 2. Identify unmapped declared parameters
+  const unmappedDeclared = declaredParamNames.filter(
+    (p) => !mappedDeclared.has(p),
+  );
+  if (unmappedDeclared.length === 0) {
+    return { fields, renames: {} };
+  }
+
+  // 3. Find orphaned fields whose pathParam source is not in declaredParamNames
+  const orphanedFieldIndices: number[] = [];
+  for (let i = 0; i < fields.length; i++) {
+    const f = fields[i];
+    if (
+      f.source?.type === "pathParam" &&
+      !declaredParamNames.includes(f.source.name)
+    ) {
+      orphanedFieldIndices.push(i);
+    }
+  }
+
+  if (orphanedFieldIndices.length === 0) {
+    return { fields, renames: {} };
+  }
+
+  // 4. Pair orphaned fields with unmapped declared parameters
+  const renames: Record<string, string> = {};
+  const updatedFields = [...fields];
+  const countToPair = Math.min(
+    orphanedFieldIndices.length,
+    unmappedDeclared.length,
+  );
+
+  for (let i = 0; i < countToPair; i++) {
+    const fieldIndex = orphanedFieldIndices[i];
+    const targetParam = unmappedDeclared[i];
+    const oldField = updatedFields[fieldIndex];
+    const oldParam =
+      oldField.source?.type === "pathParam"
+        ? oldField.source.name
+        : oldField.name;
+
+    renames[oldParam] = targetParam;
+
+    const newField: SchemaField = {
+      ...oldField,
+      source: {
+        type: "pathParam",
+        name: targetParam,
+      },
+    };
+
+    // If field was named after old parameter, update field name to match new parameter
+    if (
+      oldField.name === oldParam ||
+      oldField.name.toLowerCase() === oldParam.toLowerCase()
+    ) {
+      newField.name = targetParam;
+    }
+
+    updatedFields[fieldIndex] = newField;
+  }
+
+  return { fields: updatedFields, renames };
+}
+
+/**
+ * Reconciles a raw JSON Schema against declared route path parameters.
+ * If any schema properties reference path parameters that are no longer declared in the route path,
+ * and there are unmapped declared parameters, automatically remaps the property key,
+ * x-fack-source, required list, and x-fack-params configuration.
+ *
+ * @param schema - Raw JSON Schema object
+ * @param declaredParamNames - Array of parameter names currently declared in route path
+ * @returns Object containing the remapped schema and dictionary of renames performed
+ */
+export function reconcileSchemaParameters(
+  schema: unknown,
+  declaredParamNames: string[],
+): { schema: unknown; renames: Record<string, string> } {
+  if (
+    !schema ||
+    typeof schema !== "object" ||
+    !declaredParamNames ||
+    declaredParamNames.length === 0
+  ) {
+    return { schema, renames: {} };
+  }
+
+  const schemaObj = schema as Record<string, unknown>;
+  const properties = schemaObj.properties as
+    | Record<string, Record<string, unknown>>
+    | undefined;
+
+  if (!properties || typeof properties !== "object") {
+    return { schema, renames: {} };
+  }
+
+  // 1. Identify which declared parameters already have a bound property
+  const mappedDeclared = new Set<string>();
+  const orphanedParamNames: string[] = [];
+
+  for (const [, propDef] of Object.entries(properties)) {
+    const source = propDef["x-fack-source"] as
+      | { type?: string; name?: string }
+      | undefined;
+    if (
+      source &&
+      typeof source === "object" &&
+      source.type === "pathParam" &&
+      source.name
+    ) {
+      if (declaredParamNames.includes(source.name)) {
+        mappedDeclared.add(source.name);
+      } else {
+        orphanedParamNames.push(source.name);
+      }
+    }
+  }
+
+  const unmappedDeclared = declaredParamNames.filter(
+    (p) => !mappedDeclared.has(p),
+  );
+  if (unmappedDeclared.length === 0 || orphanedParamNames.length === 0) {
+    return { schema, renames: {} };
+  }
+
+  // 2. Build renames map
+  const renames: Record<string, string> = {};
+  const countToPair = Math.min(
+    orphanedParamNames.length,
+    unmappedDeclared.length,
+  );
+  for (let i = 0; i < countToPair; i++) {
+    renames[orphanedParamNames[i]] = unmappedDeclared[i];
+  }
+
+  // 3. Apply remapping
+  const remapped = remapSchemaParameters(schema, renames);
+  return { schema: remapped, renames };
+}

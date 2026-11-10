@@ -31,6 +31,7 @@ import {
   validateRouteSchemaBindings,
   detectParameterRenames,
   remapSchemaParameters,
+  reconcileSchemaParameters,
 } from "@/lib/services/route-param.service";
 import {
   generateRandomFapiValue,
@@ -172,8 +173,15 @@ export async function createRoute(input: CreateRouteInput): Promise<Route> {
 
     if (parsed.responseSchema) {
       try {
-        const schemaObj: unknown = JSON.parse(parsed.responseSchema);
+        let schemaObj: unknown = JSON.parse(parsed.responseSchema);
         const declaredParamNames = pathValidation.parameters.map((p) => p.name);
+        const reconciled = reconcileSchemaParameters(
+          schemaObj,
+          declaredParamNames,
+        );
+        schemaObj = reconciled.schema;
+        parsed.responseSchema = JSON.stringify(schemaObj);
+
         const bindingValidation = validateRouteSchemaBindings(
           schemaObj,
           declaredParamNames,
@@ -266,11 +274,24 @@ export async function updateRoute(input: UpdateRouteInput): Promise<Route> {
         ? updates.responseSchema
         : existingRoute.responseSchema;
 
-    if (targetSchema && Object.keys(paramRenames).length > 0) {
+    const declaredParamNames = pathValidation.parameters.map((p) => p.name);
+
+    if (targetSchema) {
       try {
-        const schemaObj: unknown = JSON.parse(targetSchema);
-        const remapped = remapSchemaParameters(schemaObj, paramRenames);
-        targetSchema = JSON.stringify(remapped);
+        let schemaObj: unknown = JSON.parse(targetSchema);
+
+        if (Object.keys(paramRenames).length > 0) {
+          schemaObj = remapSchemaParameters(schemaObj, paramRenames);
+        }
+
+        // Reconcile any remaining orphaned parameters against declared parameters
+        const reconciled = reconcileSchemaParameters(
+          schemaObj,
+          declaredParamNames,
+        );
+        schemaObj = reconciled.schema;
+
+        targetSchema = JSON.stringify(schemaObj);
         updates.responseSchema = targetSchema;
       } catch (parseError) {
         if (!(parseError instanceof SyntaxError)) {
@@ -282,7 +303,6 @@ export async function updateRoute(input: UpdateRouteInput): Promise<Route> {
     if (targetSchema) {
       try {
         const schemaObj: unknown = JSON.parse(targetSchema);
-        const declaredParamNames = pathValidation.parameters.map((p) => p.name);
         const bindingValidation = validateRouteSchemaBindings(
           schemaObj,
           declaredParamNames,

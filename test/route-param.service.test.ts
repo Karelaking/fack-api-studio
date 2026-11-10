@@ -7,6 +7,8 @@ import {
   detectParameterRenames,
   remapFieldsParameters,
   remapSchemaParameters,
+  reconcileFieldParameters,
+  reconcileSchemaParameters,
 } from "../lib/services/route-param.service";
 import type { SchemaField } from "../lib/schema-synthesizer";
 
@@ -289,6 +291,117 @@ describe("Route Parameter Service", () => {
       expect(remapped.required).toEqual(["projectId"]);
       expect(remapped["x-fack-params"]).toHaveProperty("projectId");
       expect(remapped["x-fack-params"]).not.toHaveProperty("name");
+    });
+  });
+
+  describe("reconcileFieldParameters", () => {
+    it("should update existing field in-place instead of creating a new field", () => {
+      const fields: SchemaField[] = [
+        {
+          id: "f-name",
+          name: "name",
+          type: "string",
+          nullable: false,
+          source: { type: "pathParam", name: "name" },
+        },
+        {
+          id: "f-created",
+          name: "createdAt",
+          type: "string",
+          nullable: false,
+          fakerProvider: "date.past",
+        },
+      ];
+
+      // Route path parameter was renamed from "name" to "projectId"
+      const { fields: reconciled, renames } = reconcileFieldParameters(fields, [
+        "projectId",
+      ]);
+
+      expect(renames).toEqual({ name: "projectId" });
+      // Total count of fields must remain exactly 2 (no new field added)
+      expect(reconciled.length).toBe(2);
+      expect(reconciled[0].id).toBe("f-name");
+      expect(reconciled[0].name).toBe("projectId");
+      expect(reconciled[0].source).toEqual({
+        type: "pathParam",
+        name: "projectId",
+      });
+      // Second field unaffected
+      expect(reconciled[1].name).toBe("createdAt");
+    });
+
+    it("should preserve already-mapped parameters and only reconcile unmapped ones", () => {
+      const fields: SchemaField[] = [
+        {
+          id: "f-org",
+          name: "orgId",
+          type: "string",
+          nullable: false,
+          source: { type: "pathParam", name: "orgId" },
+        },
+        {
+          id: "f-name",
+          name: "name",
+          type: "string",
+          nullable: false,
+          source: { type: "pathParam", name: "name" },
+        },
+      ];
+
+      const { fields: reconciled, renames } = reconcileFieldParameters(fields, [
+        "orgId",
+        "projectId",
+      ]);
+
+      expect(renames).toEqual({ name: "projectId" });
+      expect(reconciled.length).toBe(2);
+      expect(reconciled[0].name).toBe("orgId");
+      expect(reconciled[1].name).toBe("projectId");
+    });
+
+    it("should do nothing if all declared parameters are already mapped", () => {
+      const fields: SchemaField[] = [
+        {
+          id: "f-id",
+          name: "id",
+          type: "string",
+          nullable: false,
+          source: { type: "pathParam", name: "id" },
+        },
+      ];
+
+      const { fields: reconciled, renames } = reconcileFieldParameters(fields, [
+        "id",
+      ]);
+      expect(renames).toEqual({});
+      expect(reconciled).toBe(fields);
+    });
+  });
+
+  describe("reconcileSchemaParameters", () => {
+    it("should reconcile orphaned schema properties against unmapped declared parameters", () => {
+      const schema = {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            "x-fack-source": { type: "pathParam", name: "name" },
+          },
+        },
+        required: ["name"],
+      };
+
+      const { schema: reconciled, renames } = reconcileSchemaParameters(
+        schema,
+        ["projectId"],
+      );
+
+      expect(renames).toEqual({ name: "projectId" });
+      const props = (reconciled as { properties: Record<string, unknown> })
+        .properties;
+      expect(props).toHaveProperty("projectId");
+      expect(props).not.toHaveProperty("name");
     });
   });
 });

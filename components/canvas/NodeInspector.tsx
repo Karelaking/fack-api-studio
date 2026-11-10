@@ -42,6 +42,7 @@ import {
   extractRoutePathParameters,
   detectParameterRenames,
   remapFieldsParameters,
+  reconcileFieldParameters,
 } from "@/lib/services/route-param.service";
 import { FieldTree } from "@/components/edit-bar/FieldTree";
 import { ChaosConfig } from "@/components/edit-bar/ChaosConfig";
@@ -834,6 +835,59 @@ const RouteEditor = ({
     ],
   );
 
+  // Automatically reconcile existing fields when path parameters change or orphaned parameter fields exist
+  React.useEffect(() => {
+    const declaredNames = detectedParams.map((p) => p.name);
+    if (declaredNames.length === 0) return;
+
+    // Check if any field has an orphaned pathParam source
+    const hasOrphaned = fields.some(
+      (f) =>
+        f.source?.type === "pathParam" &&
+        !declaredNames.includes(f.source.name),
+    );
+
+    if (hasOrphaned) {
+      const { fields: reconciledFields, renames } = reconcileFieldParameters(
+        fields,
+        declaredNames,
+      );
+
+      if (Object.keys(renames).length > 0) {
+        setSchema(reconciledFields);
+
+        // eslint-disable-next-line react/set-state-in-effect
+        setParamConfigs((prev) => {
+          const next = { ...prev };
+          for (const [oldP, newP] of Object.entries(renames)) {
+            if (next[oldP]) {
+              next[newP] = next[oldP];
+              delete next[oldP];
+            }
+          }
+          return next;
+        });
+
+        // eslint-disable-next-line react/set-state-in-effect
+        setTestParamValues((prev) => {
+          const next = { ...prev };
+          for (const [oldP, newP] of Object.entries(renames)) {
+            if (next[oldP] !== undefined) {
+              next[newP] = next[oldP];
+              delete next[oldP];
+            }
+          }
+          return next;
+        });
+
+        const descriptions = Object.entries(renames)
+          .map(([oldP, newP]) => `:${oldP} → :${newP}`)
+          .join(", ");
+        toast.info(`Updated existing field for parameter ${descriptions}`);
+      }
+    }
+  }, [detectedParams, fields, setSchema]);
+
   // Check if current draft differs from saved route
   const isDirty = React.useMemo(() => {
     if (method !== ((route.method.toUpperCase() as HttpMethod) || "GET")) {
@@ -977,14 +1031,37 @@ const RouteEditor = ({
   const handleAddParamField = async (paramName: string): Promise<void> => {
     setLoading(true);
     try {
-      const newField: SchemaField = {
-        id: `field-${Date.now()}`,
-        name: paramName,
-        type: "string",
-        nullable: false,
-        source: { type: "pathParam", name: paramName },
-      };
-      const updatedFields = [...fields, newField];
+      const declaredNames = detectedParams.map((p) => p.name);
+      // Check if there is an existing orphaned pathParam field to reuse
+      const orphanedIndex = fields.findIndex(
+        (f) =>
+          f.source?.type === "pathParam" &&
+          !declaredNames.includes(f.source.name),
+      );
+
+      let updatedFields: SchemaField[];
+      if (orphanedIndex !== -1) {
+        // Update the existing field in-place instead of adding a new one
+        updatedFields = fields.map((f, idx) =>
+          idx === orphanedIndex
+            ? {
+                ...f,
+                name: paramName,
+                source: { type: "pathParam", name: paramName },
+              }
+            : f,
+        );
+      } else {
+        const newField: SchemaField = {
+          id: `field-${Date.now()}`,
+          name: paramName,
+          type: "string",
+          nullable: false,
+          source: { type: "pathParam", name: paramName },
+        };
+        updatedFields = [...fields, newField];
+      }
+
       setSchema(updatedFields);
       const updated = await updateRoute({
         id: route.id,
@@ -993,9 +1070,15 @@ const RouteEditor = ({
         ),
       });
       onRouteUpdated(updated);
-      toast.success(`Field "${paramName}" added and bound to URL parameter!`);
+      toast.success(
+        orphanedIndex !== -1
+          ? `Updated existing field to "${paramName}" and bound to URL parameter!`
+          : `Field "${paramName}" added and bound to URL parameter!`,
+      );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add field");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update field",
+      );
     } finally {
       setLoading(false);
     }
@@ -1161,6 +1244,29 @@ const RouteEditor = ({
         currentParamConfigs = nextConfigs;
         setParamConfigs(nextConfigs);
         setLastKnownEffectivePath(currentEffectivePath);
+      }
+
+      // Reconcile any remaining orphaned field bindings against declared parameters
+      const currentDeclared = extractRoutePathParameters(
+        currentEffectivePath,
+      ).map((p) => p.name);
+      const reconciled = reconcileFieldParameters(
+        currentFields,
+        currentDeclared,
+      );
+      if (Object.keys(reconciled.renames).length > 0) {
+        currentFields = reconciled.fields;
+        setSchema(currentFields);
+
+        const nextConfigs = { ...currentParamConfigs };
+        for (const [oldP, newP] of Object.entries(reconciled.renames)) {
+          if (nextConfigs[oldP]) {
+            nextConfigs[newP] = nextConfigs[oldP];
+            delete nextConfigs[oldP];
+          }
+        }
+        currentParamConfigs = nextConfigs;
+        setParamConfigs(nextConfigs);
       }
 
       const headerObj: Record<string, string> = {};
@@ -1408,6 +1514,11 @@ const RouteEditor = ({
             id="route-path"
             value={path}
             onChange={(e) => setPath(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.currentTarget.blur();
+              }
+            }}
             onBlur={() => {
               const trimmed = path.trim();
               const formatted =
