@@ -292,7 +292,7 @@ export const RouteNode = ({
         <span
           aria-hidden="true"
           className={cn(
-            "absolute top-2.5 right-2 z-10 rounded-full border px-2 py-0.5 text-mini font-bold tracking-wider uppercase",
+            "absolute top-2.5 right-2 z-10 rounded-full border px-2 py-0.5 font-mono text-xs font-bold tracking-wider uppercase",
             data.draft.changeType === "delete"
               ? "border-destructive/40 bg-destructive/10 text-destructive"
               : data.draft.changeType === "update"
@@ -310,7 +310,7 @@ export const RouteNode = ({
       {data.draft?.hasConflict ? (
         <span
           aria-hidden="true"
-          className="border-warning/40 bg-warning/10 text-warning text-mini absolute top-2.5 right-18 z-10 rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase"
+          className="border-warning/40 bg-warning/10 text-warning absolute top-2.5 right-18 z-10 rounded-full border px-2 py-0.5 font-mono text-xs font-bold tracking-wider uppercase"
         >
           Conflict
         </span>
@@ -320,6 +320,7 @@ export const RouteNode = ({
       <Handle
         type="target"
         position={Position.Left}
+        aria-label={`Input connection handle for ${data.method} ${data.path}`}
         className={cn(
           "bg-background! -left-1.75! h-3 w-3 border-2 transition-colors duration-200",
           selected
@@ -334,7 +335,7 @@ export const RouteNode = ({
           {/* Method Badge with glowing indicator dot */}
           <span
             className={cn(
-              "flex shrink-0 items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-micro font-bold tracking-wider uppercase",
+              "flex shrink-0 items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs font-bold tracking-wider uppercase",
               variants.badge,
             )}
           >
@@ -352,7 +353,7 @@ export const RouteNode = ({
           {/* Status code view */}
           <span
             className={cn(
-              "flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-mini font-semibold",
+              "flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-xs font-semibold",
               statusBadgeClass,
             )}
           >
@@ -489,7 +490,7 @@ export const RouteNode = ({
             type="button"
             onClick={handleCopyUrl}
             onPointerDown={(e) => e.stopPropagation()}
-            className="text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 rounded p-1 transition-colors"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted relative shrink-0 cursor-pointer rounded p-1 transition-colors pointer-coarse:flex pointer-coarse:size-9 pointer-coarse:items-center pointer-coarse:justify-center"
             title="Copy mock URL to clipboard"
             aria-label="Copy mock URL to clipboard"
           >
@@ -507,7 +508,7 @@ export const RouteNode = ({
         </div>
 
         {/* Subtle Host URL Breadcrumb */}
-        <span className="text-muted-foreground/60 text-micro truncate font-mono select-all">
+        <span className="text-muted-foreground truncate font-mono text-xs select-all">
           {data.mockUrl}
         </span>
 
@@ -582,10 +583,10 @@ export const RouteNode = ({
         {/* Empty state: invite the user to drop a provider */}
         {fields.length === 0 && !isOver && !data.draft && (
           <div className="border-border/50 bg-muted/20 flex flex-col items-center justify-center rounded-lg border border-dashed px-3 py-3 text-center">
-            <span className="text-muted-foreground/80 text-mini font-medium">
+            <span className="text-muted-foreground text-xs font-medium">
               No schema fields yet
             </span>
-            <span className="text-muted-foreground/60 text-micro mt-0.5">
+            <span className="text-muted-foreground mt-0.5 text-xs">
               Drag faker providers from the left panel to build payload
             </span>
           </div>
@@ -613,7 +614,7 @@ export const RouteNode = ({
             </span>
           ) : (
             <span
-              className="border-border/40 bg-muted/30 text-muted-foreground/70 text-mini inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono"
+              className="border-border/40 bg-muted/30 text-muted-foreground text-mini inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono"
               title="Instant response (0ms simulated latency)"
             >
               <PikaIcon
@@ -681,6 +682,7 @@ export const RouteNode = ({
             "group/test inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-background/90 px-2 py-0.5",
             "text-mini font-semibold text-foreground/80 shadow-2xs transition-all",
             "hover:border-primary/50 hover:bg-primary/10 hover:text-primary active:scale-95 cursor-pointer",
+            "pointer-coarse:min-h-11 pointer-coarse:px-3.5",
             "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background",
           )}
           title={`Open live mock response in new tab (${data.mockUrl})`}
@@ -694,6 +696,7 @@ export const RouteNode = ({
       <Handle
         type="source"
         position={Position.Right}
+        aria-label={`Output connection handle for ${data.method} ${data.path}`}
         className={cn(
           "bg-background! -right-1.5! h-2.5 w-2.5 border-2 transition-colors duration-200",
           selected

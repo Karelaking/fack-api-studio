@@ -1834,7 +1834,7 @@ const RouteEditor = ({
         >
           <div className="space-y-3">
             <div className="border-border/50 flex items-center justify-between border-b pb-2">
-              <span className="text-muted-foreground text-mini font-bold tracking-wider uppercase">
+              <span className="text-muted-foreground block text-xs font-semibold tracking-wider uppercase">
                 Schema Tools
               </span>
               <div className="flex items-center gap-1.5">
@@ -1843,7 +1843,7 @@ const RouteEditor = ({
                   variant="outline"
                   size="xs"
                   onClick={() => void handleCopySchema()}
-                  className="text-mini h-7 gap-1"
+                  className="h-7 gap-1 text-xs font-medium"
                 >
                   {copiedJson ? (
                     <RiCheckLine className="text-success size-3.5" />
@@ -1857,7 +1857,7 @@ const RouteEditor = ({
                   variant="outline"
                   size="xs"
                   onClick={() => setTsOpen(true)}
-                  className="text-mini h-7 gap-1"
+                  className="h-7 gap-1 text-xs font-medium"
                 >
                   <RiCodeLine className="size-3.5" />
                   <span>Types</span>
@@ -1871,7 +1871,7 @@ const RouteEditor = ({
                           variant="ghost"
                           size="xs"
                           disabled={loading}
-                          className="text-muted-foreground hover:text-destructive text-mini h-7"
+                          className="text-muted-foreground hover:text-destructive h-7 text-xs font-medium"
                         >
                           Clear all
                         </Button>
@@ -1886,7 +1886,7 @@ const RouteEditor = ({
                         <p className="text-foreground text-xs font-semibold">
                           Clear all fields?
                         </p>
-                        <p className="text-muted-foreground text-mini leading-snug">
+                        <p className="text-muted-foreground text-xs leading-snug">
                           This will remove all {fields.length} schema fields
                           from this route.
                         </p>
@@ -1930,7 +1930,7 @@ const RouteEditor = ({
         >
           {/* Section 1: Chaos Simulation */}
           <div className="space-y-2">
-            <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+            <span className="text-muted-foreground block text-xs font-semibold tracking-wider uppercase">
               Chaos Simulation & Latency
             </span>
             <ChaosConfig
@@ -1945,7 +1945,7 @@ const RouteEditor = ({
 
           {/* Section 2: Smart Conditional Rules */}
           <div className="border-border/50 space-y-2 border-t pt-3">
-            <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+            <span className="text-muted-foreground block text-xs font-semibold tracking-wider uppercase">
               Smart Conditional Rules
             </span>
             <RulesEditor rules={rules} onRulesChange={setRules} />

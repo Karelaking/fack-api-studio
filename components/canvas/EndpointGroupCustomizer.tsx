@@ -43,21 +43,16 @@ interface EndpointGroupCustomizerProps {
 const PRESET_COLORS: readonly {
   label: string;
   value: string;
-  oklchHue: string;
 }[] = [
-  { label: "Default Indigo", value: "var(--primary)", oklchHue: "#4f46e5" },
-  { label: "Sky Blue", value: "var(--info)", oklchHue: "#0284c7" },
-  { label: "Amber Orange", value: "var(--warning)", oklchHue: "#f59e0b" },
-  { label: "Fuchsia Pink", value: "var(--chart-4)", oklchHue: "#d946ef" },
-  { label: "Coral Rose", value: "var(--chart-3)", oklchHue: "#f43f5e" },
-  { label: "Teal Cyan", value: "var(--chart-5)", oklchHue: "#14b8a6" },
-  { label: "Warm Orange", value: "var(--chart-2)", oklchHue: "#f97316" },
-  { label: "Violet Purple", value: "var(--chart-1)", oklchHue: "#8b5cf6" },
-  {
-    label: "Neutral Slate",
-    value: "var(--muted-foreground)",
-    oklchHue: "#64748b",
-  },
+  { label: "Signal Indigo", value: "var(--primary)" },
+  { label: "Protocol Blue", value: "var(--info)" },
+  { label: "Caution Amber", value: "var(--warning)" },
+  { label: "Verified Green", value: "var(--success)" },
+  { label: "Fault Red", value: "var(--destructive)" },
+  { label: "GET Green", value: "var(--method-get)" },
+  { label: "POST Blue", value: "var(--method-post)" },
+  { label: "PATCH Orange", value: "var(--method-patch)" },
+  { label: "Graphite Slate", value: "var(--muted-foreground)" },
 ];
 
 // All icon keys ending in "Icon" from @pikaicons/core-free (997 unique icons)
@@ -305,6 +300,7 @@ export const EndpointGroupCustomizer = ({
                       "size-7 rounded-full flex items-center justify-center transition-all cursor-pointer relative",
                       "border border-black/10 dark:border-white/10 hover:scale-110",
                       "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-hidden",
+                      "pointer-coarse:size-9",
                       isSelected &&
                         "ring-2 ring-primary ring-offset-2 ring-offset-background scale-110",
                     )}

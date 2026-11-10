@@ -130,15 +130,18 @@ export const EndpointGroupNode = ({
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
           {/* Custom Pikaicon Squircle Badge */}
           <div
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg border shadow-2xs transition-all"
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center rounded-lg border shadow-2xs transition-all",
+              !customColor && "border-border bg-primary/10 text-primary",
+            )}
             style={{
               borderColor: customColor
                 ? `color-mix(in oklch, ${customColor} 40%, transparent)`
-                : "var(--color-border)",
+                : undefined,
               backgroundColor: customColor
                 ? `color-mix(in oklch, ${customColor} 15%, transparent)`
-                : "var(--color-primary)/10",
-              color: customColor || "var(--color-primary)",
+                : undefined,
+              color: customColor || undefined,
             }}
           >
             <PikaiconRenderer
@@ -164,7 +167,7 @@ export const EndpointGroupNode = ({
             </div>
 
             {/* Base Path Pill */}
-            <span className="text-muted-foreground text-micro truncate font-mono">
+            <span className="text-muted-foreground truncate font-mono text-xs">
               {data.basePath || "/"}
             </span>
           </div>
@@ -176,15 +179,15 @@ export const EndpointGroupNode = ({
           onPointerDown={(e) => e.stopPropagation()}
         >
           {data.draft ? (
-            <span className="border-primary/40 bg-primary/10 text-primary text-micro rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase">
+            <span className="border-primary/40 bg-primary/10 text-primary rounded-full border px-2 py-0.5 font-mono text-xs font-bold tracking-wider uppercase">
               Draft
             </span>
           ) : (
             data.routesCount !== undefined && (
               <span
                 className={cn(
-                  "border-border/60 bg-muted/40 text-muted-foreground text-micro font-mono inline-flex items-center rounded-md border px-1.5 py-0.5 font-medium transition-colors",
-                  data.routesCount === 0 && "text-muted-foreground/60",
+                  "border-border/60 bg-muted/40 text-muted-foreground font-mono text-xs inline-flex items-center rounded-md border px-2 py-0.5 font-medium transition-colors",
+                  data.routesCount === 0 && "text-muted-foreground/70",
                 )}
                 title={`${data.routesCount} routes in group`}
               >

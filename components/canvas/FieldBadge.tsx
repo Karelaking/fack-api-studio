@@ -79,7 +79,7 @@ export const FieldBadge = ({
         type="button"
         onClick={handleClickBadge}
         className={cn(
-          "text-left font-mono text-mini font-medium transition-colors",
+          "text-left font-mono text-xs font-medium transition-colors cursor-pointer",
           isInspected ? "text-primary" : "text-foreground",
           "hover:text-primary",
         )}
@@ -91,28 +91,29 @@ export const FieldBadge = ({
 
       {/* Provider shortname, URL param tag, or static value */}
       {field.source?.type === "pathParam" ? (
-        <span className="text-primary text-micro font-mono font-semibold">
+        <span className="text-primary font-mono text-xs font-semibold">
           :{field.source.name}
         </span>
       ) : field.source?.type === "static" ? (
-        <span className="text-success text-micro max-w-20 truncate font-mono font-semibold">
+        <span className="text-success max-w-24 truncate font-mono text-xs font-semibold">
           =&quot;{field.source.value}&quot;
         </span>
       ) : (
         provider && (
-          <span className="text-muted-foreground text-micro font-mono">
+          <span className="text-muted-foreground font-mono text-xs">
             {provider.label}
           </span>
         )
       )}
 
-      {/* Remove button */}
+      {/* Remove button with touch-target expansion */}
       <button
         type="button"
         onClick={handleRemove}
         className={cn(
-          "text-muted-foreground/70 hover:text-destructive hover:bg-destructive/15 focus-visible:ring-ring ml-0.5 flex size-5.5 shrink-0 items-center justify-center rounded-sm transition-all focus-visible:ring-2 focus-visible:outline-hidden",
-          "opacity-70 group-hover:opacity-100 focus-visible:opacity-100",
+          "text-muted-foreground hover:text-destructive hover:bg-destructive/15 focus-visible:ring-ring relative ml-0.5 flex size-5.5 shrink-0 items-center justify-center rounded-sm transition-all focus-visible:ring-2 focus-visible:outline-hidden cursor-pointer",
+          "opacity-80 group-hover:opacity-100 focus-visible:opacity-100",
+          "pointer-coarse:size-7 pointer-coarse:after:absolute pointer-coarse:after:-inset-2.5",
         )}
         title={`Remove field "${field.name}"`}
         aria-label={`Remove field ${field.name}`}

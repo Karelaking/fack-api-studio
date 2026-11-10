@@ -454,40 +454,45 @@ function FlowCanvasInner({
   const lastDispatchedRouteKeyRef = React.useRef<string | null>(null);
 
   // Sync selected node mock links with global dashboard sidebar and DnD store.
-  // Only dispatch when the selected route identity or attributes actually change,
-  // preventing 250 palette chips from re-rendering on node position updates / drag frames.
-  React.useEffect(() => {
-    const selectedRouteNode = nodes.find(
-      (n) => n.selected && n.type === "routeNode",
-    );
-    if (selectedRouteNode) {
-      setSelectedRouteInStore(selectedRouteNode.id);
-      const selectedRouteData = selectedRouteNode.data as {
-        path: string;
-        method: string;
-        mockUrl: string;
-      };
-      const key = `${selectedRouteNode.id}:${selectedRouteData.path}:${selectedRouteData.method}:${selectedRouteData.mockUrl}`;
-      if (lastDispatchedRouteKeyRef.current === key) return;
-      lastDispatchedRouteKeyRef.current = key;
-
-      window.dispatchEvent(
-        new CustomEvent("route-selected", {
-          detail: {
-            id: selectedRouteNode.id,
-            path: selectedRouteData.path,
-            method: selectedRouteData.method,
-            mockUrl: selectedRouteData.mockUrl,
-          },
-        }),
+  // Using React Flow's onSelectionChange rather than watching the full [nodes] array,
+  // preventing 60fps drag frames from triggering selection scans.
+  const handleSelectionChange = React.useCallback(
+    ({ nodes: selectedNodes }: { nodes: Node[] }) => {
+      const selectedRouteNode = selectedNodes.find(
+        (n) => n.type === "routeNode",
       );
-    } else {
-      setSelectedRouteInStore(null);
-      if (lastDispatchedRouteKeyRef.current === null) return;
-      lastDispatchedRouteKeyRef.current = null;
-      window.dispatchEvent(new CustomEvent("route-selected", { detail: null }));
-    }
-  }, [nodes, setSelectedRouteInStore]);
+      if (selectedRouteNode) {
+        setSelectedRouteInStore(selectedRouteNode.id);
+        const selectedRouteData = selectedRouteNode.data as {
+          path: string;
+          method: string;
+          mockUrl: string;
+        };
+        const key = `${selectedRouteNode.id}:${selectedRouteData.path}:${selectedRouteData.method}:${selectedRouteData.mockUrl}`;
+        if (lastDispatchedRouteKeyRef.current === key) return;
+        lastDispatchedRouteKeyRef.current = key;
+
+        window.dispatchEvent(
+          new CustomEvent("route-selected", {
+            detail: {
+              id: selectedRouteNode.id,
+              path: selectedRouteData.path,
+              method: selectedRouteData.method,
+              mockUrl: selectedRouteData.mockUrl,
+            },
+          }),
+        );
+      } else {
+        setSelectedRouteInStore(null);
+        if (lastDispatchedRouteKeyRef.current === null) return;
+        lastDispatchedRouteKeyRef.current = null;
+        window.dispatchEvent(
+          new CustomEvent("route-selected", { detail: null }),
+        );
+      }
+    },
+    [setSelectedRouteInStore],
+  );
 
   const handlePaneClick = React.useCallback(() => {
     setSelectedRouteInStore(null);
@@ -675,6 +680,7 @@ function FlowCanvasInner({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={handleNodeClick}
+        onSelectionChange={handleSelectionChange}
         onPaneClick={handlePaneClick}
         onNodesDelete={handleNodesDelete}
         nodeTypes={nodeTypes}
