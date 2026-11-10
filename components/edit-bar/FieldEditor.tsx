@@ -112,7 +112,7 @@ export const FieldEditor = ({
             </span>
           )}
           {field.source?.type === "static" && (
-            <span className="text-mini rounded border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+            <span className="bg-success/10 text-success border-success/20 text-mini rounded border px-1.5 py-0.5 font-mono font-semibold">
               =&quot;{field.source.value}&quot;
             </span>
           )}

@@ -4,9 +4,23 @@ import * as React from "react";
 import * as PikaCore from "@pikaicons/core-free";
 import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
-import { RiShuffleLine } from "@remixicon/react";
+import {
+  RiSettings2Line,
+  RiFileCodeLine,
+  RiGitBranchLine,
+  RiPulseLine,
+  RiFileHistoryLine,
+  RiPlayLine,
+  RiArrowDownSLine,
+  RiCodeLine,
+  RiFileCopyLine,
+  RiCheckLine,
+  RiShuffleLine,
+} from "@remixicon/react";
 import { cn } from "@/lib/utils";
 import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
+import { type InspectorTab } from "@/stores/canvas-dnd-store";
+import { SchemaStoreProvider, useSchemaStore } from "@/stores/store-provider";
 import { FakerProviderSelect } from "@/components/edit-bar/FakerProviderSelect";
 import { getProviderByValue } from "@/lib/faker-registry";
 import { updateRoute, deleteRoute } from "@/lib/actions/routes";
@@ -29,9 +43,31 @@ import {
   getEffectiveRoutePath,
   extractRoutePathParameters,
 } from "@/lib/services/route-param.service";
+import { FieldTree } from "@/components/edit-bar/FieldTree";
+import { ChaosConfig } from "@/components/edit-bar/ChaosConfig";
+import {
+  HeadersEditor,
+  type HeaderRow,
+} from "@/components/edit-bar/HeadersEditor";
+import { RulesEditor } from "@/components/edit-bar/RulesEditor";
+import { TypeScriptPreview } from "@/components/edit-bar/TypeScriptPreview";
+import type { ConditionalRule } from "@/lib/mock-engine";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { Endpoint, Route } from "@/db/schema";
 
 const FIELD_TYPES = [
@@ -48,6 +84,68 @@ type FieldType = (typeof FIELD_TYPES)[number];
 const HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"] as const;
 type HttpMethod = (typeof HTTP_METHODS)[number];
 
+const METHOD_STYLES: Record<
+  HttpMethod,
+  { text: string; dot: string; highlight: string; border: string; bg: string }
+> = {
+  GET: {
+    text: "text-method-get",
+    dot: "bg-method-get",
+    highlight: "data-highlighted:bg-method-get/10",
+    border: "border-method-get/30",
+    bg: "bg-method-get/10",
+  },
+  POST: {
+    text: "text-method-post",
+    dot: "bg-method-post",
+    highlight: "data-highlighted:bg-method-post/10",
+    border: "border-method-post/30",
+    bg: "bg-method-post/10",
+  },
+  PUT: {
+    text: "text-method-put",
+    dot: "bg-method-put",
+    highlight: "data-highlighted:bg-method-put/10",
+    border: "border-method-put/30",
+    bg: "bg-method-put/10",
+  },
+  DELETE: {
+    text: "text-method-delete",
+    dot: "bg-method-delete",
+    highlight: "data-highlighted:bg-method-delete/10",
+    border: "border-method-delete/30",
+    bg: "bg-method-delete/10",
+  },
+  PATCH: {
+    text: "text-method-patch",
+    dot: "bg-method-patch",
+    highlight: "data-highlighted:bg-method-patch/10",
+    border: "border-method-patch/30",
+    bg: "bg-method-patch/10",
+  },
+};
+
+const COMMON_STATUS_CODES = [200, 201, 204, 400, 404, 500] as const;
+
+/**
+ * Resolves status code badge styling following semantic DESIGN.md tokens.
+ */
+const getStatusCodeBadgeStyles = (
+  code: number,
+  isSelected: boolean,
+): string => {
+  if (!isSelected) {
+    return "bg-muted/40 text-muted-foreground border-border/40 hover:bg-muted hover:text-foreground";
+  }
+  if (code >= 200 && code < 300) {
+    return "bg-success/15 text-success border-success/40 shadow-xs";
+  }
+  if (code >= 300 && code < 400) {
+    return "bg-warning/15 text-warning border-warning/40 shadow-xs";
+  }
+  return "bg-destructive/15 text-destructive border-destructive/40 shadow-xs";
+};
+
 interface NodeInspectorProps {
   /** The currently selected route on canvas, if any. */
   route?: Route | null;
@@ -63,8 +161,6 @@ interface NodeInspectorProps {
   onRouteUpdated: (updatedRoute: Route) => void;
   /** Called when a route is deleted so canvas and selection clean up. */
   onRouteDeleted?: (routeId: string) => void;
-  /** Called to open the full advanced EditBar sheet. */
-  onOpenAdvanced: () => void;
   /** Called when the user closes the inspector (back/close). */
   onCloseInspector: () => void;
 }
@@ -76,17 +172,15 @@ interface FieldEditorProps {
   endpoints?: Endpoint[];
   onRouteUpdated: (updatedRoute: Route) => void;
   onBack: () => void;
-  onOpenAdvanced: () => void;
 }
 
-const FieldEditor = ({
+const FieldPropertyEditor = ({
   field,
   allFields,
   route,
   endpoints,
   onRouteUpdated,
   onBack,
-  onOpenAdvanced,
 }: FieldEditorProps): React.JSX.Element => {
   const [loading, setLoading] = React.useState(false);
   const [name, setName] = React.useState(field.name);
@@ -128,7 +222,7 @@ const FieldEditor = ({
     ? getProviderByValue(fakerProvider)
     : undefined;
 
-  const handleSave = async () => {
+  const handleSave = React.useCallback(async (): Promise<void> => {
     if (!name.trim()) {
       toast.error("Field name cannot be empty");
       return;
@@ -143,9 +237,15 @@ const FieldEditor = ({
               type: type as SchemaField["type"],
               source:
                 sourceType === "pathParam" && selectedParamName
-                  ? { type: "pathParam" as const, name: selectedParamName }
+                  ? {
+                      type: "pathParam" as const,
+                      name: selectedParamName,
+                    }
                   : sourceType === "static"
-                    ? { type: "static" as const, value: staticValue }
+                    ? {
+                        type: "static" as const,
+                        value: staticValue,
+                      }
                     : undefined,
               fakerProvider:
                 sourceType === "faker" ? fakerProvider || undefined : undefined,
@@ -164,9 +264,21 @@ const FieldEditor = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    name,
+    allFields,
+    field.id,
+    type,
+    sourceType,
+    selectedParamName,
+    staticValue,
+    fakerProvider,
+    nullable,
+    route.id,
+    onRouteUpdated,
+  ]);
 
-  const handleRemove = async () => {
+  const handleRemove = async (): Promise<void> => {
     setLoading(true);
     try {
       const updated = await removeFieldFromRoute(route.id, field.id);
@@ -179,6 +291,23 @@ const FieldEditor = ({
       setLoading(false);
     }
   };
+
+  // Keyboard shortcuts: Cmd+S / Ctrl+S to save, Esc to go back
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        void handleSave();
+      } else if (e.key === "Escape") {
+        onBack();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleSave, onBack]);
 
   return (
     <div className="flex h-full flex-col">
@@ -224,7 +353,7 @@ const FieldEditor = ({
             onChange={(e) => setName(e.target.value)}
             placeholder="fieldName"
             variant="mono"
-            className="h-8 text-xs"
+            className="h-8 font-mono text-xs"
             disabled={loading}
           />
         </div>
@@ -357,7 +486,7 @@ const FieldEditor = ({
               onChange={(e) => setStaticValue(e.target.value)}
               placeholder='e.g. "active", 100, true'
               variant="mono"
-              className="h-8 text-xs"
+              className="h-8 font-mono text-xs"
               disabled={loading}
             />
             <p className="text-muted-foreground text-mini leading-snug">
@@ -402,22 +531,6 @@ const FieldEditor = ({
             aria-label="Allow null values"
           />
         </div>
-
-        {/* Advanced settings link */}
-        <div className="border-border/40 border-t pt-3">
-          <button
-            type="button"
-            onClick={onOpenAdvanced}
-            className="text-muted-foreground hover:text-primary focus-visible:ring-ring flex items-center gap-1.5 rounded-sm text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
-          >
-            <PikaIcon
-              icon={PikaCore.Settings01Icon}
-              size={14}
-              aria-hidden="true"
-            />
-            <span>Advanced settings (chaos, headers…)</span>
-          </button>
-        </div>
       </div>
 
       {/* Footer */}
@@ -454,7 +567,7 @@ const FieldEditor = ({
           onClick={handleSave}
           disabled={loading || !name.trim()}
           className="text-xs"
-          aria-label="Save field changes"
+          aria-label="Save field changes (Ctrl+S / Cmd+S)"
         >
           {loading ? (
             <PikaIcon
@@ -481,7 +594,6 @@ interface RouteEditorProps {
   onRouteDeleted?: (routeId: string) => void;
   onSelectField: (fieldId: string) => void;
   onDeselect: () => void;
-  onOpenAdvanced: () => void;
 }
 
 const RouteEditor = ({
@@ -490,13 +602,25 @@ const RouteEditor = ({
   projectSlug,
   onRouteUpdated,
   onRouteDeleted,
-  onSelectField,
   onDeselect,
-  onOpenAdvanced,
 }: RouteEditorProps): React.JSX.Element => {
   const [loading, setLoading] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [clearAllOpen, setClearAllOpen] = React.useState(false);
+  const [tsOpen, setTsOpen] = React.useState(false);
+  const [copiedJson, setCopiedJson] = React.useState(false);
+
+  // Sync with unified canvas-dnd store for active tab
+  const inspectorTab = useCanvasDndStore((s) => s.inspectorTab);
+  const setInspectorTab = useCanvasDndStore((s) => s.setInspectorTab);
+
+  // Route fields from Zustand schema store
+  const fields = useSchemaStore((state) => state.fields);
+  const setSchema = useSchemaStore((state) => state.setSchema);
+  const resetSchema = useSchemaStore((state) => state.resetSchema);
+
+  // Route basic settings
   const [method, setMethod] = React.useState<HttpMethod>(
     (route.method.toUpperCase() as HttpMethod) || "GET",
   );
@@ -504,7 +628,49 @@ const RouteEditor = ({
   const [statusCode, setStatusCode] = React.useState<number>(
     route.statusCode || 200,
   );
-  const [latency, setLatency] = React.useState<number>(route.latencyMin || 0);
+  const [isEnabled, setIsEnabled] = React.useState<boolean>(route.isEnabled);
+  const [latencyMin, setLatencyMin] = React.useState<number>(
+    route.latencyMin ?? 0,
+  );
+  const [latencyMax, setLatencyMax] = React.useState<number>(
+    route.latencyMax ?? 0,
+  );
+  const [errorRate, setErrorRate] = React.useState<number>(
+    route.errorRate ?? 0,
+  );
+
+  // Parse initial headers
+  const [headers, setHeaders] = React.useState<HeaderRow[]>(() => {
+    try {
+      const parsed = JSON.parse(route.customHeaders ?? "{}");
+      return Object.entries(parsed).map(([key, value]) => ({
+        key,
+        value: String(value),
+      }));
+    } catch {
+      return [];
+    }
+  });
+
+  // Parse initial conditional rules
+  const [rules, setRules] = React.useState<ConditionalRule[]>(() => {
+    try {
+      return JSON.parse(route.conditionalRules ?? "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  // Keep store fields synchronized when route updates externally
+  React.useEffect(() => {
+    try {
+      const parsed = JSON.parse(route.responseSchema ?? "{}");
+      const list = parseSchemaToFields(parsed);
+      setSchema(list);
+    } catch {
+      setSchema([]);
+    }
+  }, [route.responseSchema, setSchema]);
 
   const parentEndpoint = endpoints?.find((ep) => ep.id === route.endpointId);
   const effectiveBasePath = parentEndpoint?.basePath ?? "";
@@ -514,27 +680,14 @@ const RouteEditor = ({
     [effectivePath],
   );
 
-  const [isTryingRequest, setIsTryingRequest] = React.useState(false);
-  const [tryResponse, setTryResponse] = React.useState<{
-    status: number;
-    statusText: string;
-    timeMs: number;
-    body: string;
-  } | null>(null);
-
-  // Parse fields & saved parameter configurations from schema
-  const routeResponseSchema = route.responseSchema;
+  // Parse saved parameter configurations
   const parsedSchemaObj = React.useMemo(() => {
     try {
-      return JSON.parse(routeResponseSchema ?? "{}");
+      return JSON.parse(route.responseSchema ?? "{}");
     } catch {
       return {};
     }
-  }, [routeResponseSchema]);
-
-  const fields: SchemaField[] = React.useMemo(() => {
-    return parseSchemaToFields(parsedSchemaObj);
-  }, [parsedSchemaObj]);
+  }, [route.responseSchema]);
 
   const savedParamConfigs = React.useMemo(() => {
     return extractRouteParamConfigs(parsedSchemaObj);
@@ -590,6 +743,34 @@ const RouteEditor = ({
     }
     return initial;
   });
+
+  // Check if current draft differs from saved route
+  const isDirty = React.useMemo(() => {
+    if (method !== ((route.method.toUpperCase() as HttpMethod) || "GET")) {
+      return true;
+    }
+    if (path !== route.path) return true;
+    if (statusCode !== (route.statusCode || 200)) return true;
+    if (isEnabled !== route.isEnabled) return true;
+    if (latencyMin !== (route.latencyMin ?? 0)) return true;
+    if (latencyMax !== (route.latencyMax ?? 0)) return true;
+    if (errorRate !== (route.errorRate ?? 0)) return true;
+    if (JSON.stringify(paramConfigs) !== JSON.stringify(savedParamConfigs)) {
+      return true;
+    }
+    return false;
+  }, [
+    method,
+    path,
+    statusCode,
+    isEnabled,
+    latencyMin,
+    latencyMax,
+    errorRate,
+    paramConfigs,
+    route,
+    savedParamConfigs,
+  ]);
 
   const handleToggleParamMode = (
     paramName: string,
@@ -729,6 +910,15 @@ const RouteEditor = ({
     }
   };
 
+  // Live Try Request test runner state
+  const [isTryingRequest, setIsTryingRequest] = React.useState(false);
+  const [tryResponse, setTryResponse] = React.useState<{
+    status: number;
+    statusText: string;
+    timeMs: number;
+    body: string;
+  } | null>(null);
+
   const constructedTryUrl = React.useMemo(() => {
     let resolvedSubpath = effectivePath;
     for (const p of detectedParams) {
@@ -747,7 +937,6 @@ const RouteEditor = ({
     setIsTryingRequest(true);
     const start = Date.now();
     try {
-      // Re-generate fresh runtime random values for all parameters configured with FAPI
       const updatedRuntimeValues = { ...testParamValues };
       for (const p of detectedParams) {
         if (paramConfigs[p.name]?.mode === "fapi") {
@@ -806,6 +995,7 @@ const RouteEditor = ({
     setLoading(true);
     try {
       const updated = await clearFieldsFromRoute(route.id);
+      resetSchema();
       onRouteUpdated(updated);
       toast.success("All schema fields cleared");
     } catch {
@@ -815,20 +1005,20 @@ const RouteEditor = ({
     }
   };
 
-  const handleRemoveFieldDirect = async (
-    fieldId: string,
-    fieldName: string,
-    e: React.MouseEvent,
-  ): Promise<void> => {
-    e.stopPropagation();
+  const schemaPreview = React.useMemo(() => {
+    return JSON.stringify(synthesizeSchema(fields, paramConfigs), null, 2);
+  }, [fields, paramConfigs]);
+
+  const handleCopySchema = React.useCallback(async (): Promise<void> => {
     try {
-      const updated = await removeFieldFromRoute(route.id, fieldId);
-      onRouteUpdated(updated);
-      toast.success(`Field "${fieldName}" removed`);
+      await navigator.clipboard.writeText(schemaPreview);
+      setCopiedJson(true);
+      toast.success("JSON Schema copied to clipboard");
+      setTimeout(() => setCopiedJson(false), 2000);
     } catch {
-      toast.error("Failed to remove field");
+      toast.error("Failed to copy schema");
     }
-  };
+  }, [schemaPreview]);
 
   const handleDeleteRoute = async (): Promise<void> => {
     setIsDeleting(true);
@@ -847,314 +1037,633 @@ const RouteEditor = ({
     }
   };
 
-  const handleSaveRoute = async () => {
+  const handleSaveRoute = React.useCallback(async (): Promise<void> => {
     if (!path.trim()) {
       toast.error("Path cannot be empty");
       return;
     }
     setLoading(true);
     try {
+      const headerObj: Record<string, string> = {};
+      headers.forEach((h) => {
+        if (h.key.trim()) {
+          headerObj[h.key.trim()] = h.value;
+        }
+      });
+
       const updated = await updateRoute({
         id: route.id,
         method,
         path: path.trim(),
         statusCode,
-        latencyMin: latency,
-        latencyMax: latency,
+        isEnabled,
+        latencyMin,
+        latencyMax,
+        errorRate,
         responseSchema: JSON.stringify(synthesizeSchema(fields, paramConfigs)),
+        customHeaders: JSON.stringify(headerObj),
+        conditionalRules: JSON.stringify(rules),
       });
       onRouteUpdated(updated);
-      toast.success("Route updated");
+      toast.success("Route details saved successfully!");
     } catch {
       toast.error("Failed to update route");
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    path,
+    route.id,
+    method,
+    statusCode,
+    isEnabled,
+    latencyMin,
+    latencyMax,
+    errorRate,
+    fields,
+    paramConfigs,
+    headers,
+    rules,
+    onRouteUpdated,
+  ]);
+
+  // Keyboard shortcuts & Window Events from Top Navigation Bar Menu
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        void handleSaveRoute();
+      } else if (e.key === "Escape") {
+        onDeselect();
+      }
+    };
+
+    const handleOpenTypes = (): void => setTsOpen(true);
+    const handleCopySchemaEvent = (): void => {
+      void handleCopySchema();
+    };
+    const handleToggleEnabledEvent = (): void => {
+      setIsEnabled((prev) => !prev);
+    };
+    const handleSaveRouteEvent = (): void => {
+      void handleSaveRoute();
+    };
+    const handleDeleteRouteEvent = (): void => {
+      setConfirmDelete(true);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("route-generate-types", handleOpenTypes);
+    window.addEventListener("route-copy-schema", handleCopySchemaEvent);
+    window.addEventListener("route-toggle-enabled", handleToggleEnabledEvent);
+    window.addEventListener("route-save", handleSaveRouteEvent);
+    window.addEventListener("route-delete", handleDeleteRouteEvent);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("route-generate-types", handleOpenTypes);
+      window.removeEventListener("route-copy-schema", handleCopySchemaEvent);
+      window.removeEventListener(
+        "route-toggle-enabled",
+        handleToggleEnabledEvent,
+      );
+      window.removeEventListener("route-save", handleSaveRouteEvent);
+      window.removeEventListener("route-delete", handleDeleteRouteEvent);
+    };
+  }, [handleCopySchema, handleSaveRoute, onDeselect]);
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="border-border/60 flex shrink-0 items-center justify-between border-b px-3 py-3">
-        <div className="flex items-center gap-1.5">
-          <PikaIcon
-            icon={PikaCore.GraphTrendLineIcon}
-            size={16}
-            className="text-primary"
-            aria-hidden="true"
-          />
-          <h2 className="text-foreground text-xs font-semibold">
-            Route Node Inspector
-          </h2>
-        </div>
-        <button
-          type="button"
-          onClick={onDeselect}
-          className="text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring flex size-7 items-center justify-center rounded-md p-1 transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
-          title="Deselect route"
-          aria-label="Deselect route"
-        >
-          <PikaIcon
-            icon={PikaCore.MultipleCrossCancelIcon}
-            size={16}
-            aria-hidden="true"
-          />
-        </button>
-      </div>
-
-      {/* Body */}
-      <div className="scrollbar-subtle min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
-        {/* Method */}
-        <div className="space-y-1.5">
-          <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
-            HTTP Method
-          </span>
-          <div className="flex flex-wrap gap-1">
-            {HTTP_METHODS.map((m) => {
-              const isSelected = method === m;
-              return (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMethod(m)}
-                  aria-pressed={isSelected}
-                  className={cn(
-                    "rounded-md px-2.5 py-1.5 font-mono text-caption font-bold tracking-wider uppercase transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-                    isSelected
-                      ? "bg-foreground text-background shadow-xs"
-                      : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground",
-                  )}
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Header: Section Dropdown Component for Method + Enabled Toggle + Path Input */}
+      <div className="border-border/60 bg-muted/10 flex shrink-0 flex-col gap-2.5 border-b p-3 shadow-2xs">
+        {/* Row 1: Method Dropdown + Enabled Switch + Unsaved Badge + Close */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            {/* Section Dropdown Component for HTTP Method */}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                disabled={loading}
+                render={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "w-28 justify-between gap-1.5 px-2 font-mono text-xs font-bold tracking-wider",
+                      METHOD_STYLES[method]?.border,
+                      METHOD_STYLES[method]?.bg,
+                    )}
+                    aria-label={`Select HTTP method. Current: ${method}`}
+                  />
+                }
+              >
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span
+                    className={cn(
+                      "size-1.5 shrink-0 rounded-full",
+                      METHOD_STYLES[method]?.dot,
+                    )}
+                    aria-hidden="true"
+                  />
+                  <span
+                    className={cn(
+                      "font-mono font-bold tracking-wider text-xs",
+                      METHOD_STYLES[method]?.text,
+                    )}
+                  >
+                    {method}
+                  </span>
+                </span>
+                <RiArrowDownSLine
+                  className="text-muted-foreground size-3.5 shrink-0"
+                  aria-hidden="true"
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-32">
+                <DropdownMenuRadioGroup
+                  value={method}
+                  onValueChange={(val) => setMethod(val as HttpMethod)}
                 >
-                  {m}
-                </button>
-              );
-            })}
+                  {HTTP_METHODS.map((m) => (
+                    <DropdownMenuRadioItem
+                      key={m}
+                      value={m}
+                      className={cn(
+                        "gap-2 font-mono font-bold tracking-wider text-xs cursor-pointer",
+                        METHOD_STYLES[m]?.text,
+                        METHOD_STYLES[m]?.highlight,
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "size-1.5 shrink-0 rounded-full",
+                          METHOD_STYLES[m]?.dot,
+                        )}
+                        aria-hidden="true"
+                      />
+                      {m}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Route Active/Disabled Switch */}
+            <div className="border-border/50 flex items-center gap-1.5 border-l pl-2">
+              <Switch
+                id="route-enabled"
+                checked={isEnabled}
+                onCheckedChange={setIsEnabled}
+                disabled={loading}
+                aria-label="Toggle Route Active"
+              />
+              <label
+                htmlFor="route-enabled"
+                className="text-muted-foreground text-micro cursor-pointer font-bold tracking-wider uppercase"
+              >
+                {isEnabled ? "Active" : "Disabled"}
+              </label>
+            </div>
+
+            {isDirty && (
+              <span
+                className="bg-warning/15 text-warning border-warning/30 text-mini rounded border px-1.5 py-0.5 font-medium"
+                title="Unsaved changes pending"
+              >
+                Unsaved
+              </span>
+            )}
           </div>
+
+          <button
+            type="button"
+            onClick={onDeselect}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring flex size-8 items-center justify-center rounded-md p-1 transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
+            title="Deselect route (Esc)"
+            aria-label="Deselect route"
+          >
+            <PikaIcon
+              icon={PikaCore.MultipleCrossCancelIcon}
+              size={16}
+              aria-hidden="true"
+            />
+          </button>
         </div>
 
-        {/* Path */}
-        <div className="space-y-1.5">
-          <label
-            htmlFor="route-path"
-            className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
-          >
-            Path
-          </label>
+        {/* Row 2: Route Path Input */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="route-path"
+              className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
+            >
+              Route Path
+            </label>
+            <span className="text-muted-foreground text-micro truncate font-mono">
+              {effectivePath}
+            </span>
+          </div>
           <Input
             id="route-path"
             value={path}
             onChange={(e) => setPath(e.target.value)}
+            onBlur={() => {
+              const trimmed = path.trim();
+              if (trimmed && !trimmed.startsWith("/")) {
+                setPath(`/${trimmed}`);
+              }
+            }}
             placeholder="/api/v1/resource"
             variant="mono"
-            className="h-8 text-xs"
+            className="h-8 font-mono text-xs"
             disabled={loading}
           />
         </div>
+      </div>
 
-        {/* Status Code & Latency */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1.5">
-            <label
-              htmlFor="route-status"
-              className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
-            >
-              Status Code
-            </label>
-            <Input
-              id="route-status"
-              type="number"
-              value={statusCode}
-              onChange={(e) => setStatusCode(Number(e.target.value) || 200)}
-              variant="mono"
-              className="h-8 text-xs"
-              disabled={loading}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label
-              htmlFor="route-latency"
-              className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
-            >
-              Delay (ms)
-            </label>
-            <Input
-              id="route-latency"
-              type="number"
-              value={latency}
-              onChange={(e) => setLatency(Number(e.target.value) || 0)}
-              variant="mono"
-              className="h-8 text-xs"
-              disabled={loading}
-            />
-          </div>
-        </div>
-
-        {/* Route Path Parameters */}
-        {detectedParams.length > 0 && (
-          <div className="border-border/50 space-y-2 border-t pt-3">
-            <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
-              Route Parameters ({detectedParams.length})
+      {/* Categorized Tabs: Config, Schema, Rules, Chaos, Headers, Try */}
+      <Tabs
+        value={inspectorTab}
+        onValueChange={(val) => setInspectorTab(val as InspectorTab)}
+        className="flex min-h-0 min-w-0 flex-1 flex-col"
+      >
+        <TabsList className="bg-muted/30 border-border/60 grid shrink-0 grid-cols-6 border-b p-1">
+          <TabsTrigger
+            value="config"
+            size="compact"
+            className="text-micro gap-1 px-1 py-1"
+          >
+            <RiSettings2Line className="size-3.5" aria-hidden="true" />
+            <span>Config</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="schema"
+            size="compact"
+            className="text-micro gap-1 px-1 py-1"
+          >
+            <RiFileCodeLine className="size-3.5" aria-hidden="true" />
+            <span>Schema</span>
+            <span className="bg-muted-foreground/15 text-muted-foreground text-micro rounded px-1 font-mono">
+              {fields.length}
             </span>
-            <div className="space-y-1.5">
-              {detectedParams.map((p) => {
-                const isMapped = fields.some(
-                  (f) =>
-                    (f.source?.type === "pathParam" &&
-                      f.source.name === p.name) ||
-                    f.name.toLowerCase() === p.name.toLowerCase(),
-                );
-                const cfg = paramConfigs[p.name];
-                const isFapi = cfg?.mode === "fapi";
+          </TabsTrigger>
+          <TabsTrigger
+            value="rules"
+            size="compact"
+            className="text-micro gap-1 px-1 py-1"
+          >
+            <RiGitBranchLine className="size-3.5" aria-hidden="true" />
+            <span>Rules</span>
+            {rules.length > 0 && (
+              <span className="bg-primary/15 text-primary text-micro rounded px-1 font-mono font-bold">
+                {rules.length}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger
+            value="chaos"
+            size="compact"
+            className="text-micro gap-1 px-1 py-1"
+          >
+            <RiPulseLine className="size-3.5" aria-hidden="true" />
+            <span>Chaos</span>
+            {(latencyMin > 0 || latencyMax > 0 || errorRate > 0) && (
+              <span className="bg-warning/15 text-warning text-micro rounded px-1 font-mono font-bold">
+                ON
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger
+            value="headers"
+            size="compact"
+            className="text-micro gap-1 px-1 py-1"
+          >
+            <RiFileHistoryLine className="size-3.5" aria-hidden="true" />
+            <span>Headers</span>
+            {headers.length > 0 && (
+              <span className="bg-info/15 text-info text-micro rounded px-1 font-mono font-bold">
+                {headers.length}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger
+            value="try"
+            size="compact"
+            className="text-micro gap-1 px-1 py-1"
+          >
+            <RiPlayLine className="size-3.5" aria-hidden="true" />
+            <span>Try</span>
+          </TabsTrigger>
+        </TabsList>
 
+        {/* Tab 1: Config (Status Code, Latency, Route URL Parameters) */}
+        <TabsContent
+          value="config"
+          className="scrollbar-subtle m-0 min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4"
+        >
+          {/* Status Code with Presets */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+                Status Code
+              </span>
+              <span
+                className={cn(
+                  "text-mini font-mono font-semibold",
+                  statusCode >= 200 && statusCode < 300
+                    ? "text-success"
+                    : statusCode >= 300 && statusCode < 400
+                      ? "text-warning"
+                      : "text-destructive",
+                )}
+              >
+                {statusCode}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {COMMON_STATUS_CODES.map((code) => {
+                const isSelected = statusCode === code;
                 return (
-                  <div
-                    key={p.name}
-                    className="bg-card border-border/60 flex items-center justify-between rounded-md border p-2"
-                  >
-                    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                      <span className="text-foreground font-mono text-xs font-semibold">
-                        :{p.name}
-                      </span>
-                      <span className="text-muted-foreground text-mini">
-                        (required)
-                      </span>
-                      <span
-                        className={cn(
-                          "text-mini rounded border px-1 py-0.5 font-mono",
-                          isFapi
-                            ? "border-primary/30 bg-primary/10 text-primary"
-                            : "border-border/70 bg-muted/60 text-muted-foreground",
-                        )}
-                      >
-                        {isFapi
-                          ? `FAPI: ${cfg?.provider || "random"}`
-                          : `Static: "${testParamValues[p.name] ?? cfg?.staticValue ?? ""}"`}
-                      </span>
-                    </div>
-                    {!isMapped ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="xs"
-                        onClick={() => void handleAddParamField(p.name)}
-                        disabled={loading}
-                        className="text-mini h-6 shrink-0 font-mono"
-                      >
-                        + Add field
-                      </Button>
-                    ) : (
-                      <span className="text-success text-mini shrink-0 font-medium">
-                        Field mapped
-                      </span>
+                  <button
+                    key={code}
+                    type="button"
+                    onClick={() => setStatusCode(code)}
+                    aria-pressed={isSelected}
+                    className={cn(
+                      "rounded-md border px-2 py-1 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                      getStatusCodeBadgeStyles(code, isSelected),
                     )}
-                  </div>
+                  >
+                    {code}
+                  </button>
                 );
               })}
             </div>
-          </div>
-        )}
-
-        {/* Attached Fields */}
-        <div className="border-border/50 space-y-2 border-t pt-3">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-mini font-bold tracking-wider uppercase">
-              Route Fields ({fields.length})
-            </span>
-            {fields.length > 0 && (
-              <button
-                type="button"
-                onClick={() => void handleClearAllFields()}
-                disabled={loading}
-                className="text-muted-foreground hover:text-destructive text-mini font-medium transition-colors"
-                title="Remove all fields from this route"
-              >
-                Clear all
-              </button>
-            )}
-          </div>
-
-          {fields.length === 0 ? (
-            <div className="bg-muted/30 border-border/60 rounded-md border p-3 text-center">
-              <p className="text-muted-foreground text-caption leading-snug">
-                No mock fields on this route yet. Drag a provider from the left
-                sidebar onto this route.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              {fields.map((f) => (
-                <div
-                  key={f.id}
-                  className="bg-card hover:border-border border-border/60 group flex items-center justify-between rounded-md border p-2 transition-colors"
+            <div className="grid grid-cols-2 gap-2 pt-0.5">
+              <div className="space-y-1">
+                <label
+                  htmlFor="route-custom-status"
+                  className="text-muted-foreground text-micro font-mono uppercase"
                 >
-                  <button
-                    type="button"
-                    onClick={() => onSelectField(f.id)}
-                    className="flex min-w-0 flex-1 flex-col text-left focus-visible:outline-hidden"
-                  >
-                    <span className="text-foreground group-hover:text-primary truncate font-mono text-xs font-semibold transition-colors">
-                      {f.name}
-                    </span>
-                    <span className="text-muted-foreground text-mini flex items-center gap-1 truncate font-mono">
-                      {f.source?.type === "pathParam" ? (
-                        <span className="bg-primary/10 text-primary border-primary/20 text-mini rounded-xs border px-1 py-0.5 font-mono font-medium">
-                          URL: :{f.source.name}
+                  Custom Code
+                </label>
+                <Input
+                  id="route-custom-status"
+                  type="number"
+                  value={statusCode}
+                  onChange={(e) => setStatusCode(Number(e.target.value) || 200)}
+                  variant="mono"
+                  className="h-8 font-mono text-xs"
+                  disabled={loading}
+                  placeholder="200"
+                />
+              </div>
+              <div className="space-y-1">
+                <label
+                  htmlFor="route-latency-quick"
+                  className="text-muted-foreground text-micro font-mono uppercase"
+                >
+                  Delay (ms)
+                </label>
+                <Input
+                  id="route-latency-quick"
+                  type="number"
+                  value={latencyMin}
+                  onChange={(e) => {
+                    const val = Number(e.target.value) || 0;
+                    setLatencyMin(val);
+                    if (latencyMax < val) setLatencyMax(val);
+                  }}
+                  variant="mono"
+                  className="h-8 font-mono text-xs"
+                  disabled={loading}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Route Path Parameters Overview */}
+          {detectedParams.length > 0 && (
+            <div className="border-border/50 space-y-2 border-t pt-3">
+              <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+                Route Parameters ({detectedParams.length})
+              </span>
+              <div className="space-y-1.5">
+                {detectedParams.map((p) => {
+                  const isMapped = fields.some(
+                    (f) =>
+                      (f.source?.type === "pathParam" &&
+                        f.source.name === p.name) ||
+                      f.name.toLowerCase() === p.name.toLowerCase(),
+                  );
+                  const cfg = paramConfigs[p.name];
+                  const isFapi = cfg?.mode === "fapi";
+
+                  return (
+                    <div
+                      key={p.name}
+                      className="bg-card border-border/60 flex items-center justify-between rounded-md border p-2"
+                    >
+                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                        <span className="text-foreground font-mono text-xs font-semibold">
+                          :{p.name}
                         </span>
-                      ) : f.source?.type === "static" ? (
-                        <span className="text-mini rounded-xs border border-emerald-500/20 bg-emerald-500/10 px-1 py-0.5 font-mono font-medium text-emerald-600 dark:text-emerald-400">
-                          =&quot;{f.source.value}&quot;
+                        <span className="text-muted-foreground text-mini">
+                          (param)
                         </span>
+                        <span
+                          className={cn(
+                            "text-mini rounded border px-1 py-0.5 font-mono",
+                            isFapi
+                              ? "border-primary/30 bg-primary/10 text-primary"
+                              : "border-border/70 bg-muted/60 text-muted-foreground",
+                          )}
+                        >
+                          {isFapi
+                            ? `FAPI: ${cfg?.provider || "random"}`
+                            : `Static: "${testParamValues[p.name] ?? cfg?.staticValue ?? ""}"`}
+                        </span>
+                      </div>
+                      {!isMapped ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="xs"
+                          onClick={() => void handleAddParamField(p.name)}
+                          disabled={loading}
+                          className="text-mini h-6 shrink-0 font-mono"
+                        >
+                          + Add field
+                        </Button>
                       ) : (
-                        f.fakerProvider || f.type
+                        <span className="text-success text-mini shrink-0 font-medium">
+                          Field mapped
+                        </span>
                       )}
-                    </span>
-                  </button>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => onSelectField(f.id)}
-                      className="text-primary hover:text-primary/80 text-mini px-1 py-0.5 font-semibold"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) =>
-                        void handleRemoveFieldDirect(f.id, f.name, e)
-                      }
-                      className="text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 rounded p-1 transition-colors"
-                      title={`Remove field "${f.name}"`}
-                      aria-label={`Remove field ${f.name}`}
-                    >
-                      <PikaIcon
-                        icon={PikaCore.DeleteDustbin01Icon}
-                        size={14}
-                        aria-hidden="true"
-                      />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
-        </div>
+        </TabsContent>
 
-        {/* Try Request Interactive Preview */}
-        <div className="border-border/50 space-y-2.5 border-t pt-3">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-mini font-bold tracking-wider uppercase">
-              Try Request
-            </span>
-            <span className="text-muted-foreground text-mini font-mono font-semibold">
+        {/* Tab 2: Schema (FieldTree + TS Generator + JSON Schema Copy) */}
+        <TabsContent
+          value="schema"
+          className="scrollbar-subtle m-0 min-h-0 flex-1 overflow-y-auto px-4 py-3"
+        >
+          <div className="space-y-3">
+            <div className="border-border/50 flex items-center justify-between border-b pb-2">
+              <span className="text-muted-foreground text-mini font-bold tracking-wider uppercase">
+                Schema Tools
+              </span>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  onClick={() => void handleCopySchema()}
+                  className="text-mini h-7 gap-1"
+                >
+                  {copiedJson ? (
+                    <RiCheckLine className="text-success size-3.5" />
+                  ) : (
+                    <RiFileCopyLine className="size-3.5" />
+                  )}
+                  <span>{copiedJson ? "Copied" : "Copy JSON"}</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  onClick={() => setTsOpen(true)}
+                  className="text-mini h-7 gap-1"
+                >
+                  <RiCodeLine className="size-3.5" />
+                  <span>Types</span>
+                </Button>
+                {fields.length > 0 && (
+                  <Popover open={clearAllOpen} onOpenChange={setClearAllOpen}>
+                    <PopoverTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="xs"
+                          disabled={loading}
+                          className="text-muted-foreground hover:text-destructive text-mini h-7"
+                        >
+                          Clear all
+                        </Button>
+                      }
+                    />
+                    <PopoverContent
+                      align="end"
+                      side="bottom"
+                      className="w-56 p-3 shadow-md"
+                    >
+                      <div className="space-y-2">
+                        <p className="text-foreground text-xs font-semibold">
+                          Clear all fields?
+                        </p>
+                        <p className="text-muted-foreground text-mini leading-snug">
+                          This will remove all {fields.length} schema fields
+                          from this route.
+                        </p>
+                        <div className="flex items-center justify-end gap-1.5 pt-1">
+                          <Button
+                            type="button"
+                            size="xs"
+                            variant="ghost"
+                            onClick={() => setClearAllOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            size="xs"
+                            variant="destructive"
+                            onClick={() => {
+                              setClearAllOpen(false);
+                              void handleClearAllFields();
+                            }}
+                          >
+                            Clear all
+                          </Button>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+            </div>
+
+            {/* Interactive Field Tree */}
+            <FieldTree />
+          </div>
+        </TabsContent>
+
+        {/* Tab 3: Rules (RulesEditor) */}
+        <TabsContent
+          value="rules"
+          className="scrollbar-subtle m-0 min-h-0 flex-1 overflow-y-auto px-4 py-3"
+        >
+          <RulesEditor rules={rules} onRulesChange={setRules} />
+        </TabsContent>
+
+        {/* Tab 4: Chaos (ChaosConfig) */}
+        <TabsContent
+          value="chaos"
+          className="scrollbar-subtle m-0 min-h-0 flex-1 overflow-y-auto px-4 py-3"
+        >
+          <ChaosConfig
+            latencyMin={latencyMin}
+            latencyMax={latencyMax}
+            errorRate={errorRate}
+            onLatencyMinChange={setLatencyMin}
+            onLatencyMaxChange={setLatencyMax}
+            onErrorRateChange={setErrorRate}
+          />
+        </TabsContent>
+
+        {/* Tab 5: Headers (HeadersEditor) */}
+        <TabsContent
+          value="headers"
+          className="scrollbar-subtle m-0 min-h-0 flex-1 overflow-y-auto px-4 py-3"
+        >
+          <HeadersEditor headers={headers} onHeadersChange={setHeaders} />
+        </TabsContent>
+
+        {/* Tab 6: Try (Interactive Request Runner) */}
+        <TabsContent
+          value="try"
+          className="scrollbar-subtle m-0 min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4"
+        >
+          {/* Active Route Header Banner */}
+          <div className="bg-muted/40 border-border/60 flex items-center gap-2 rounded-md border p-2">
+            <span
+              className={cn(
+                "rounded border px-2 py-0.5 font-mono text-caption font-bold uppercase",
+                METHOD_STYLES[method]?.border,
+                METHOD_STYLES[method]?.bg,
+                METHOD_STYLES[method]?.text,
+              )}
+            >
               {method}
+            </span>
+            <span className="text-foreground truncate font-mono text-xs font-semibold">
+              {effectivePath}
             </span>
           </div>
 
+          {/* Parameter Values Controls */}
           {detectedParams.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-mini block font-semibold">
-                  Parameter Values:
+                <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+                  Parameter Values
                 </span>
                 {detectedParams.some(
                   (p) => paramConfigs[p.name]?.mode === "fapi",
@@ -1197,9 +1706,13 @@ const RouteEditor = ({
                         </div>
 
                         {/* Mode Selector Toggle: Static vs FAPI */}
-                        <div className="bg-muted/80 flex items-center rounded-md p-0.5">
+                        <div
+                          aria-label={`Mode for parameter ${p.name}`}
+                          className="bg-muted/80 flex items-center rounded-md p-0.5"
+                        >
                           <button
                             type="button"
+                            aria-pressed={!isFapi}
                             onClick={() =>
                               handleToggleParamMode(p.name, "static")
                             }
@@ -1214,6 +1727,7 @@ const RouteEditor = ({
                           </button>
                           <button
                             type="button"
+                            aria-pressed={isFapi}
                             onClick={() =>
                               handleToggleParamMode(p.name, "fapi")
                             }
@@ -1244,7 +1758,7 @@ const RouteEditor = ({
                               p.name === "id" ? "295" : `sample_${p.name}`
                             }
                             variant="mono"
-                            className="h-7 text-xs"
+                            className="h-7 font-mono text-xs"
                             disabled={isTryingRequest}
                           />
                           <p className="text-muted-foreground text-micro font-mono">
@@ -1295,10 +1809,37 @@ const RouteEditor = ({
             </div>
           )}
 
-          <div className="bg-muted/40 border-border/60 text-muted-foreground text-mini rounded-md border p-2 font-mono break-all">
-            {constructedTryUrl}
+          {/* URL Preview with Copy */}
+          <div className="space-y-1.5">
+            <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+              Mock Request URL
+            </span>
+            <div className="bg-muted/40 border-border/60 text-muted-foreground text-mini flex items-center justify-between gap-2 rounded-md border p-2 font-mono break-all">
+              <span className="truncate">{constructedTryUrl}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={() => {
+                  void navigator.clipboard.writeText(
+                    window.location.origin + constructedTryUrl,
+                  );
+                  toast.success("URL copied to clipboard");
+                }}
+                className="text-mini h-6 shrink-0 gap-1 px-1.5"
+                title="Copy full mock URL"
+              >
+                <PikaIcon
+                  icon={PikaCore.CopyIcon}
+                  size={12}
+                  aria-hidden="true"
+                />
+                <span>Copy</span>
+              </Button>
+            </div>
           </div>
 
+          {/* Send Button */}
           <Button
             type="button"
             variant="secondary"
@@ -1322,49 +1863,57 @@ const RouteEditor = ({
             )}
           </Button>
 
+          {/* Response Console */}
           {tryResponse && (
-            <div className="border-border/70 bg-card space-y-1.5 rounded-md border p-2">
+            <div className="border-border/70 bg-card space-y-1.5 rounded-md border p-2.5">
               <div className="text-mini flex items-center justify-between">
-                <span
-                  className={cn(
-                    "font-mono font-bold",
-                    tryResponse.status >= 200 && tryResponse.status < 300
-                      ? "text-success"
-                      : "text-destructive",
-                  )}
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "rounded border px-1.5 py-0.5 font-mono text-caption font-bold",
+                      tryResponse.status >= 200 && tryResponse.status < 300
+                        ? "bg-success/15 text-success border-success/30"
+                        : "bg-destructive/15 text-destructive border-destructive/30",
+                    )}
+                  >
+                    {tryResponse.status} {tryResponse.statusText}
+                  </span>
+                  <span className="text-muted-foreground text-mini font-mono">
+                    {tryResponse.timeMs}ms
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(tryResponse.body);
+                    toast.success("Response body copied to clipboard");
+                  }}
+                  className="text-mini h-6 gap-1 px-1.5"
+                  title="Copy response body"
                 >
-                  {tryResponse.status} {tryResponse.statusText}
-                </span>
-                <span className="text-muted-foreground font-mono">
-                  {tryResponse.timeMs}ms
-                </span>
+                  <PikaIcon
+                    icon={PikaCore.CopyIcon}
+                    size={12}
+                    aria-hidden="true"
+                  />
+                  <span>Copy</span>
+                </Button>
               </div>
-              <pre className="bg-muted/60 text-foreground text-caption max-h-36 overflow-auto rounded p-2 font-mono">
+              <pre
+                aria-label="Response payload"
+                className="bg-muted/60 text-foreground text-caption scrollbar-subtle max-h-48 overflow-auto rounded p-2.5 font-mono"
+              >
                 {tryResponse.body}
               </pre>
             </div>
           )}
-        </div>
+        </TabsContent>
+      </Tabs>
 
-        {/* Advanced Drawer Trigger */}
-        <div className="border-border/40 border-t pt-3">
-          <button
-            type="button"
-            onClick={onOpenAdvanced}
-            className="text-muted-foreground hover:text-primary focus-visible:ring-ring flex items-center gap-1.5 rounded-sm text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
-          >
-            <PikaIcon
-              icon={PikaCore.Settings01Icon}
-              size={14}
-              aria-hidden="true"
-            />
-            <span>Chaos rules & headers drawer…</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="border-border/60 flex shrink-0 items-center justify-between border-t px-4 py-3">
+      {/* Footer with Delete and Save Route buttons */}
+      <div className="border-border/60 bg-card flex shrink-0 items-center justify-between border-t px-4 py-3">
         {confirmDelete ? (
           <div className="flex items-center gap-1.5">
             <Button
@@ -1414,27 +1963,42 @@ const RouteEditor = ({
           </Button>
         )}
 
-        <Button
-          type="button"
-          size="sm"
-          onClick={handleSaveRoute}
-          disabled={loading || !path.trim()}
-          className="text-xs"
-          aria-label="Save route changes"
-        >
-          {loading ? (
-            <PikaIcon
-              icon={PikaCore.RefreshIcon}
-              size={14}
-              className="animate-spin motion-reduce:animate-none"
-              aria-hidden="true"
-            />
-          ) : (
-            <PikaIcon icon={PikaCore.FloppyIcon} size={14} aria-hidden="true" />
-          )}
-          <span>Save Route</span>
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <Button
+            type="button"
+            size="sm"
+            variant={isDirty ? "default" : "secondary"}
+            onClick={handleSaveRoute}
+            disabled={loading || !path.trim()}
+            className="text-xs"
+            aria-label="Save route changes (Ctrl+S / Cmd+S)"
+            title="Save route changes (Ctrl+S / Cmd+S)"
+          >
+            {loading ? (
+              <PikaIcon
+                icon={PikaCore.RefreshIcon}
+                size={14}
+                className="animate-spin motion-reduce:animate-none"
+                aria-hidden="true"
+              />
+            ) : (
+              <PikaIcon
+                icon={PikaCore.FloppyIcon}
+                size={14}
+                aria-hidden="true"
+              />
+            )}
+            <span>Save Route</span>
+          </Button>
+        </div>
       </div>
+
+      {/* TypeScript Preview Modal */}
+      <TypeScriptPreview
+        routeId={route.id}
+        open={tsOpen}
+        onOpenChange={setTsOpen}
+      />
     </div>
   );
 };
@@ -1498,10 +2062,7 @@ const IdleInspector = ({
  * Permanently visible Right Sidebar Node Inspector.
  *
  * Dedicated strictly to inspecting and editing node and field values on the canvas.
- * Handles three clean states:
- * 1. Field Node Editor (when a field badge is clicked)
- * 2. Route Node Editor (when a route's pencil button is clicked)
- * 3. Idle Inspector (when no node is explicitly opened for editing)
+ * Unifies all route editing, schema fields, rules, chaos, headers, and live testing.
  */
 export const NodeInspector = ({
   route,
@@ -1511,14 +2072,13 @@ export const NodeInspector = ({
   endpoints,
   onRouteUpdated,
   onRouteDeleted,
-  onOpenAdvanced,
   onCloseInspector,
 }: NodeInspectorProps): React.JSX.Element => {
   const setInspectedField = useCanvasDndStore((s) => s.setInspectedField);
 
   // Parse fields for route
   const activeResponseSchema = route?.responseSchema;
-  const fields: SchemaField[] = React.useMemo(() => {
+  const initialFields: SchemaField[] = React.useMemo(() => {
     if (!activeResponseSchema) return [];
     try {
       const parsed = JSON.parse(activeResponseSchema);
@@ -1531,37 +2091,37 @@ export const NodeInspector = ({
   // Find inspected field
   const inspectedField = React.useMemo(() => {
     if (!inspectedFieldId) return null;
-    return fields.find((f) => f.id === inspectedFieldId) ?? null;
-  }, [fields, inspectedFieldId]);
+    return initialFields.find((f) => f.id === inspectedFieldId) ?? null;
+  }, [initialFields, inspectedFieldId]);
 
   if (route && inspectedField) {
     return (
-      <FieldEditor
+      <FieldPropertyEditor
         key={inspectedField.id}
         field={inspectedField}
-        allFields={fields}
+        allFields={initialFields}
         route={route}
         endpoints={endpoints}
         onRouteUpdated={onRouteUpdated}
         onBack={() => setInspectedField(null)}
-        onOpenAdvanced={onOpenAdvanced}
       />
     );
   }
 
   if (route) {
     return (
-      <RouteEditor
-        key={route.id}
-        route={route}
-        endpoints={endpoints}
-        projectSlug={projectSlug}
-        onRouteUpdated={onRouteUpdated}
-        onRouteDeleted={onRouteDeleted}
-        onSelectField={(fieldId) => setInspectedField(fieldId)}
-        onDeselect={onCloseInspector}
-        onOpenAdvanced={onOpenAdvanced}
-      />
+      <SchemaStoreProvider key={route.id} initialFields={initialFields}>
+        <RouteEditor
+          key={route.id}
+          route={route}
+          endpoints={endpoints}
+          projectSlug={projectSlug}
+          onRouteUpdated={onRouteUpdated}
+          onRouteDeleted={onRouteDeleted}
+          onSelectField={(fieldId) => setInspectedField(fieldId)}
+          onDeselect={onCloseInspector}
+        />
+      </SchemaStoreProvider>
     );
   }
 

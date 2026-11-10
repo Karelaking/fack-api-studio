@@ -66,15 +66,12 @@ export const FieldBadge = ({
       {/* Color dot indicating provider category */}
       <span
         aria-hidden="true"
-        className="h-1.5 w-1.5 shrink-0 rounded-full"
-        style={{
-          backgroundColor:
-            field.source?.type === "pathParam"
-              ? "oklch(0.47 0.15 245)"
-              : field.source?.type === "static"
-                ? "oklch(0.65 0.16 150)"
-                : color,
-        }}
+        className={cn(
+          "h-1.5 w-1.5 shrink-0 rounded-full",
+          field.source?.type === "pathParam" && "bg-primary",
+          field.source?.type === "static" && "bg-success",
+        )}
+        style={!field.source ? { backgroundColor: color } : undefined}
       />
 
       {/* Field name — click to inspect */}
@@ -98,7 +95,7 @@ export const FieldBadge = ({
           :{field.source.name}
         </span>
       ) : field.source?.type === "static" ? (
-        <span className="text-micro max-w-20 truncate font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+        <span className="text-success text-micro max-w-20 truncate font-mono font-semibold">
           =&quot;{field.source.value}&quot;
         </span>
       ) : (
@@ -114,7 +111,7 @@ export const FieldBadge = ({
         type="button"
         onClick={handleRemove}
         className={cn(
-          "text-muted-foreground/70 hover:text-destructive hover:bg-destructive/15 focus-visible:ring-ring ml-0.5 flex size-5 shrink-0 items-center justify-center rounded-sm transition-all focus-visible:ring-2 focus-visible:outline-hidden",
+          "text-muted-foreground/70 hover:text-destructive hover:bg-destructive/15 focus-visible:ring-ring ml-0.5 flex size-5.5 shrink-0 items-center justify-center rounded-sm transition-all focus-visible:ring-2 focus-visible:outline-hidden",
           "opacity-70 group-hover:opacity-100 focus-visible:opacity-100",
         )}
         title={`Remove field "${field.name}"`}

@@ -16,6 +16,12 @@ import {
   RiAddLine,
   RiMore2Fill,
   RiLoader2Line,
+  RiPlayLine,
+  RiFileCodeLine,
+  RiCodeLine,
+  RiFileCopyLine,
+  RiCheckLine,
+  RiDeleteBin6Line,
 } from "@remixicon/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -42,6 +48,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { OPEN_AGENT_COMPOSER_EVENT } from "@/lib/ai/agent-events";
 import { useOptionalProject } from "@/components/project/ProjectProvider";
+import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
+import { type InspectorTab } from "@/stores/canvas-dnd-store";
 
 interface SectionMenuBarProps {
   projectSlug: string;
@@ -66,6 +74,19 @@ export const SectionMenuBar = ({
   const isLogsActive = pathname.endsWith("/logs");
   const isNotesActive = pathname.endsWith("/notes");
   const isSettingsActive = pathname.endsWith("/settings");
+
+  const selectedRouteId = useCanvasDndStore((s) => s.selectedRouteId);
+  const setInspectorTab = useCanvasDndStore((s) => s.setInspectorTab);
+
+  const switchInspectorTab = React.useCallback(
+    (tab: InspectorTab) => {
+      setInspectorTab(tab);
+      toast.info(
+        `Switched Inspector to ${tab.charAt(0).toUpperCase() + tab.slice(1)}`,
+      );
+    },
+    [setInspectorTab],
+  );
 
   const [isSavingLayout, setIsSavingLayout] = React.useState(false);
   const [isSavingFack, setIsSavingFack] = React.useState(false);
@@ -151,6 +172,28 @@ export const SectionMenuBar = ({
         return;
       }
 
+      if (isCanvasActive && selectedRouteId && e.altKey) {
+        if (e.key === "1") {
+          e.preventDefault();
+          switchInspectorTab("config");
+        } else if (e.key === "2") {
+          e.preventDefault();
+          switchInspectorTab("schema");
+        } else if (e.key === "3") {
+          e.preventDefault();
+          switchInspectorTab("rules");
+        } else if (e.key === "4") {
+          e.preventDefault();
+          switchInspectorTab("chaos");
+        } else if (e.key === "5") {
+          e.preventDefault();
+          switchInspectorTab("headers");
+        } else if (e.key === "6") {
+          e.preventDefault();
+          switchInspectorTab("try");
+        }
+      }
+
       const isModifier = e.metaKey || e.ctrlKey;
       if (isModifier) {
         if (e.key === "1") {
@@ -190,6 +233,9 @@ export const SectionMenuBar = ({
   }, [
     projectSlug,
     router,
+    isCanvasActive,
+    selectedRouteId,
+    switchInspectorTab,
     handleSaveFack,
     handleSaveCanvasLayout,
     handleAddRoute,
@@ -310,6 +356,94 @@ export const SectionMenuBar = ({
                 <span>Export OpenAPI</span>
               </DropdownMenuItem>
             </DropdownMenuGroup>
+
+            {isCanvasActive && selectedRouteId && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <div className="text-micro text-muted-foreground px-2 py-1 font-semibold tracking-wider uppercase">
+                    Route Inspector
+                  </div>
+                  <DropdownMenuItem
+                    onClick={() => switchInspectorTab("config")}
+                    className="cursor-pointer text-xs"
+                  >
+                    <RiSettings2Line className="h-3.5 w-3.5 shrink-0" />
+                    <span>Config & Status</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => switchInspectorTab("schema")}
+                    className="cursor-pointer text-xs"
+                  >
+                    <RiFileCodeLine className="h-3.5 w-3.5 shrink-0" />
+                    <span>Schema & Fields</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => switchInspectorTab("rules")}
+                    className="cursor-pointer text-xs"
+                  >
+                    <RiGitBranchLine className="h-3.5 w-3.5 shrink-0" />
+                    <span>Smart Rules</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => switchInspectorTab("chaos")}
+                    className="cursor-pointer text-xs"
+                  >
+                    <RiPulseLine className="h-3.5 w-3.5 shrink-0" />
+                    <span>Chaos Simulation</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => switchInspectorTab("headers")}
+                    className="cursor-pointer text-xs"
+                  >
+                    <RiFileHistoryLine className="h-3.5 w-3.5 shrink-0" />
+                    <span>Custom Headers</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => switchInspectorTab("try")}
+                    className="cursor-pointer text-xs"
+                  >
+                    <RiPlayLine className="h-3.5 w-3.5 shrink-0" />
+                    <span>Try Request</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      dispatchCanvasCommand("route-generate-types")
+                    }
+                    className="cursor-pointer text-xs"
+                  >
+                    <RiCodeLine className="h-3.5 w-3.5 shrink-0" />
+                    <span>Generate TypeScript Types</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => dispatchCanvasCommand("route-copy-schema")}
+                    className="cursor-pointer text-xs"
+                  >
+                    <RiFileCopyLine className="h-3.5 w-3.5 shrink-0" />
+                    <span>Copy JSON Schema</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      dispatchCanvasCommand("route-toggle-enabled")
+                    }
+                    className="cursor-pointer text-xs"
+                  >
+                    <RiCheckLine className="h-3.5 w-3.5 shrink-0" />
+                    <span>Toggle Active/Disabled</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => dispatchCanvasCommand("route-save")}
+                    className="cursor-pointer text-xs"
+                  >
+                    <RiSaveLine className="h-3.5 w-3.5 shrink-0" />
+                    <span>Save Route</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -453,6 +587,187 @@ export const SectionMenuBar = ({
             </MenubarGroup>
           </MenubarContent>
         </MenubarMenu>
+
+        {/* ── Route Section Menu ──────────────────────────────────── */}
+        {isCanvasActive && (
+          <MenubarMenu>
+            <MenubarTrigger
+              className={cn(
+                "flex h-6.5 cursor-pointer items-center gap-1.5 rounded-sm px-2 text-xs font-medium transition-colors",
+                selectedRouteId &&
+                  "bg-secondary text-secondary-foreground font-semibold shadow-xs",
+              )}
+            >
+              <RiSettings2Line
+                className="size-3.5 shrink-0"
+                aria-hidden="true"
+              />
+              <span>Route</span>
+              {selectedRouteId && (
+                <span className="bg-primary size-1.5 rounded-full" />
+              )}
+            </MenubarTrigger>
+            <MenubarContent align="start" className="min-w-64">
+              <MenubarGroup>
+                <MenubarItem
+                  onClick={handleAddRoute}
+                  className="cursor-pointer text-xs"
+                >
+                  <RiAddLine
+                    className="h-3.5 w-3.5 shrink-0"
+                    aria-hidden="true"
+                  />
+                  <span>Add Route Node</span>
+                  <MenubarShortcut>⇧⌘R</MenubarShortcut>
+                </MenubarItem>
+              </MenubarGroup>
+
+              {selectedRouteId ? (
+                <>
+                  <MenubarSeparator />
+                  <MenubarGroup>
+                    <div className="text-micro text-muted-foreground px-2 py-1 font-semibold tracking-wider uppercase">
+                      Inspector Categories
+                    </div>
+                    <MenubarItem
+                      onClick={() => switchInspectorTab("config")}
+                      className="cursor-pointer text-xs"
+                    >
+                      <RiSettings2Line
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span>Config & Status</span>
+                      <MenubarShortcut>⌥1</MenubarShortcut>
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() => switchInspectorTab("schema")}
+                      className="cursor-pointer text-xs"
+                    >
+                      <RiFileCodeLine
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span>Schema & Fields</span>
+                      <MenubarShortcut>⌥2</MenubarShortcut>
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() => switchInspectorTab("rules")}
+                      className="cursor-pointer text-xs"
+                    >
+                      <RiGitBranchLine
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span>Smart Rules</span>
+                      <MenubarShortcut>⌥3</MenubarShortcut>
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() => switchInspectorTab("chaos")}
+                      className="cursor-pointer text-xs"
+                    >
+                      <RiPulseLine
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span>Chaos Simulation</span>
+                      <MenubarShortcut>⌥4</MenubarShortcut>
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() => switchInspectorTab("headers")}
+                      className="cursor-pointer text-xs"
+                    >
+                      <RiFileHistoryLine
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span>Custom Headers</span>
+                      <MenubarShortcut>⌥5</MenubarShortcut>
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() => switchInspectorTab("try")}
+                      className="cursor-pointer text-xs"
+                    >
+                      <RiPlayLine
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span>Try Live Request</span>
+                      <MenubarShortcut>⌥6</MenubarShortcut>
+                    </MenubarItem>
+                  </MenubarGroup>
+
+                  <MenubarSeparator />
+                  <MenubarGroup>
+                    <div className="text-micro text-muted-foreground px-2 py-1 font-semibold tracking-wider uppercase">
+                      Route Operations
+                    </div>
+                    <MenubarItem
+                      onClick={() =>
+                        dispatchCanvasCommand("route-generate-types")
+                      }
+                      className="cursor-pointer text-xs"
+                    >
+                      <RiCodeLine
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span>Generate TypeScript Types</span>
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() => dispatchCanvasCommand("route-copy-schema")}
+                      className="cursor-pointer text-xs"
+                    >
+                      <RiFileCopyLine
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span>Copy JSON Schema</span>
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() =>
+                        dispatchCanvasCommand("route-toggle-enabled")
+                      }
+                      className="cursor-pointer text-xs"
+                    >
+                      <RiCheckLine
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span>Toggle Active / Disabled</span>
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() => dispatchCanvasCommand("route-save")}
+                      className="cursor-pointer text-xs"
+                    >
+                      <RiSaveLine
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span>Save Route</span>
+                      <MenubarShortcut>⌘S</MenubarShortcut>
+                    </MenubarItem>
+                    <MenubarItem
+                      onClick={() => dispatchCanvasCommand("route-delete")}
+                      className="text-destructive focus:text-destructive cursor-pointer text-xs"
+                    >
+                      <RiDeleteBin6Line
+                        className="h-3.5 w-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span>Delete Route</span>
+                    </MenubarItem>
+                  </MenubarGroup>
+                </>
+              ) : (
+                <div className="text-mini text-muted-foreground px-2 py-2">
+                  Select a route on canvas to inspect its config, schema, rules,
+                  chaos, headers, and test runner.
+                </div>
+              )}
+            </MenubarContent>
+          </MenubarMenu>
+        )}
 
         {/* ── Endpoints Section Menu ──────────────────────────────── */}
         <MenubarMenu>

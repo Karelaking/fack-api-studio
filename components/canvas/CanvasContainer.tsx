@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { FlowCanvas } from "./FlowCanvas";
-import { EditBar } from "@/components/edit-bar/EditBar";
 import { AgentComposer } from "@/components/ai/AgentComposer";
 import { AgentStoreProvider } from "@/stores/agent-store-provider";
 import { useCanvasDndStore } from "@/stores/canvas-dnd-store-provider";
@@ -64,21 +63,20 @@ function CanvasContainerInner({
     React.useState<(Endpoint & { routes: Route[] })[]>(endpoints);
   const [activeEndpoints, setActiveEndpoints] =
     React.useState<(Endpoint & { routes: Route[] })[]>(endpoints);
-  const [isEditOpen, setIsEditOpen] = React.useState(false);
   const isBelowLg = useBelowLg();
 
   /**
-   * The route explicitly opened in the inspector. This is deliberately separate
-   * from `selectedRouteId`: clicking a node only targets it for drag-and-drop,
-   * it must not pull the editor open by itself.
+   * The route explicitly opened in the inspector.
    */
   const [inspectorRouteId, setInspectorRouteId] = React.useState<string | null>(
     null,
   );
 
+  const selectedRouteId = useCanvasDndStore((s) => s.selectedRouteId);
   const setSelectedRoute = useCanvasDndStore((s) => s.setSelectedRoute);
-  const setInspectedField = useCanvasDndStore((s) => s.setInspectedField);
   const inspectedFieldId = useCanvasDndStore((s) => s.inspectedFieldId);
+  const setInspectedField = useCanvasDndStore((s) => s.setInspectedField);
+
   if (routes !== prevRoutes) {
     setPrevRoutes(routes);
     setActiveRoutes(routes);
@@ -88,18 +86,26 @@ function CanvasContainerInner({
     setActiveEndpoints(endpoints);
   }
 
+  // Sync inspector with selectedRouteId if triggered from top menu or store
+  React.useEffect(() => {
+    if (selectedRouteId) {
+      // eslint-disable-next-line react/set-state-in-effect
+      setInspectorRouteId(selectedRouteId);
+    }
+  }, [selectedRouteId]);
+
   const inspectorRoute = React.useMemo(() => {
+    if (!inspectorRouteId) return null;
     return activeRoutes.find((r) => r.id === inspectorRouteId) ?? null;
   }, [activeRoutes, inspectorRouteId]);
 
-  // Pane clicks and the sidebar's Clear action emit a null route selection.
-  // Close the inspector with them so it never shows a stale route.
+  // Pane clicks and sidebar's Clear action emit a null route selection
   React.useEffect(() => {
     const handleRouteDeselected = (event: Event) => {
       if ((event as CustomEvent<unknown>).detail !== null) return;
+      // eslint-disable-next-line react/set-state-in-effect
       setInspectorRouteId(null);
       setInspectedField(null);
-      setIsEditOpen(false);
     };
 
     window.addEventListener("route-selected", handleRouteDeselected);
@@ -111,9 +117,8 @@ function CanvasContainerInner({
   const handleSelectRoute = React.useCallback(
     (routeId: string) => {
       setSelectedRoute(routeId);
-      // Follow the newly selected node only when the inspector is already
-      // open. A click never opens it.
-      setInspectorRouteId((openRouteId) => (openRouteId ? routeId : null));
+      // Follow the newly selected node only when the inspector is already open
+      setInspectorRouteId((current) => (current ? routeId : current));
     },
     [setSelectedRoute],
   );
@@ -130,7 +135,6 @@ function CanvasContainerInner({
     setInspectorRouteId(null);
     setInspectedField(null);
     setSelectedRoute(null);
-    setIsEditOpen(false);
   }, [setInspectedField, setSelectedRoute]);
 
   const handleRouteUpdated = React.useCallback((updatedRoute: Route) => {
@@ -144,7 +148,6 @@ function CanvasContainerInner({
       setActiveRoutes((prev) => prev.filter((r) => r.id !== routeId));
       setInspectorRouteId(null);
       setSelectedRoute(null);
-      setIsEditOpen(false);
     },
     [setSelectedRoute],
   );
@@ -171,7 +174,6 @@ function CanvasContainerInner({
         return currentRoute?.endpointId === endpointId ? null : current;
       });
       setSelectedRoute(null);
-      setIsEditOpen(false);
     },
     [activeRoutes, setSelectedRoute],
   );
@@ -212,7 +214,7 @@ function CanvasContainerInner({
   return (
     <div className="relative flex h-full min-h-0 w-full min-w-0 overflow-hidden">
       {/* Center: Full Canvas Workspace */}
-      <div className="relative min-h-0 min-w-0 flex-1">
+      <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
         <FlowCanvas
           projectId={projectId}
           projectSlug={projectSlug}
@@ -230,9 +232,9 @@ function CanvasContainerInner({
         <AgentComposer />
       </div>
 
-      {/* Desktop Right Sidebar: Node Inspector (Visible on lg and larger viewports) */}
+      {/* Desktop Right Sidebar: Unified Node Inspector (Visible on lg and larger viewports) */}
       <aside
-        className="border-border/60 bg-background hidden h-full w-80 shrink-0 flex-col border-l lg:flex"
+        className="border-border/60 bg-background hidden h-full w-96 shrink-0 flex-col border-l lg:flex"
         aria-label="Node Inspector"
       >
         <NodeInspector
@@ -243,15 +245,14 @@ function CanvasContainerInner({
           endpoints={endpoints}
           onRouteUpdated={handleRouteUpdated}
           onRouteDeleted={handleRouteDeleted}
-          onOpenAdvanced={() => setIsEditOpen(true)}
           onCloseInspector={handleCloseInspector}
         />
       </aside>
 
-      {/* Mobile & Tablet Overlay Sheet: Node Inspector (< lg viewports) */}
+      {/* Mobile & Tablet Overlay Sheet: Unified Node Inspector (< lg viewports) */}
       {isBelowLg && (
         <Sheet
-          open={Boolean(inspectorRoute) && !isEditOpen}
+          open={Boolean(inspectorRoute)}
           onOpenChange={(open) => {
             if (!open) {
               handleCloseInspector();
@@ -275,24 +276,10 @@ function CanvasContainerInner({
               endpoints={endpoints}
               onRouteUpdated={handleRouteUpdated}
               onRouteDeleted={handleRouteDeleted}
-              onOpenAdvanced={() => setIsEditOpen(true)}
               onCloseInspector={handleCloseInspector}
             />
           </SheetContent>
         </Sheet>
-      )}
-
-      {/* Slide-out Edit Bar Sheet drawer panel for advanced route settings */}
-      {inspectorRoute && (
-        <EditBar
-          route={inspectorRoute}
-          projectSlug={projectSlug}
-          endpoints={activeEndpoints}
-          open={isEditOpen}
-          onOpenChange={setIsEditOpen}
-          onRouteUpdated={handleRouteUpdated}
-          onRouteDeleted={handleRouteDeleted}
-        />
       )}
     </div>
   );
