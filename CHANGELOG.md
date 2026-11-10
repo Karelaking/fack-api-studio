@@ -1,3 +1,30 @@
+# [1.26.0](https://github.com/Karelaking/fack-api-studio/compare/v1.25.0...v1.26.0) (2026-11-10)
+
+### Bug Fixes
+
+- **canvas:** address technical audit findings across canvas components ([1868540](https://github.com/Karelaking/fack-api-studio/commit/1868540be3672e3798c510850cb0906408d26348)), closes [hi#frequency](https://github.com/hi/issues/frequency)
+- **canvas:** harden deletion, layout, and color rendering ([090d641](https://github.com/Karelaking/fack-api-studio/commit/090d6418fac090e3dd4a40ade011486b972324e2))
+- **canvas:** improve accessibility, touch targets, and rendering ([e759760](https://github.com/Karelaking/fack-api-studio/commit/e7597600ce4b2a6e8c38afb0e7cfa745a10227c9))
+- **canvas:** make inspector tab selection resilient against uninitialized store ([22a3024](https://github.com/Karelaking/fack-api-studio/commit/22a3024d35a70c947c550acc7bef8e70c05a9c53))
+- **canvas:** reconcile and update existing fields in place on parameter rename ([46e9625](https://github.com/Karelaking/fack-api-studio/commit/46e9625acd3e220f038e546e45e15a0fa6792afa))
+- **canvas:** refine schema parameter badges, enforce field ordering, and declutter route inspector ([dbb014d](https://github.com/Karelaking/fack-api-studio/commit/dbb014d895005d5958ffb8cd5a8778e351a42a11))
+- **canvas:** synchronize field bindings when route parameters are renamed ([f16daa9](https://github.com/Karelaking/fack-api-studio/commit/f16daa96f5e491053dfb1f76502dcb94444732ac))
+- **mock-engine:** harden template engine and eliminate any types ([73593f4](https://github.com/Karelaking/fack-api-studio/commit/73593f406f29a48bff119c7f3dd7a626bd43fe69))
+- resolve merge conflicts in package.json and pnpm-lock.yaml ([46f2c0b](https://github.com/Karelaking/fack-api-studio/commit/46f2c0bb30735ddb9c3762bf6f73108c1cbde113))
+- resolve package merge conflicts and ignore lockfile in lint-staged ([1513385](https://github.com/Karelaking/fack-api-studio/commit/15133852045d50905b8e01e797fccb8b90f77266))
+
+### Features
+
+- **canvas:** add field removal, quick route deletion, and hugeicons group customization ([a6ae301](https://github.com/Karelaking/fack-api-studio/commit/a6ae301a94f365efe4a22248a5b02b6b7ccced9b))
+- **canvas:** add static value and fapi provider options for parameters ([de58f56](https://github.com/Karelaking/fack-api-studio/commit/de58f567ebc84d62865b17e9cc0ff9ce6c5e94d2))
+- **canvas:** auto-create schema fields for newly introduced route parameters ([62a5b49](https://github.com/Karelaking/fack-api-studio/commit/62a5b49da59831bb180d9bfc3dedf4749a8c632a))
+- **canvas:** consolidate node inspector tabs from 6 to 4 ([eba2173](https://github.com/Karelaking/fack-api-studio/commit/eba21736c97acdf69ebe887a5f0c0dff6c350c18))
+- **canvas:** expand hugeicons browser to all 6,791 icons ([e245efd](https://github.com/Karelaking/fack-api-studio/commit/e245efd9b55ff166b4be52d15d970c64efd5f341))
+- **canvas:** replace hugeicons with pikaicons across canvas forms ([46fe38f](https://github.com/Karelaking/fack-api-studio/commit/46fe38f0db593890dc5087ce38afcc8e44d8897b))
+- **canvas:** use pikaicons throughout canvas components ([aa62bf9](https://github.com/Karelaking/fack-api-studio/commit/aa62bf9a713f69faa75beb5012a526d408bf7785))
+- **mock-engine:** implement route parameter response binding ([ed2cc84](https://github.com/Karelaking/fack-api-studio/commit/ed2cc84bb04059209ec06350956ccbb56eb7fcb3))
+- **ui:** add 3d isometric logo model to landing hero ([f6a96d0](https://github.com/Karelaking/fack-api-studio/commit/f6a96d076e83bd43654d2fc33bb6797eb28e9726))
+
 # [1.25.0](https://github.com/Karelaking/fack-api-studio/compare/v1.24.0...v1.25.0) (2026-11-09)
 
 ### Bug Fixes
