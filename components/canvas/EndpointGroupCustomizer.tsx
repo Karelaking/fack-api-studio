@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { PikaiconRenderer } from "./HugeiconRenderer";
+import { EndpointGroupIconCell } from "./EndpointGroupIconCell";
 import { updateEndpoint, deleteEndpoint } from "@/lib/actions/endpoints";
 
 interface EndpointGroupCustomizerProps {
@@ -61,41 +62,6 @@ const ALL_ICON_KEYS: readonly string[] = Object.keys(PikaCore).filter((k) =>
 );
 
 const PAGE_SIZE = 96;
-
-interface IconCellProps {
-  iconName: string;
-  isSelected: boolean;
-  onSelect: (name: string) => void;
-}
-
-/**
- * Individual memoized Pikaicon cell button in the customizer grid.
- */
-const IconCell = React.memo(
-  ({ iconName, isSelected, onSelect }: IconCellProps): React.JSX.Element => {
-    return (
-      <button
-        type="button"
-        onClick={() => onSelect(iconName)}
-        title={iconName}
-        aria-label={iconName}
-        aria-pressed={isSelected}
-        className={cn(
-          "size-9 rounded-md flex items-center justify-center transition-all cursor-pointer relative",
-          "border border-transparent hover:border-border hover:bg-muted/80 active:scale-95",
-          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-hidden",
-          isSelected
-            ? "bg-primary/20 text-primary border-primary ring-2 ring-primary ring-offset-1 ring-offset-background shadow-xs font-bold"
-            : "text-muted-foreground hover:text-foreground",
-        )}
-      >
-        <PikaiconRenderer name={iconName} size={18} />
-      </button>
-    );
-  },
-);
-
-IconCell.displayName = "IconCell";
 
 /**
  * Endpoint Group Customization Modal Dialog.
@@ -375,7 +341,7 @@ export const EndpointGroupCustomizer = ({
               ) : (
                 <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8 md:grid-cols-9">
                   {displayedIcons.map((iconName) => (
-                    <IconCell
+                    <EndpointGroupIconCell
                       key={iconName}
                       iconName={iconName}
                       isSelected={icon === iconName}

@@ -90,6 +90,6 @@ export const PikaiconRenderer = React.memo(
 PikaiconRenderer.displayName = "PikaiconRenderer";
 
 // Alias for backwards compatibility with existing imports
-export const HugeiconRenderer = PikaiconRenderer;
+export { PikaiconRenderer as HugeiconRenderer };
 
 export default PikaiconRenderer;
