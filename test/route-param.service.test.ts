@@ -11,6 +11,8 @@ import {
   reconcileSchemaParameters,
   syncRoutePathFields,
   syncRoutePathSchema,
+  insertFieldInCanonicalOrder,
+  sortFieldsCanonically,
 } from "../lib/services/route-param.service";
 import type { SchemaField } from "../lib/schema-synthesizer";
 
@@ -506,6 +508,102 @@ describe("Route Parameter Service", () => {
       const req = (synced as { required: string[] }).required;
       expect(req).toContain("projectId");
       expect(req).toContain("roleId");
+    });
+  });
+
+  describe("Canonical Field Ordering", () => {
+    it("should insert fields in between id and createdAt/updatedAt", () => {
+      const initial: SchemaField[] = [
+        { id: "1", name: "id", type: "string", nullable: false },
+        { id: "2", name: "createdAt", type: "string", nullable: false },
+        { id: "3", name: "updatedAt", type: "string", nullable: false },
+      ];
+
+      const newField: SchemaField = {
+        id: "4",
+        name: "projectId",
+        type: "string",
+        nullable: false,
+      };
+
+      const result = insertFieldInCanonicalOrder(initial, newField);
+      expect(result.map((f) => f.name)).toEqual([
+        "id",
+        "projectId",
+        "createdAt",
+        "updatedAt",
+      ]);
+    });
+
+    it("should place id at the top when inserting id", () => {
+      const initial: SchemaField[] = [
+        { id: "1", name: "name", type: "string", nullable: false },
+        { id: "2", name: "createdAt", type: "string", nullable: false },
+      ];
+
+      const idField: SchemaField = {
+        id: "3",
+        name: "id",
+        type: "string",
+        nullable: false,
+      };
+
+      const result = insertFieldInCanonicalOrder(initial, idField);
+      expect(result[0].name).toBe("id");
+    });
+
+    it("should sort fields canonically: id -> payload fields -> createdAt -> updatedAt", () => {
+      const mixed: SchemaField[] = [
+        { id: "1", name: "updatedAt", type: "string", nullable: false },
+        { id: "2", name: "email", type: "string", nullable: false },
+        { id: "3", name: "id", type: "string", nullable: false },
+        { id: "4", name: "createdAt", type: "string", nullable: false },
+        { id: "5", name: "name", type: "string", nullable: false },
+      ];
+
+      const sorted = sortFieldsCanonically(mixed);
+      expect(sorted.map((f) => f.name)).toEqual([
+        "id",
+        "email",
+        "name",
+        "createdAt",
+        "updatedAt",
+      ]);
+    });
+
+    it("should ensure syncRoutePathFields inserts new parameters in between id and timestamps", () => {
+      const existingFields: SchemaField[] = [
+        {
+          id: "f-1",
+          name: "id",
+          type: "string",
+          nullable: false,
+          source: { type: "pathParam", name: "id" },
+        },
+        {
+          id: "f-2",
+          name: "createdAt",
+          type: "string",
+          nullable: false,
+        },
+        {
+          id: "f-3",
+          name: "updatedAt",
+          type: "string",
+          nullable: false,
+        },
+      ];
+
+      const { fields } = syncRoutePathFields(existingFields, [
+        "id",
+        "tenantId",
+      ]);
+      expect(fields.map((f) => f.name)).toEqual([
+        "id",
+        "tenantId",
+        "createdAt",
+        "updatedAt",
+      ]);
     });
   });
 });

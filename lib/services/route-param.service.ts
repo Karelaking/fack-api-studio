@@ -763,6 +763,73 @@ export function reconcileSchemaParameters(
   return { schema: remapped, renames };
 }
 
+// ─── Field Ordering Helpers ──────────────────────────────────────────────────
+
+/**
+ * Resolves the canonical sort weight for a schema field name:
+ * 0: "id" or "_id" (always at the very top)
+ * 1: regular payload / route parameter / business fields (in the middle)
+ * 2: "createdAt" / "created_at" (towards the end)
+ * 3: "updatedAt" / "updated_at" (at the very end)
+ */
+export function getFieldOrderWeight(fieldName: string): number {
+  const normalized = (fieldName || "").trim().toLowerCase().replace(/_/g, "");
+  if (normalized === "id") return 0;
+  if (normalized === "createdat" || normalized === "created") return 2;
+  if (normalized === "updatedat" || normalized === "updated") return 3;
+  return 1;
+}
+
+/**
+ * Inserts a new field in canonical order:
+ * "id" first, all regular and parameter fields in between, and "createdAt" / "updatedAt" at the end.
+ */
+export function insertFieldInCanonicalOrder(
+  fields: SchemaField[],
+  newField: SchemaField,
+): SchemaField[] {
+  const weight = getFieldOrderWeight(newField.name);
+
+  if (weight === 0) {
+    const existingIdIndex = fields.findIndex(
+      (f) => getFieldOrderWeight(f.name) === 0,
+    );
+    if (existingIdIndex !== -1) {
+      return fields.map((f, i) => (i === existingIdIndex ? newField : f));
+    }
+    return [newField, ...fields];
+  }
+
+  if (weight >= 2) {
+    return [...fields.filter((f) => f.name !== newField.name), newField];
+  }
+
+  // Regular or parameter field: insert before the first timestamp field (createdAt/updatedAt)
+  const firstTimestampIndex = fields.findIndex(
+    (f) => getFieldOrderWeight(f.name) >= 2,
+  );
+  if (firstTimestampIndex === -1) {
+    return [...fields, newField];
+  }
+
+  const updated = [...fields];
+  updated.splice(firstTimestampIndex, 0, newField);
+  return updated;
+}
+
+/**
+ * Canonically sorts top-level schema fields so that:
+ * 1. "id" is first
+ * 2. all parameter & payload fields are in between
+ * 3. "createdAt" and "updatedAt" are at the end
+ * Preserves the relative order of fields within the same weight tier.
+ */
+export function sortFieldsCanonically(fields: SchemaField[]): SchemaField[] {
+  return [...fields].sort((a, b) => {
+    return getFieldOrderWeight(a.name) - getFieldOrderWeight(b.name);
+  });
+}
+
 /**
  * Automatically ensures that all declared route path parameters have corresponding
  * fields in the schema fields array.
@@ -807,9 +874,10 @@ export function syncRoutePathFields(
   }
 
   // 3. For any remaining unmapped declared parameters, automatically create fields
+  // and insert them in between "id" and timestamp fields (createdAt / updatedAt)
   const unmapped = declaredParamNames.filter((p) => !mappedParams.has(p));
   const addedParams: string[] = [];
-  const updatedFields = [...reconciledFields];
+  let updatedFields = [...reconciledFields];
 
   for (const paramName of unmapped) {
     const newField: SchemaField = {
@@ -822,12 +890,15 @@ export function syncRoutePathFields(
         name: paramName,
       },
     };
-    updatedFields.push(newField);
+    updatedFields = insertFieldInCanonicalOrder(updatedFields, newField);
     addedParams.push(paramName);
   }
 
+  // Ensure overall canonical ordering
+  const canonicallySorted = sortFieldsCanonically(updatedFields);
+
   return {
-    fields: updatedFields,
+    fields: canonicallySorted,
     renames,
     addedParams,
   };
@@ -917,7 +988,21 @@ export function syncRoutePathSchema(
     addedParams.push(paramName);
   }
 
-  cloned.properties = properties;
+  // Sort properties canonically: id first, other fields in middle, createdAt/updatedAt at end
+  const sortedProps: Record<string, Record<string, unknown>> = {};
+  const sortedKeys = Object.keys(properties).sort((a, b) => {
+    return getFieldOrderWeight(a) - getFieldOrderWeight(b);
+  });
+  for (const k of sortedKeys) {
+    sortedProps[k] = properties[k];
+  }
+
+  // Sort required list in same canonical order
+  requiredList.sort((a, b) => {
+    return getFieldOrderWeight(a) - getFieldOrderWeight(b);
+  });
+
+  cloned.properties = sortedProps;
   cloned.required = requiredList;
 
   return {

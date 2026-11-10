@@ -43,6 +43,8 @@ import {
   detectParameterRenames,
   remapFieldsParameters,
   syncRoutePathFields,
+  insertFieldInCanonicalOrder,
+  sortFieldsCanonically,
 } from "@/lib/services/route-param.service";
 import { FieldTree } from "@/components/edit-bar/FieldTree";
 import { ChaosConfig } from "@/components/edit-bar/ChaosConfig";
@@ -1085,6 +1087,7 @@ const RouteEditor = ({
               }
             : f,
         );
+        updatedFields = sortFieldsCanonically(updatedFields);
       } else {
         const newField: SchemaField = {
           id: `field-${Date.now()}`,
@@ -1093,7 +1096,8 @@ const RouteEditor = ({
           nullable: false,
           source: { type: "pathParam", name: paramName },
         };
-        updatedFields = [...fields, newField];
+        updatedFields = insertFieldInCanonicalOrder(fields, newField);
+        updatedFields = sortFieldsCanonically(updatedFields);
       }
 
       setSchema(updatedFields);
@@ -1439,7 +1443,7 @@ const RouteEditor = ({
                     variant="outline"
                     size="sm"
                     className={cn(
-                      "w-28 justify-between gap-1.5 px-2 font-mono text-xs font-bold tracking-wider",
+                      "h-9 w-28 justify-between gap-1.5 px-3 font-mono text-xs font-bold tracking-wider",
                       METHOD_STYLES[method]?.border,
                       METHOD_STYLES[method]?.bg,
                     )}
@@ -1499,7 +1503,7 @@ const RouteEditor = ({
             </DropdownMenu>
 
             {/* Route Active/Disabled Switch */}
-            <div className="border-border/50 flex items-center gap-1.5 border-l pl-2">
+            <div className="border-border/60 flex items-center gap-2 border-l pl-2.5">
               <Switch
                 id="route-enabled"
                 checked={isEnabled}
@@ -1509,7 +1513,7 @@ const RouteEditor = ({
               />
               <label
                 htmlFor="route-enabled"
-                className="text-muted-foreground text-micro cursor-pointer font-bold tracking-wider uppercase"
+                className="text-foreground cursor-pointer text-xs font-medium"
               >
                 {isEnabled ? "Active" : "Disabled"}
               </label>
@@ -1517,7 +1521,7 @@ const RouteEditor = ({
 
             {isDirty && (
               <span
-                className="bg-warning/15 text-warning border-warning/30 text-mini rounded border px-1.5 py-0.5 font-medium"
+                className="bg-warning/15 text-warning border-warning/30 rounded border px-2 py-0.5 text-xs font-medium"
                 title="Unsaved changes pending"
               >
                 Unsaved
@@ -1541,15 +1545,18 @@ const RouteEditor = ({
         </div>
 
         {/* Row 2: Route Path Input */}
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label
               htmlFor="route-path"
-              className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
+              className="text-muted-foreground block text-xs font-semibold tracking-wider uppercase"
             >
               Route Path
             </label>
-            <span className="text-muted-foreground text-micro truncate font-mono">
+            <span
+              className="text-muted-foreground max-w-[200px] truncate font-mono text-xs"
+              title={effectivePath}
+            >
               {effectivePath}
             </span>
           </div>
@@ -1577,7 +1584,7 @@ const RouteEditor = ({
             }}
             placeholder="/api/v1/resource"
             variant="mono"
-            className="h-8 font-mono text-xs"
+            className="h-9 px-3 font-mono text-sm"
             disabled={loading}
           />
         </div>
@@ -1599,7 +1606,7 @@ const RouteEditor = ({
             <RiSettings2Line className="size-3.5 shrink-0" aria-hidden="true" />
             <span className="truncate">Route</span>
             {headers.length > 0 && (
-              <span className="bg-info/15 text-info text-micro rounded px-1 font-mono font-bold">
+              <span className="bg-info/15 text-info py-0.2 rounded px-1.5 font-mono text-xs font-bold">
                 {headers.length}
               </span>
             )}
@@ -1612,7 +1619,7 @@ const RouteEditor = ({
           >
             <RiFileCodeLine className="size-3.5 shrink-0" aria-hidden="true" />
             <span className="truncate">Schema</span>
-            <span className="bg-muted-foreground/15 text-muted-foreground text-micro rounded px-1 font-mono">
+            <span className="bg-muted-foreground/15 text-muted-foreground py-0.2 rounded px-1.5 font-mono text-xs">
               {fields.length}
             </span>
           </TabsTrigger>
@@ -1625,11 +1632,11 @@ const RouteEditor = ({
             <RiPulseLine className="size-3.5 shrink-0" aria-hidden="true" />
             <span className="truncate">Behavior</span>
             {latencyMin > 0 || latencyMax > 0 || errorRate > 0 ? (
-              <span className="bg-warning/15 text-warning text-micro rounded px-1 font-mono font-bold">
+              <span className="bg-warning/15 text-warning py-0.2 rounded px-1.5 font-mono text-xs font-bold">
                 ON
               </span>
             ) : rules.length > 0 ? (
-              <span className="bg-primary/15 text-primary text-micro rounded px-1 font-mono font-bold">
+              <span className="bg-primary/15 text-primary py-0.2 rounded px-1.5 font-mono text-xs font-bold">
                 {rules.length}
               </span>
             ) : null}
@@ -1648,17 +1655,17 @@ const RouteEditor = ({
         {/* Tab 1: Route (Status Code, Route URL Parameters, Headers, Runtime Behavior Summary) */}
         <TabsContent
           value="route"
-          className="scrollbar-subtle m-0 min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4"
+          className="scrollbar-subtle m-0 min-h-0 flex-1 space-y-5 overflow-y-auto p-4"
         >
           {/* Status Code with Presets */}
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+              <span className="text-muted-foreground block text-xs font-semibold tracking-wider uppercase">
                 Status Code
               </span>
               <span
                 className={cn(
-                  "text-mini font-mono font-semibold",
+                  "font-mono text-xs font-semibold",
                   statusCode >= 200 && statusCode < 300
                     ? "text-success"
                     : statusCode >= 300 && statusCode < 400
@@ -1669,7 +1676,7 @@ const RouteEditor = ({
                 {statusCode}
               </span>
             </div>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {COMMON_STATUS_CODES.map((code) => {
                 const isSelected = statusCode === code;
                 return (
@@ -1679,7 +1686,7 @@ const RouteEditor = ({
                     onClick={() => setStatusCode(code)}
                     aria-pressed={isSelected}
                     className={cn(
-                      "rounded-md border px-2 py-1 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                      "cursor-pointer rounded-md border px-3 py-1 font-mono text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                       getStatusCodeBadgeStyles(code, isSelected),
                     )}
                   >
@@ -1688,10 +1695,10 @@ const RouteEditor = ({
                 );
               })}
             </div>
-            <div className="space-y-1 pt-0.5">
+            <div className="space-y-1.5 pt-1">
               <label
                 htmlFor="route-custom-status"
-                className="text-muted-foreground text-micro font-mono uppercase"
+                className="text-muted-foreground block text-xs font-medium"
               >
                 Custom Status Code
               </label>
@@ -1701,7 +1708,7 @@ const RouteEditor = ({
                 value={statusCode}
                 onChange={(e) => setStatusCode(Number(e.target.value) || 200)}
                 variant="mono"
-                className="h-8 font-mono text-xs"
+                className="h-9 px-3 font-mono text-sm"
                 disabled={loading}
                 placeholder="200"
               />
@@ -1710,11 +1717,16 @@ const RouteEditor = ({
 
           {/* Route Path Parameters Overview */}
           {detectedParams.length > 0 && (
-            <div className="border-border/50 space-y-2 border-t pt-3">
-              <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
-                Route Parameters ({detectedParams.length})
-              </span>
-              <div className="space-y-1.5">
+            <div className="border-border/60 space-y-2.5 border-t pt-4">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground block text-xs font-semibold tracking-wider uppercase">
+                  Route Parameters ({detectedParams.length})
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  Bound from URL path
+                </span>
+              </div>
+              <div className="space-y-2">
                 {detectedParams.map((p) => {
                   const isMapped = fields.some(
                     (f) =>
@@ -1728,18 +1740,15 @@ const RouteEditor = ({
                   return (
                     <div
                       key={p.name}
-                      className="bg-card border-border/60 flex items-center justify-between rounded-md border p-2"
+                      className="bg-card/70 border-border/60 hover:border-border flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors"
                     >
-                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                        <span className="text-foreground font-mono text-xs font-semibold">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <span className="text-foreground font-mono text-sm font-semibold">
                           :{p.name}
-                        </span>
-                        <span className="text-muted-foreground text-mini">
-                          (param)
                         </span>
                         <span
                           className={cn(
-                            "text-mini rounded border px-1 py-0.5 font-mono",
+                            "rounded-md border px-2 py-0.5 font-mono text-xs font-medium",
                             isFapi
                               ? "border-primary/30 bg-primary/10 text-primary"
                               : "border-border/70 bg-muted/60 text-muted-foreground",
@@ -1747,23 +1756,24 @@ const RouteEditor = ({
                         >
                           {isFapi
                             ? `FAPI: ${cfg?.provider || "random"}`
-                            : `Static: "${testParamValues[p.name] ?? cfg?.staticValue ?? ""}"`}
+                            : `"${testParamValues[p.name] ?? cfg?.staticValue ?? ""}"`}
                         </span>
                       </div>
                       {!isMapped ? (
                         <Button
                           type="button"
                           variant="outline"
-                          size="xs"
+                          size="sm"
                           onClick={() => void handleAddParamField(p.name)}
                           disabled={loading}
-                          className="text-mini h-6 shrink-0 font-mono"
+                          className="h-7 shrink-0 font-mono text-xs"
                         >
                           + Add field
                         </Button>
                       ) : (
-                        <span className="text-success text-mini shrink-0 font-medium">
-                          Field mapped
+                        <span className="text-success flex shrink-0 items-center gap-1 text-xs font-medium">
+                          <RiCheckLine className="size-3.5" />
+                          <span>Field mapped</span>
                         </span>
                       )}
                     </div>
@@ -1774,20 +1784,26 @@ const RouteEditor = ({
           )}
 
           {/* Custom Response Headers */}
-          <div className="border-border/50 space-y-2 border-t pt-3">
-            <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
-              Response Headers {headers.length > 0 && `(${headers.length})`}
-            </span>
-            <HeadersEditor headers={headers} onHeadersChange={setHeaders} />
+          <div className="border-border/60 space-y-2.5 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground block text-xs font-semibold tracking-wider uppercase">
+                Response Headers {headers.length > 0 && `(${headers.length})`}
+              </span>
+            </div>
+            <HeadersEditor
+              headers={headers}
+              onHeadersChange={setHeaders}
+              hideHeader={true}
+            />
           </div>
 
           {/* Runtime Behavior Quick Summary */}
-          <div className="border-border/60 bg-muted/20 flex items-center justify-between gap-2 rounded-md border border-t p-2.5 pt-3">
-            <div className="space-y-0.5">
-              <span className="text-micro text-muted-foreground block font-bold tracking-wider uppercase">
+          <div className="border-border/60 bg-muted/20 flex items-center justify-between gap-3 rounded-lg border p-3.5">
+            <div className="space-y-1">
+              <span className="text-foreground block text-xs font-semibold">
                 Runtime Behavior
               </span>
-              <span className="text-caption text-foreground font-mono">
+              <p className="text-muted-foreground font-mono text-xs">
                 {latencyMin > 0 || latencyMax > 0
                   ? `Latency: ${latencyMin}${latencyMax > latencyMin ? `-${latencyMax}` : ""}ms`
                   : "Zero latency"}
@@ -1797,14 +1813,14 @@ const RouteEditor = ({
                 {rules.length > 0
                   ? `${rules.length} rule${rules.length > 1 ? "s" : ""}`
                   : "No rules"}
-              </span>
+              </p>
             </div>
             <Button
               type="button"
               variant="outline"
-              size="xs"
+              size="sm"
               onClick={() => handleTabChange("behavior")}
-              className="text-mini h-6 font-mono"
+              className="h-7 shrink-0 text-xs font-medium"
             >
               Configure →
             </Button>
@@ -1992,16 +2008,13 @@ const RouteEditor = ({
                   return (
                     <div
                       key={p.name}
-                      className="bg-card border-border/70 space-y-2 rounded-md border p-2.5 shadow-2xs"
+                      className="bg-card border-border/70 space-y-2 rounded-lg border p-3 shadow-2xs"
                     >
                       {/* Param Row Header: Name and Mode Switch */}
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex min-w-0 items-center gap-1.5">
-                          <span className="text-foreground font-mono text-xs font-semibold">
+                          <span className="text-foreground font-mono text-sm font-semibold">
                             :{p.name}
-                          </span>
-                          <span className="text-muted-foreground text-micro">
-                            (param)
                           </span>
                         </div>
 
@@ -2017,7 +2030,7 @@ const RouteEditor = ({
                               handleToggleParamMode(p.name, "static")
                             }
                             className={cn(
-                              "rounded px-2 py-0.5 text-mini transition-all",
+                              "rounded px-2.5 py-1 text-xs transition-all cursor-pointer",
                               !isFapi
                                 ? "bg-background text-foreground shadow-xs font-semibold"
                                 : "text-muted-foreground hover:text-foreground",
@@ -2032,7 +2045,7 @@ const RouteEditor = ({
                               handleToggleParamMode(p.name, "fapi")
                             }
                             className={cn(
-                              "rounded px-2 py-0.5 text-mini transition-all",
+                              "rounded px-2.5 py-1 text-xs transition-all cursor-pointer",
                               isFapi
                                 ? "bg-primary text-primary-foreground shadow-xs font-semibold"
                                 : "text-muted-foreground hover:text-foreground",
@@ -2058,10 +2071,10 @@ const RouteEditor = ({
                               p.name === "id" ? "295" : `sample_${p.name}`
                             }
                             variant="mono"
-                            className="h-7 font-mono text-xs"
+                            className="h-8 font-mono text-xs"
                             disabled={isTryingRequest}
                           />
-                          <p className="text-muted-foreground text-micro font-mono">
+                          <p className="text-muted-foreground font-mono text-xs">
                             Hard-coded constant parameter value
                           </p>
                         </div>
@@ -2092,7 +2105,7 @@ const RouteEditor = ({
                           </div>
 
                           <div className="bg-muted/40 border-border/50 text-mini flex items-center justify-between rounded border px-2 py-1 font-mono">
-                            <span className="text-muted-foreground text-micro">
+                            <span className="text-muted-foreground text-xs">
                               Runtime value:
                             </span>
                             <span className="text-primary truncate font-semibold">

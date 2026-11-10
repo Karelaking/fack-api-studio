@@ -12,6 +12,10 @@ import {
   synthesizeSchema,
   type SchemaField,
 } from "@/lib/schema-synthesizer";
+import {
+  insertFieldInCanonicalOrder,
+  sortFieldsCanonically,
+} from "@/lib/services/route-param.service";
 import { getProviderByValue } from "@/lib/faker-registry";
 import type { Route } from "@/db/schema";
 import { LoggerRegistry } from "@/lib/logger-registry";
@@ -114,8 +118,9 @@ export async function addFieldToRoute(
       }
     }
 
-    // 4. Append field and synthesize back to JSON Schema
-    const updatedFields = [...currentFields, newField];
+    // 4. Insert field canonically (id first, fields middle, createdAt/updatedAt at end)
+    const orderedFields = insertFieldInCanonicalOrder(currentFields, newField);
+    const updatedFields = sortFieldsCanonically(orderedFields);
     const updatedSchema = synthesizeSchema(updatedFields);
 
     // 5. Write to DB

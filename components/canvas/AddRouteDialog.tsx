@@ -115,9 +115,28 @@ export const AddRouteDialog = ({
         const properties: Record<string, unknown> = {};
         const required: string[] = [];
 
-        // When route has path parameters, default same-named response field(s) to URL value
-        if (detectedParameters.length > 0) {
-          for (const param of detectedParameters) {
+        // 1. "id" field is always first at the top
+        const idParam = detectedParameters.find((p) => p.name === "id");
+        if (idParam) {
+          properties.id = {
+            type: "string",
+            "x-fack-source": {
+              type: "pathParam",
+              name: "id",
+            },
+          };
+        } else {
+          properties.id = {
+            type: "string",
+            faker: "string.uuid",
+            "x-faker": "string.uuid",
+          };
+        }
+        required.push("id");
+
+        // 2. All other URL parameters placed in between "id" and timestamps
+        for (const param of detectedParameters) {
+          if (param.name !== "id") {
             properties[param.name] = {
               type: "string",
               "x-fack-source": {
@@ -127,15 +146,9 @@ export const AddRouteDialog = ({
             };
             required.push(param.name);
           }
-        } else {
-          properties.id = {
-            type: "string",
-            faker: "string.uuid",
-            "x-faker": "string.uuid",
-          };
-          required.push("id");
         }
 
+        // 3. Timestamps placed strictly at the end
         properties.createdAt = {
           type: "string",
           faker: "date.past",

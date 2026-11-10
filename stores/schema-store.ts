@@ -1,6 +1,10 @@
 import { createStore } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import type { SchemaField } from "@/lib/schema-synthesizer";
+import {
+  insertFieldInCanonicalOrder,
+  sortFieldsCanonically,
+} from "@/lib/services/route-param.service";
 import { generateId } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -65,19 +69,11 @@ export const createSchemaStore = (initialFields: SchemaField[] = []) => {
           };
 
           if (!parentId) {
-            // Add to root level
-            // Find the index of the first default trailing field (createdAt, updatedAt)
-            // so we can insert the new field *before* them (in between user fields and default fields)
-            const targetIndex = state.fields.findIndex((f) => {
-              const lower = f.name.toLowerCase().replace(/_/g, "");
-              return lower === "createdat" || lower === "updatedat";
-            });
-
-            if (targetIndex !== -1) {
-              state.fields.splice(targetIndex, 0, newField);
-            } else {
-              state.fields.push(newField);
-            }
+            // Add to root level canonically: id first, other fields middle, createdAt/updatedAt at end
+            const ordered = sortFieldsCanonically(
+              insertFieldInCanonicalOrder([...state.fields], newField),
+            );
+            state.fields = ordered;
             return;
           }
 

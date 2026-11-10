@@ -107,12 +107,27 @@ export const FieldEditor = ({
             {isArray && field.arrayItemType && ` (${field.arrayItemType})`}
           </span>
           {field.source?.type === "pathParam" && (
-            <span className="bg-primary/10 text-primary border-primary/20 text-mini rounded border px-1.5 py-0.5 font-mono font-semibold">
-              URL: :{field.source.name}
+            <span
+              className="bg-primary/10 text-primary border-primary/30 shrink-0 rounded border px-1.5 py-0.5 font-mono text-xs font-semibold whitespace-nowrap"
+              title={`URL parameter :${field.source.name}`}
+            >
+              :{field.source.name}
+            </span>
+          )}
+          {(field.source as { type?: string; name?: string })?.type ===
+            "queryParam" && (
+            <span
+              className="bg-info/10 text-info border-info/30 shrink-0 rounded border px-1.5 py-0.5 font-mono text-xs font-semibold whitespace-nowrap"
+              title={`Query parameter ?${(field.source as { name: string }).name}`}
+            >
+              ?{(field.source as { name: string }).name}
             </span>
           )}
           {field.source?.type === "static" && (
-            <span className="bg-success/10 text-success border-success/20 text-mini rounded border px-1.5 py-0.5 font-mono font-semibold">
+            <span
+              className="bg-success/10 text-success border-success/30 shrink-0 rounded border px-1.5 py-0.5 font-mono text-xs font-semibold whitespace-nowrap"
+              title={`Static value: "${field.source.value}"`}
+            >
               =&quot;{field.source.value}&quot;
             </span>
           )}
