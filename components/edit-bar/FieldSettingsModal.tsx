@@ -285,7 +285,7 @@ export function FieldSettingsModal({
                       placeholder="e.g. id"
                       className="font-mono text-xs"
                     />
-                    <p className="text-muted-foreground text-mini">
+                    <p className="text-muted-foreground text-xs">
                       Enter the route parameter name (e.g. &quot;id&quot; for
                       &quot;/:id&quot;).
                     </p>
@@ -307,7 +307,7 @@ export function FieldSettingsModal({
                       placeholder='e.g. "active", 100, true'
                       className="font-mono text-xs"
                     />
-                    <p className="text-muted-foreground text-mini">
+                    <p className="text-muted-foreground text-xs">
                       Returns this fixed, hard-coded scalar value on every
                       response.
                     </p>

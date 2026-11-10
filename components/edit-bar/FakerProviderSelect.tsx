@@ -95,7 +95,7 @@ export function FakerProviderSelect({
                       <span className="text-foreground font-medium">
                         {provider.label}
                       </span>
-                      <span className="text-muted-foreground text-mini max-w-55 truncate">
+                      <span className="text-muted-foreground max-w-55 truncate text-xs">
                         Example: {provider.example}
                       </span>
                     </div>

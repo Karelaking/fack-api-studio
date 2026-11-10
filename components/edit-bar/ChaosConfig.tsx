@@ -66,7 +66,7 @@ export function ChaosConfig({
     <div className="space-y-4">
       {/* Quick Simulation Presets */}
       <div className="space-y-1.5">
-        <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+        <span className="text-muted-foreground block text-xs font-bold tracking-wider uppercase">
           Quick Simulation Presets
         </span>
         <div className="grid grid-cols-5 gap-1.5">
@@ -85,18 +85,18 @@ export function ChaosConfig({
                   onErrorRateChange(preset.errorRate);
                 }}
                 className={cn(
-                  "flex cursor-pointer flex-col items-center gap-0.5 border p-1.5 text-center transition-all",
+                  "flex cursor-pointer flex-col items-center gap-0.5 rounded-md border p-1.5 text-center transition-all",
                   isMatch
                     ? "bg-primary text-primary-foreground border-primary shadow-xs"
                     : "bg-muted/30 hover:bg-muted border-border text-foreground",
                 )}
               >
-                <span className="text-mini leading-none font-bold">
+                <span className="text-xs leading-none font-bold">
                   {preset.label}
                 </span>
                 <span
                   className={cn(
-                    "max-w-full truncate font-mono text-micro leading-tight",
+                    "max-w-full truncate font-mono text-xs leading-tight",
                     isMatch
                       ? "text-primary-foreground/80"
                       : "text-muted-foreground",
@@ -119,7 +119,7 @@ export function ChaosConfig({
             <RiTimeLine className="text-warning h-3.5 w-3.5" />
             <h3 className="text-xs font-semibold">Simulated Latency</h3>
           </div>
-          <span className="bg-muted border-border text-caption border px-1.5 py-0.5 font-mono font-medium">
+          <span className="bg-muted border-border rounded border px-1.5 py-0.5 font-mono text-xs font-medium">
             {latencyMin === latencyMax
               ? `${latencyMin} ms`
               : `${latencyMin} - ${latencyMax} ms`}
@@ -129,7 +129,7 @@ export function ChaosConfig({
         <div className="space-y-3">
           {/* Min Latency */}
           <div className="space-y-1 py-1">
-            <div className="text-muted-foreground text-caption flex items-center justify-between font-medium">
+            <div className="text-muted-foreground flex items-center justify-between text-xs font-medium">
               <span>Minimum Delay</span>
               <span>{latencyMin} ms</span>
             </div>
@@ -145,7 +145,7 @@ export function ChaosConfig({
 
           {/* Max Latency */}
           <div className="space-y-1 py-1">
-            <div className="text-muted-foreground text-caption flex items-center justify-between font-medium">
+            <div className="text-muted-foreground flex items-center justify-between text-xs font-medium">
               <span>Maximum Delay</span>
               <span>{latencyMax} ms</span>
             </div>
@@ -168,7 +168,7 @@ export function ChaosConfig({
             <RiAlertLine className="text-destructive h-3.5 w-3.5" />
             <h3 className="text-xs font-semibold">Probabilistic Failures</h3>
           </div>
-          <span className="bg-muted border-border text-caption border px-1.5 py-0.5 font-mono font-medium">
+          <span className="bg-muted border-border rounded border px-1.5 py-0.5 font-mono text-xs font-medium">
             {errorRate}% chance
           </span>
         </div>
@@ -176,7 +176,7 @@ export function ChaosConfig({
         <div className="grid gap-1.5">
           <label
             htmlFor="err-percentage"
-            className="text-muted-foreground text-caption font-medium"
+            className="text-muted-foreground text-xs font-medium"
           >
             Failure Rate (Percentage)
           </label>
@@ -189,10 +189,10 @@ export function ChaosConfig({
               step={1}
               value={errorRate || ""}
               onChange={handleErrorRateChange}
-              className="w-20"
+              className="w-20 font-mono text-xs"
               placeholder="0"
             />
-            <span className="text-muted-foreground text-caption leading-normal">
+            <span className="text-muted-foreground text-xs leading-normal">
               {errorRate > 0
                 ? `${errorRate}% of requests fail with a 500 error.`
                 : "No simulated failures."}
