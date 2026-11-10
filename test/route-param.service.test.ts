@@ -4,7 +4,11 @@ import {
   extractRoutePathParameters,
   validateRoutePath,
   validateRouteSchemaBindings,
+  detectParameterRenames,
+  remapFieldsParameters,
+  remapSchemaParameters,
 } from "../lib/services/route-param.service";
+import type { SchemaField } from "../lib/schema-synthesizer";
 
 describe("Route Parameter Service", () => {
   describe("getEffectiveRoutePath", () => {
@@ -154,6 +158,137 @@ describe("Route Parameter Service", () => {
       const result = validateRouteSchemaBindings(schema, ["userId"]);
       expect(result.isValid).toBe(true);
       expect(result.boundFields[0].fieldLocation).toBe("user.id");
+    });
+  });
+
+  describe("detectParameterRenames", () => {
+    it("should detect 1-to-1 parameter rename", () => {
+      const renames = detectParameterRenames(
+        "/projects/:name",
+        "/projects/:projectId",
+      );
+      expect(renames).toEqual({ name: "projectId" });
+    });
+
+    it("should detect rename with different path prefix", () => {
+      const renames = detectParameterRenames("/:name", "/projects/:projectId");
+      expect(renames).toEqual({ name: "projectId" });
+    });
+
+    it("should detect rename among multiple parameters while preserving unchanged ones", () => {
+      const renames = detectParameterRenames(
+        "/orgs/:orgId/users/:name",
+        "/orgs/:orgId/users/:userId",
+      );
+      expect(renames).toEqual({ name: "userId" });
+    });
+
+    it("should return empty object when parameters are unchanged", () => {
+      const renames = detectParameterRenames(
+        "/projects/:name",
+        "/projects/:name",
+      );
+      expect(renames).toEqual({});
+    });
+
+    it("should return empty object when a parameter is newly added or removed", () => {
+      expect(detectParameterRenames("/projects", "/projects/:id")).toEqual({});
+      expect(detectParameterRenames("/projects/:id", "/projects")).toEqual({});
+    });
+  });
+
+  describe("remapFieldsParameters", () => {
+    it("should remap field name and source when parameter is renamed", () => {
+      const fields: SchemaField[] = [
+        {
+          id: "f-1",
+          name: "name",
+          type: "string",
+          nullable: false,
+          source: { type: "pathParam", name: "name" },
+        },
+        {
+          id: "f-2",
+          name: "createdAt",
+          type: "string",
+          nullable: false,
+        },
+      ];
+
+      const remapped = remapFieldsParameters(fields, { name: "projectId" });
+      expect(remapped[0].name).toBe("projectId");
+      expect(remapped[0].source).toEqual({
+        type: "pathParam",
+        name: "projectId",
+      });
+      expect(remapped[1].name).toBe("createdAt");
+    });
+
+    it("should remap nested fields inside object children", () => {
+      const fields: SchemaField[] = [
+        {
+          id: "f-parent",
+          name: "project",
+          type: "object",
+          nullable: false,
+          children: [
+            {
+              id: "f-child",
+              name: "name",
+              type: "string",
+              nullable: false,
+              source: { type: "pathParam", name: "name" },
+            },
+          ],
+        },
+      ];
+
+      const remapped = remapFieldsParameters(fields, { name: "projectId" });
+      expect(remapped[0].children?.[0].name).toBe("projectId");
+      expect(remapped[0].children?.[0].source).toEqual({
+        type: "pathParam",
+        name: "projectId",
+      });
+    });
+  });
+
+  describe("remapSchemaParameters", () => {
+    it("should remap JSON schema property key, x-fack-source, and required array", () => {
+      const rawSchema = {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            "x-fack-source": { type: "pathParam", name: "name" },
+          },
+          title: { type: "string" },
+        },
+        required: ["name"],
+        "x-fack-params": {
+          name: { mode: "fapi", provider: "company.name" },
+        },
+      };
+
+      const remapped = remapSchemaParameters(rawSchema, {
+        name: "projectId",
+      }) as {
+        properties: Record<
+          string,
+          { "x-fack-source"?: unknown; [k: string]: unknown }
+        >;
+        required: string[];
+        "x-fack-params": Record<string, unknown>;
+      };
+
+      expect(remapped.properties).toHaveProperty("projectId");
+      expect(remapped.properties).not.toHaveProperty("name");
+      expect(remapped.properties["projectId"]["x-fack-source"]).toEqual({
+        type: "pathParam",
+        name: "projectId",
+      });
+      expect(remapped.required).toEqual(["projectId"]);
+      expect(remapped["x-fack-params"]).toHaveProperty("projectId");
+      expect(remapped["x-fack-params"]).not.toHaveProperty("name");
     });
   });
 });

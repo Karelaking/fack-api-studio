@@ -29,6 +29,8 @@ import {
   getEffectiveRoutePath,
   validateRoutePath,
   validateRouteSchemaBindings,
+  detectParameterRenames,
+  remapSchemaParameters,
 } from "@/lib/services/route-param.service";
 import {
   generateRandomFapiValue,
@@ -242,6 +244,10 @@ export async function updateRoute(input: UpdateRouteInput): Promise<Route> {
     const effectiveBasePath = existingRoute.endpoint?.basePath ?? "";
     const targetPath =
       updates.path !== undefined ? updates.path : existingRoute.path;
+    const oldEffectivePath = getEffectiveRoutePath(
+      effectiveBasePath,
+      existingRoute.path,
+    );
     const effectivePath = getEffectiveRoutePath(effectiveBasePath, targetPath);
 
     const pathValidation = validateRoutePath(effectivePath);
@@ -249,10 +255,29 @@ export async function updateRoute(input: UpdateRouteInput): Promise<Route> {
       throw new Error(pathValidation.errors.join(" "));
     }
 
-    const targetSchema =
+    // Detect if any path parameters were renamed and remap responseSchema
+    const paramRenames = detectParameterRenames(
+      oldEffectivePath,
+      effectivePath,
+    );
+
+    let targetSchema =
       updates.responseSchema !== undefined
         ? updates.responseSchema
         : existingRoute.responseSchema;
+
+    if (targetSchema && Object.keys(paramRenames).length > 0) {
+      try {
+        const schemaObj: unknown = JSON.parse(targetSchema);
+        const remapped = remapSchemaParameters(schemaObj, paramRenames);
+        targetSchema = JSON.stringify(remapped);
+        updates.responseSchema = targetSchema;
+      } catch (parseError) {
+        if (!(parseError instanceof SyntaxError)) {
+          throw parseError;
+        }
+      }
+    }
 
     if (targetSchema) {
       try {

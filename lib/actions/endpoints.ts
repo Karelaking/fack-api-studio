@@ -2,12 +2,13 @@
 
 import { cache } from "react";
 import { db } from "@/db";
-import { endpoints } from "@/db/schema";
+import { endpoints, routes } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { generateId } from "@/lib/utils";
 import {
   clearProjectCache,
+  clearRouteCache,
   getCachedEndpoints,
   setCachedEndpoints,
 } from "@/lib/cache";
@@ -20,6 +21,10 @@ import {
   type UpdateEndpointInput,
 } from "@/lib/validators";
 import { LoggerRegistry } from "@/lib/logger-registry";
+import {
+  detectParameterRenames,
+  remapSchemaParameters,
+} from "@/lib/services/route-param.service";
 
 const endpointsTrace = LoggerRegistry.getTrace("db-endpoints");
 
@@ -149,6 +154,42 @@ export async function updateEndpoint(
   try {
     const parsed = updateEndpointSchema.parse(input);
     const { id, ...updates } = parsed;
+
+    const existing = await db.query.endpoints.findFirst({
+      where: eq(endpoints.id, id),
+      with: { routes: true },
+    });
+
+    if (
+      existing &&
+      updates.basePath !== undefined &&
+      updates.basePath !== existing.basePath
+    ) {
+      const baseRenames = detectParameterRenames(
+        existing.basePath,
+        updates.basePath,
+      );
+      if (Object.keys(baseRenames).length > 0 && existing.routes.length > 0) {
+        for (const r of existing.routes) {
+          if (r.responseSchema) {
+            try {
+              const schemaObj: unknown = JSON.parse(r.responseSchema);
+              const remapped = remapSchemaParameters(schemaObj, baseRenames);
+              await db
+                .update(routes)
+                .set({
+                  responseSchema: JSON.stringify(remapped),
+                  updatedAt: new Date(),
+                })
+                .where(eq(routes.id, r.id));
+              clearRouteCache(r.id);
+            } catch {
+              // Ignore invalid JSON parsing errors
+            }
+          }
+        }
+      }
+    }
 
     const [endpoint] = await db
       .update(endpoints)

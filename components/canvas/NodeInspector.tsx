@@ -40,6 +40,8 @@ import {
 import {
   getEffectiveRoutePath,
   extractRoutePathParameters,
+  detectParameterRenames,
+  remapFieldsParameters,
 } from "@/lib/services/route-param.service";
 import { FieldTree } from "@/components/edit-bar/FieldTree";
 import { ChaosConfig } from "@/components/edit-bar/ChaosConfig";
@@ -702,6 +704,9 @@ const RouteEditor = ({
   const parentEndpoint = endpoints?.find((ep) => ep.id === route.endpointId);
   const effectiveBasePath = parentEndpoint?.basePath ?? "";
   const effectivePath = getEffectiveRoutePath(effectiveBasePath, path);
+  const [lastKnownEffectivePath, setLastKnownEffectivePath] = React.useState(
+    getEffectiveRoutePath(effectiveBasePath, route.path),
+  );
   const detectedParams = React.useMemo(
     () => extractRoutePathParameters(effectivePath),
     [effectivePath],
@@ -770,6 +775,64 @@ const RouteEditor = ({
     }
     return initial;
   });
+
+  const synchronizeParameterRenames = React.useCallback(
+    (targetEffectivePath: string): void => {
+      if (targetEffectivePath === lastKnownEffectivePath) return;
+
+      const renames = detectParameterRenames(
+        lastKnownEffectivePath,
+        targetEffectivePath,
+      );
+
+      if (Object.keys(renames).length === 0) {
+        setLastKnownEffectivePath(targetEffectivePath);
+        return;
+      }
+
+      // 1. Remap fields in Zustand schema store
+      const updatedFields = remapFieldsParameters(fields, renames);
+      setSchema(updatedFields);
+
+      // 2. Migrate paramConfigs
+      setParamConfigs((prev) => {
+        const next = { ...prev };
+        for (const [oldP, newP] of Object.entries(renames)) {
+          if (next[oldP]) {
+            next[newP] = next[oldP];
+            delete next[oldP];
+          }
+        }
+        return next;
+      });
+
+      // 3. Migrate testParamValues
+      setTestParamValues((prev) => {
+        const next = { ...prev };
+        for (const [oldP, newP] of Object.entries(renames)) {
+          if (next[oldP] !== undefined) {
+            next[newP] = next[oldP];
+            delete next[oldP];
+          }
+        }
+        return next;
+      });
+
+      setLastKnownEffectivePath(targetEffectivePath);
+
+      const descriptions = Object.entries(renames)
+        .map(([oldP, newP]) => `:${oldP} → :${newP}`)
+        .join(", ");
+      toast.info(`Updated parameter ${descriptions} in route fields`);
+    },
+    [
+      lastKnownEffectivePath,
+      fields,
+      setSchema,
+      setParamConfigs,
+      setTestParamValues,
+    ],
+  );
 
   // Check if current draft differs from saved route
   const isDirty = React.useMemo(() => {
@@ -922,6 +985,7 @@ const RouteEditor = ({
         source: { type: "pathParam", name: paramName },
       };
       const updatedFields = [...fields, newField];
+      setSchema(updatedFields);
       const updated = await updateRoute({
         id: route.id,
         responseSchema: JSON.stringify(
@@ -1071,6 +1135,34 @@ const RouteEditor = ({
     }
     setLoading(true);
     try {
+      const currentEffectivePath = getEffectiveRoutePath(
+        effectiveBasePath,
+        path.trim(),
+      );
+      const renames = detectParameterRenames(
+        lastKnownEffectivePath,
+        currentEffectivePath,
+      );
+
+      let currentFields = fields;
+      let currentParamConfigs = paramConfigs;
+
+      if (Object.keys(renames).length > 0) {
+        currentFields = remapFieldsParameters(fields, renames);
+        setSchema(currentFields);
+
+        const nextConfigs = { ...paramConfigs };
+        for (const [oldP, newP] of Object.entries(renames)) {
+          if (nextConfigs[oldP]) {
+            nextConfigs[newP] = nextConfigs[oldP];
+            delete nextConfigs[oldP];
+          }
+        }
+        currentParamConfigs = nextConfigs;
+        setParamConfigs(nextConfigs);
+        setLastKnownEffectivePath(currentEffectivePath);
+      }
+
       const headerObj: Record<string, string> = {};
       headers.forEach((h) => {
         if (h.key.trim()) {
@@ -1087,19 +1179,30 @@ const RouteEditor = ({
         latencyMin,
         latencyMax,
         errorRate,
-        responseSchema: JSON.stringify(synthesizeSchema(fields, paramConfigs)),
+        responseSchema: JSON.stringify(
+          synthesizeSchema(currentFields, currentParamConfigs),
+        ),
         customHeaders: JSON.stringify(headerObj),
         conditionalRules: JSON.stringify(rules),
       });
       onRouteUpdated(updated);
       toast.success("Route details saved successfully!");
-    } catch {
-      toast.error("Failed to update route");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update route",
+      );
     } finally {
       setLoading(false);
     }
   }, [
     path,
+    effectiveBasePath,
+    lastKnownEffectivePath,
+    fields,
+    paramConfigs,
+    setParamConfigs,
+    setSchema,
+    headers,
     route.id,
     method,
     statusCode,
@@ -1107,9 +1210,6 @@ const RouteEditor = ({
     latencyMin,
     latencyMax,
     errorRate,
-    fields,
-    paramConfigs,
-    headers,
     rules,
     onRouteUpdated,
   ]);
@@ -1310,9 +1410,16 @@ const RouteEditor = ({
             onChange={(e) => setPath(e.target.value)}
             onBlur={() => {
               const trimmed = path.trim();
-              if (trimmed && !trimmed.startsWith("/")) {
-                setPath(`/${trimmed}`);
+              const formatted =
+                trimmed && !trimmed.startsWith("/") ? `/${trimmed}` : trimmed;
+              if (formatted !== path) {
+                setPath(formatted);
               }
+              const nextEffective = getEffectiveRoutePath(
+                effectiveBasePath,
+                formatted,
+              );
+              synchronizeParameterRenames(nextEffective);
             }}
             placeholder="/api/v1/resource"
             variant="mono"

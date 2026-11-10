@@ -1,3 +1,5 @@
+import type { SchemaField } from "@/lib/schema-synthesizer";
+
 /**
  * Fack API — Route Parameter Service
  *
@@ -283,4 +285,305 @@ export function validateRouteSchemaBindings(
     errors,
     boundFields,
   };
+}
+
+// ─── Parameter Renaming & Schema Synchronization ─────────────────────────────
+
+/**
+ * Compares two route paths (e.g. an old path and an updated path) and detects
+ * if any URL path parameters were renamed.
+ *
+ * Handles:
+ * - Direct 1-to-1 parameter replacement (e.g. "/projects/:name" -> "/projects/:projectId")
+ * - Positional segment alignment for multi-parameter routes
+ * - Preserves unchanged parameters (e.g. "/users/:id/photos/:name" -> "/users/:id/photos/:photoName")
+ *
+ * @param oldPath - The original route path or effective path
+ * @param newPath - The updated route path or effective path
+ * @returns Dictionary mapping `{ [oldParamName]: newParamName }`
+ */
+export function detectParameterRenames(
+  oldPath: string,
+  newPath: string,
+): Record<string, string> {
+  if (!oldPath || !newPath || oldPath === newPath) {
+    return {};
+  }
+
+  const oldParams = extractRoutePathParameters(oldPath);
+  const newParams = extractRoutePathParameters(newPath);
+
+  const oldNames = oldParams.map((p) => p.name);
+  const newNames = newParams.map((p) => p.name);
+
+  // If identical parameter lists, no rename
+  if (
+    oldNames.length === newNames.length &&
+    oldNames.every((name, index) => name === newNames[index])
+  ) {
+    return {};
+  }
+
+  // Identify parameters present in both (unchanged)
+  const unchanged = new Set(oldNames.filter((name) => newNames.includes(name)));
+
+  const remainingOld = oldNames.filter((name) => !unchanged.has(name));
+  const remainingNew = newNames.filter((name) => !unchanged.has(name));
+
+  if (remainingOld.length === 0 || remainingNew.length === 0) {
+    return {};
+  }
+
+  const renames: Record<string, string> = {};
+
+  // If single parameter changed on both sides, it is a direct rename
+  if (remainingOld.length === 1 && remainingNew.length === 1) {
+    renames[remainingOld[0]] = remainingNew[0];
+    return renames;
+  }
+
+  // Segment-based positional alignment
+  const oldSegments = oldPath.split("/").filter(Boolean);
+  const newSegments = newPath.split("/").filter(Boolean);
+
+  const minSegments = Math.min(oldSegments.length, newSegments.length);
+  for (let i = 0; i < minSegments; i++) {
+    const oldSeg = oldSegments[i];
+    const newSeg = newSegments[i];
+
+    if (
+      (oldSeg.startsWith(":") || oldSeg.startsWith("*")) &&
+      (newSeg.startsWith(":") || newSeg.startsWith("*"))
+    ) {
+      const oldParam = oldSeg.slice(1);
+      const newParam = newSeg.slice(1);
+
+      if (
+        oldParam &&
+        newParam &&
+        oldParam !== newParam &&
+        remainingOld.includes(oldParam) &&
+        remainingNew.includes(newParam)
+      ) {
+        renames[oldParam] = newParam;
+      }
+    }
+  }
+
+  // For any remaining unmapped, pair by order of appearance
+  const stillUnmappedOld = remainingOld.filter((name) => !renames[name]);
+  const stillUnmappedNew = remainingNew.filter(
+    (name) => !Object.values(renames).includes(name),
+  );
+
+  const minUnmapped = Math.min(
+    stillUnmappedOld.length,
+    stillUnmappedNew.length,
+  );
+  for (let i = 0; i < minUnmapped; i++) {
+    renames[stillUnmappedOld[i]] = stillUnmappedNew[i];
+  }
+
+  return renames;
+}
+
+/**
+ * Synchronizes and updates an array of SchemaField definitions when route path parameters
+ * are renamed. Renames both the field's `source.name` and the field's `name` if it was
+ * bound to or named after the renamed parameter.
+ *
+ * @param fields - Visual schema fields tree from Zustand store
+ * @param renames - Map of `{ [oldParamName]: newParamName }`
+ * @returns Updated array of SchemaField definitions
+ */
+export function remapFieldsParameters(
+  fields: SchemaField[],
+  renames: Record<string, string>,
+): SchemaField[] {
+  if (Object.keys(renames).length === 0) {
+    return fields;
+  }
+
+  const remapNode = (field: SchemaField): SchemaField => {
+    const updated: SchemaField = { ...field };
+
+    if (updated.source?.type === "pathParam") {
+      const currentParam = updated.source.name;
+      const targetParam = renames[currentParam];
+      if (targetParam) {
+        updated.source = {
+          type: "pathParam",
+          name: targetParam,
+        };
+
+        // If field was named after the parameter, update the field name to match
+        if (
+          updated.name === currentParam ||
+          updated.name.toLowerCase() === currentParam.toLowerCase()
+        ) {
+          updated.name = targetParam;
+        }
+      }
+    } else if (renames[updated.name]) {
+      // Field was named after old param but did not yet have source specified
+      const targetParam = renames[updated.name];
+      updated.name = targetParam;
+      updated.source = {
+        type: "pathParam",
+        name: targetParam,
+      };
+      updated.fakerProvider = undefined;
+    }
+
+    if (updated.arrayItemSource?.type === "pathParam") {
+      const currentParam = updated.arrayItemSource.name;
+      const targetParam = renames[currentParam];
+      if (targetParam) {
+        updated.arrayItemSource = {
+          type: "pathParam",
+          name: targetParam,
+        };
+      }
+    }
+
+    if (updated.children && updated.children.length > 0) {
+      updated.children = updated.children.map(remapNode);
+    }
+
+    if (updated.arrayItemChildren && updated.arrayItemChildren.length > 0) {
+      updated.arrayItemChildren = updated.arrayItemChildren.map(remapNode);
+    }
+
+    return updated;
+  };
+
+  return fields.map(remapNode);
+}
+
+/**
+ * Remaps parameter references and property keys in a raw JSON Schema object.
+ * Synchronizes:
+ * - "properties" keys (if named after old parameter or bound to it)
+ * - "required" array entries
+ * - "x-fack-source" annotations
+ * - "x-fack-params" configurations dictionary
+ *
+ * @param schema - Raw JSON Schema object or parsed schema
+ * @param renames - Map of `{ [oldParamName]: newParamName }`
+ * @returns Remapped schema object
+ */
+export function remapSchemaParameters(
+  schema: unknown,
+  renames: Record<string, string>,
+): unknown {
+  if (
+    !schema ||
+    typeof schema !== "object" ||
+    Object.keys(renames).length === 0
+  ) {
+    return schema;
+  }
+
+  const cloned = JSON.parse(JSON.stringify(schema)) as Record<string, unknown>;
+
+  // 1. Remap x-fack-params dictionary
+  const rawParams = cloned["x-fack-params"];
+  if (rawParams && typeof rawParams === "object") {
+    const updatedParams: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(
+      rawParams as Record<string, unknown>,
+    )) {
+      const targetKey = renames[key] ?? key;
+      updatedParams[targetKey] = val;
+    }
+    cloned["x-fack-params"] = updatedParams;
+  }
+
+  // 2. Recursively remap schema properties
+  const traverse = (node: Record<string, unknown>): void => {
+    if (!node || typeof node !== "object") {
+      return;
+    }
+
+    if (node.properties && typeof node.properties === "object") {
+      const oldProps = node.properties as Record<
+        string,
+        Record<string, unknown>
+      >;
+      const newProps: Record<string, Record<string, unknown>> = {};
+      const requiredList: string[] = Array.isArray(node.required)
+        ? (node.required as string[]).slice()
+        : [];
+
+      for (const [key, propDef] of Object.entries(oldProps)) {
+        let targetKey = key;
+        const source = propDef["x-fack-source"] as
+          | { type?: string; name?: string; value?: string }
+          | undefined;
+
+        if (
+          source &&
+          typeof source === "object" &&
+          source.type === "pathParam"
+        ) {
+          const oldName = source.name ? String(source.name).trim() : "";
+          const targetName = renames[oldName];
+          if (targetName) {
+            source.name = targetName;
+            if (
+              key === oldName ||
+              key.toLowerCase() === oldName.toLowerCase()
+            ) {
+              targetKey = targetName;
+              const reqIndex = requiredList.indexOf(key);
+              if (reqIndex !== -1) {
+                requiredList[reqIndex] = targetKey;
+              }
+            }
+          }
+        } else if (renames[key]) {
+          targetKey = renames[key];
+          propDef["x-fack-source"] = {
+            type: "pathParam",
+            name: targetKey,
+          };
+          delete propDef["faker"];
+          delete propDef["x-faker"];
+          const reqIndex = requiredList.indexOf(key);
+          if (reqIndex !== -1) {
+            requiredList[reqIndex] = targetKey;
+          }
+        }
+
+        traverse(propDef);
+        newProps[targetKey] = propDef;
+      }
+
+      node.properties = newProps;
+      if (requiredList.length > 0) {
+        node.required = requiredList;
+      }
+    }
+
+    if (node.items && typeof node.items === "object") {
+      const itemsNode = node.items as Record<string, unknown>;
+      const itemSource = itemsNode["x-fack-source"] as
+        | { type?: string; name?: string; value?: string }
+        | undefined;
+      if (
+        itemSource &&
+        typeof itemSource === "object" &&
+        itemSource.type === "pathParam"
+      ) {
+        const oldName = itemSource.name ? String(itemSource.name).trim() : "";
+        if (renames[oldName]) {
+          itemSource.name = renames[oldName];
+        }
+      }
+      traverse(itemsNode);
+    }
+  };
+
+  traverse(cloned);
+  return cloned;
 }
