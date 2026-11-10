@@ -42,7 +42,7 @@ import {
   extractRoutePathParameters,
   detectParameterRenames,
   remapFieldsParameters,
-  reconcileFieldParameters,
+  syncRoutePathFields,
 } from "@/lib/services/route-param.service";
 import { FieldTree } from "@/components/edit-bar/FieldTree";
 import { ChaosConfig } from "@/components/edit-bar/ChaosConfig";
@@ -835,7 +835,7 @@ const RouteEditor = ({
     ],
   );
 
-  // Automatically reconcile existing fields when path parameters change or orphaned parameter fields exist
+  // Automatically synchronize fields when path parameters change (renaming or introducing new parameters)
   React.useEffect(() => {
     const declaredNames = detectedParams.map((p) => p.name);
     if (declaredNames.length === 0) return;
@@ -847,14 +847,25 @@ const RouteEditor = ({
         !declaredNames.includes(f.source.name),
     );
 
-    if (hasOrphaned) {
-      const { fields: reconciledFields, renames } = reconcileFieldParameters(
-        fields,
-        declaredNames,
-      );
+    const mappedNames = new Set(
+      fields
+        .filter(
+          (f) =>
+            f.source?.type === "pathParam" && typeof f.source.name === "string",
+        )
+        .map((f) => (f.source?.type === "pathParam" ? f.source.name : f.name)),
+    );
+    const hasUnmapped = declaredNames.some((p) => !mappedNames.has(p));
 
-      if (Object.keys(renames).length > 0) {
-        setSchema(reconciledFields);
+    if (hasOrphaned || hasUnmapped) {
+      const {
+        fields: updatedFields,
+        renames,
+        addedParams,
+      } = syncRoutePathFields(fields, declaredNames);
+
+      if (Object.keys(renames).length > 0 || addedParams.length > 0) {
+        setSchema(updatedFields);
 
         // eslint-disable-next-line react/set-state-in-effect
         setParamConfigs((prev) => {
@@ -863,6 +874,15 @@ const RouteEditor = ({
             if (next[oldP]) {
               next[newP] = next[oldP];
               delete next[oldP];
+            }
+          }
+          for (const newP of addedParams) {
+            if (!next[newP]) {
+              next[newP] = {
+                mode: "static",
+                staticValue: newP === "id" ? "295" : `sample_${newP}`,
+                provider: getDefaultProviderForParam(newP),
+              };
             }
           }
           return next;
@@ -877,13 +897,27 @@ const RouteEditor = ({
               delete next[oldP];
             }
           }
+          for (const newP of addedParams) {
+            if (next[newP] === undefined) {
+              next[newP] = newP === "id" ? "295" : `sample_${newP}`;
+            }
+          }
           return next;
         });
 
-        const descriptions = Object.entries(renames)
-          .map(([oldP, newP]) => `:${oldP} → :${newP}`)
-          .join(", ");
-        toast.info(`Updated existing field for parameter ${descriptions}`);
+        if (Object.keys(renames).length > 0) {
+          const descriptions = Object.entries(renames)
+            .map(([oldP, newP]) => `:${oldP} → :${newP}`)
+            .join(", ");
+          toast.info(`Updated existing field for parameter ${descriptions}`);
+        }
+
+        if (addedParams.length > 0) {
+          const descriptions = addedParams.map((p) => `:${p}`).join(", ");
+          toast.success(
+            `Automatically added field for parameter ${descriptions}`,
+          );
+        }
       }
     }
   }, [detectedParams, fields, setSchema]);
@@ -1246,23 +1280,32 @@ const RouteEditor = ({
         setLastKnownEffectivePath(currentEffectivePath);
       }
 
-      // Reconcile any remaining orphaned field bindings against declared parameters
+      // Reconcile and synchronize all declared route parameters into fields
       const currentDeclared = extractRoutePathParameters(
         currentEffectivePath,
       ).map((p) => p.name);
-      const reconciled = reconcileFieldParameters(
-        currentFields,
-        currentDeclared,
-      );
-      if (Object.keys(reconciled.renames).length > 0) {
-        currentFields = reconciled.fields;
+      const synced = syncRoutePathFields(currentFields, currentDeclared);
+      if (
+        Object.keys(synced.renames).length > 0 ||
+        synced.addedParams.length > 0
+      ) {
+        currentFields = synced.fields;
         setSchema(currentFields);
 
         const nextConfigs = { ...currentParamConfigs };
-        for (const [oldP, newP] of Object.entries(reconciled.renames)) {
+        for (const [oldP, newP] of Object.entries(synced.renames)) {
           if (nextConfigs[oldP]) {
             nextConfigs[newP] = nextConfigs[oldP];
             delete nextConfigs[oldP];
+          }
+        }
+        for (const newP of synced.addedParams) {
+          if (!nextConfigs[newP]) {
+            nextConfigs[newP] = {
+              mode: "static",
+              staticValue: newP === "id" ? "295" : `sample_${newP}`,
+              provider: getDefaultProviderForParam(newP),
+            };
           }
         }
         currentParamConfigs = nextConfigs;

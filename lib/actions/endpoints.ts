@@ -24,7 +24,7 @@ import { LoggerRegistry } from "@/lib/logger-registry";
 import {
   detectParameterRenames,
   remapSchemaParameters,
-  reconcileSchemaParameters,
+  syncRoutePathSchema,
   getEffectiveRoutePath,
   extractRoutePathParameters,
 } from "@/lib/services/route-param.service";
@@ -185,11 +185,8 @@ export async function updateEndpoint(
               const childParamNames = extractRoutePathParameters(
                 childEffectivePath,
               ).map((p) => p.name);
-              const reconciled = reconcileSchemaParameters(
-                remapped,
-                childParamNames,
-              );
-              remapped = reconciled.schema;
+              const synced = syncRoutePathSchema(remapped, childParamNames);
+              remapped = synced.schema;
               await db
                 .update(routes)
                 .set({

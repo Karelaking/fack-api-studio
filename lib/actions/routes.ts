@@ -31,7 +31,7 @@ import {
   validateRouteSchemaBindings,
   detectParameterRenames,
   remapSchemaParameters,
-  reconcileSchemaParameters,
+  syncRoutePathSchema,
 } from "@/lib/services/route-param.service";
 import {
   generateRandomFapiValue,
@@ -175,11 +175,8 @@ export async function createRoute(input: CreateRouteInput): Promise<Route> {
       try {
         let schemaObj: unknown = JSON.parse(parsed.responseSchema);
         const declaredParamNames = pathValidation.parameters.map((p) => p.name);
-        const reconciled = reconcileSchemaParameters(
-          schemaObj,
-          declaredParamNames,
-        );
-        schemaObj = reconciled.schema;
+        const synced = syncRoutePathSchema(schemaObj, declaredParamNames);
+        schemaObj = synced.schema;
         parsed.responseSchema = JSON.stringify(schemaObj);
 
         const bindingValidation = validateRouteSchemaBindings(
@@ -284,12 +281,9 @@ export async function updateRoute(input: UpdateRouteInput): Promise<Route> {
           schemaObj = remapSchemaParameters(schemaObj, paramRenames);
         }
 
-        // Reconcile any remaining orphaned parameters against declared parameters
-        const reconciled = reconcileSchemaParameters(
-          schemaObj,
-          declaredParamNames,
-        );
-        schemaObj = reconciled.schema;
+        // Reconcile and auto-add fields for all declared path parameters
+        const synced = syncRoutePathSchema(schemaObj, declaredParamNames);
+        schemaObj = synced.schema;
 
         targetSchema = JSON.stringify(schemaObj);
         updates.responseSchema = targetSchema;

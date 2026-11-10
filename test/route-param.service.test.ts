@@ -9,6 +9,8 @@ import {
   remapSchemaParameters,
   reconcileFieldParameters,
   reconcileSchemaParameters,
+  syncRoutePathFields,
+  syncRoutePathSchema,
 } from "../lib/services/route-param.service";
 import type { SchemaField } from "../lib/schema-synthesizer";
 
@@ -402,6 +404,108 @@ describe("Route Parameter Service", () => {
         .properties;
       expect(props).toHaveProperty("projectId");
       expect(props).not.toHaveProperty("name");
+    });
+  });
+
+  describe("syncRoutePathFields", () => {
+    it("should automatically add fields for newly introduced URL parameters", () => {
+      const existingFields: SchemaField[] = [
+        {
+          id: "f-project",
+          name: "projectId",
+          type: "string",
+          nullable: false,
+          source: { type: "pathParam", name: "projectId" },
+        },
+      ];
+
+      // Route path now introduces a new parameter ":teamId"
+      const {
+        fields: updated,
+        renames,
+        addedParams,
+      } = syncRoutePathFields(existingFields, ["projectId", "teamId"]);
+
+      expect(renames).toEqual({});
+      expect(addedParams).toEqual(["teamId"]);
+      expect(updated.length).toBe(2);
+      expect(updated[1].name).toBe("teamId");
+      expect(updated[1].source).toEqual({
+        type: "pathParam",
+        name: "teamId",
+      });
+    });
+
+    it("should reconcile renames and auto-add new parameters simultaneously", () => {
+      const existingFields: SchemaField[] = [
+        {
+          id: "f-old",
+          name: "name",
+          type: "string",
+          nullable: false,
+          source: { type: "pathParam", name: "name" },
+        },
+      ];
+
+      // URL was changed to rename ":name" -> ":projectId" AND add ":version"
+      const {
+        fields: updated,
+        renames,
+        addedParams,
+      } = syncRoutePathFields(existingFields, ["projectId", "version"]);
+
+      expect(renames).toEqual({ name: "projectId" });
+      expect(addedParams).toEqual(["version"]);
+      expect(updated.length).toBe(2);
+      expect(updated[0].name).toBe("projectId");
+      expect(updated[1].name).toBe("version");
+      expect(updated[1].source).toEqual({
+        type: "pathParam",
+        name: "version",
+      });
+    });
+  });
+
+  describe("syncRoutePathSchema", () => {
+    it("should automatically create properties for newly introduced parameters", () => {
+      const schema = {
+        type: "object",
+        properties: {
+          projectId: {
+            type: "string",
+            "x-fack-source": { type: "pathParam", name: "projectId" },
+          },
+        },
+        required: ["projectId"],
+      };
+
+      const {
+        schema: synced,
+        renames,
+        addedParams,
+      } = syncRoutePathSchema(schema, ["projectId", "roleId"]);
+
+      expect(renames).toEqual({});
+      expect(addedParams).toEqual(["roleId"]);
+
+      const props = (synced as { properties: Record<string, unknown> })
+        .properties;
+      expect(props).toHaveProperty("projectId");
+      expect(props).toHaveProperty("roleId");
+
+      const roleProp = props["roleId"] as {
+        type: string;
+        "x-fack-source"?: unknown;
+      };
+      expect(roleProp.type).toBe("string");
+      expect(roleProp["x-fack-source"]).toEqual({
+        type: "pathParam",
+        name: "roleId",
+      });
+
+      const req = (synced as { required: string[] }).required;
+      expect(req).toContain("projectId");
+      expect(req).toContain("roleId");
     });
   });
 });

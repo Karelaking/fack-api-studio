@@ -762,3 +762,167 @@ export function reconcileSchemaParameters(
   const remapped = remapSchemaParameters(schema, renames);
   return { schema: remapped, renames };
 }
+
+/**
+ * Automatically ensures that all declared route path parameters have corresponding
+ * fields in the schema fields array.
+ *
+ * 1. First reconciles any orphaned path parameter fields in-place (e.g. from parameter renames).
+ * 2. Then, for any remaining unmapped parameters introduced in the URL, automatically creates
+ *    and appends a new SchemaField bound to that URL parameter.
+ *
+ * @param fields - Current visual schema fields
+ * @param declaredParamNames - Array of parameter names extracted from the route path
+ * @returns Object with updated fields, renames performed, and list of newly added parameter fields
+ */
+export function syncRoutePathFields(
+  fields: SchemaField[],
+  declaredParamNames: string[],
+): {
+  fields: SchemaField[];
+  renames: Record<string, string>;
+  addedParams: string[];
+} {
+  if (!declaredParamNames || declaredParamNames.length === 0) {
+    return { fields: fields ?? [], renames: {}, addedParams: [] };
+  }
+
+  // 1. Reconcile orphaned parameter fields in-place first
+  const { fields: reconciledFields, renames } = reconcileFieldParameters(
+    fields ?? [],
+    declaredParamNames,
+  );
+
+  // 2. Identify which declared parameters are now mapped
+  const mappedParams = new Set<string>();
+  for (const f of reconciledFields) {
+    if (
+      f.source?.type === "pathParam" &&
+      declaredParamNames.includes(f.source.name)
+    ) {
+      mappedParams.add(f.source.name);
+    } else if (declaredParamNames.includes(f.name)) {
+      mappedParams.add(f.name);
+    }
+  }
+
+  // 3. For any remaining unmapped declared parameters, automatically create fields
+  const unmapped = declaredParamNames.filter((p) => !mappedParams.has(p));
+  const addedParams: string[] = [];
+  const updatedFields = [...reconciledFields];
+
+  for (const paramName of unmapped) {
+    const newField: SchemaField = {
+      id: `field-${Date.now()}-${paramName}`,
+      name: paramName,
+      type: "string",
+      nullable: false,
+      source: {
+        type: "pathParam",
+        name: paramName,
+      },
+    };
+    updatedFields.push(newField);
+    addedParams.push(paramName);
+  }
+
+  return {
+    fields: updatedFields,
+    renames,
+    addedParams,
+  };
+}
+
+/**
+ * Automatically ensures that all declared route path parameters have corresponding
+ * properties in a raw JSON Schema.
+ *
+ * 1. First reconciles any orphaned path parameter properties in-place.
+ * 2. Then, for any remaining unmapped parameters introduced in the URL, automatically creates
+ *    and appends a new property with type "string", "x-fack-source", and adds it to required.
+ *
+ * @param schema - Raw JSON Schema object
+ * @param declaredParamNames - Array of parameter names extracted from the route path
+ * @returns Object with remapped/extended schema, renames performed, and list of newly added params
+ */
+export function syncRoutePathSchema(
+  schema: unknown,
+  declaredParamNames: string[],
+): {
+  schema: unknown;
+  renames: Record<string, string>;
+  addedParams: string[];
+} {
+  if (!declaredParamNames || declaredParamNames.length === 0) {
+    return { schema, renames: {}, addedParams: [] };
+  }
+
+  // 1. Reconcile existing orphaned properties in-place
+  const { schema: reconciledSchema, renames } = reconcileSchemaParameters(
+    schema,
+    declaredParamNames,
+  );
+
+  const cloned = JSON.parse(
+    JSON.stringify(
+      reconciledSchema ?? { type: "object", properties: {}, required: [] },
+    ),
+  ) as Record<string, unknown>;
+
+  if (!cloned.properties || typeof cloned.properties !== "object") {
+    cloned.properties = {};
+  }
+  const properties = cloned.properties as Record<
+    string,
+    Record<string, unknown>
+  >;
+
+  const requiredList: string[] = Array.isArray(cloned.required)
+    ? (cloned.required as string[]).slice()
+    : [];
+
+  // 2. Identify mapped parameters
+  const mappedParams = new Set<string>();
+  for (const [propKey, propDef] of Object.entries(properties)) {
+    const source = propDef["x-fack-source"] as
+      | { type?: string; name?: string }
+      | undefined;
+    if (
+      source &&
+      source.type === "pathParam" &&
+      source.name &&
+      declaredParamNames.includes(source.name)
+    ) {
+      mappedParams.add(source.name);
+    } else if (declaredParamNames.includes(propKey)) {
+      mappedParams.add(propKey);
+    }
+  }
+
+  // 3. For any remaining unmapped declared parameters, automatically create properties
+  const unmapped = declaredParamNames.filter((p) => !mappedParams.has(p));
+  const addedParams: string[] = [];
+
+  for (const paramName of unmapped) {
+    properties[paramName] = {
+      type: "string",
+      "x-fack-source": {
+        type: "pathParam",
+        name: paramName,
+      },
+    };
+    if (!requiredList.includes(paramName)) {
+      requiredList.push(paramName);
+    }
+    addedParams.push(paramName);
+  }
+
+  cloned.properties = properties;
+  cloned.required = requiredList;
+
+  return {
+    schema: cloned,
+    renames,
+    addedParams,
+  };
+}
