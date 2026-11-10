@@ -43,6 +43,10 @@ import {
   parseRouteSchema,
 } from "@/lib/services/mock-request-input.service";
 import { getMockJwtSecret } from "@/lib/mock-jwt";
+import {
+  applyRouteParameterBindings,
+  RouteParamConversionError,
+} from "@/lib/services/route-param-binding.service";
 
 const mockLogger = LoggerRegistry.get("mock");
 const mockCoreTrace = LoggerRegistry.getTrace("mock-core");
@@ -648,6 +652,32 @@ export async function processMockRequest({
           }
         }
       }
+    }
+
+    // ── 6.6 Route Parameter Response Binding ────────────────────────────
+    try {
+      rawPayload = applyRouteParameterBindings(
+        rawPayload,
+        schema,
+        matchedParams,
+      );
+    } catch (bindingError) {
+      if (bindingError instanceof RouteParamConversionError) {
+        const errorBody = {
+          error: true,
+          message: bindingError.message,
+          param: bindingError.paramName,
+          field: bindingError.fieldName,
+        };
+        const errorResponse = buildErrorResponse(400, bindingError.message);
+        after(() => log(400, true, errorBody));
+        mockCoreTrace.traceError(
+          "processMockRequest (invalid route parameter binding)",
+          bindingError,
+        );
+        return errorResponse;
+      }
+      throw bindingError;
     }
 
     let payload: unknown;

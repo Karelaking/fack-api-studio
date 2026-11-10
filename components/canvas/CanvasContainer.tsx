@@ -239,6 +239,8 @@ function CanvasContainerInner({
           route={inspectorRoute}
           inspectedFieldId={inspectedFieldId}
           activeRoutesCount={activeRoutes.length}
+          projectSlug={projectSlug}
+          endpoints={endpoints}
           onRouteUpdated={handleRouteUpdated}
           onRouteDeleted={handleRouteDeleted}
           onOpenAdvanced={() => setIsEditOpen(true)}
@@ -269,6 +271,8 @@ function CanvasContainerInner({
               route={inspectorRoute}
               inspectedFieldId={inspectedFieldId}
               activeRoutesCount={activeRoutes.length}
+              projectSlug={projectSlug}
+              endpoints={endpoints}
               onRouteUpdated={handleRouteUpdated}
               onRouteDeleted={handleRouteDeleted}
               onOpenAdvanced={() => setIsEditOpen(true)}

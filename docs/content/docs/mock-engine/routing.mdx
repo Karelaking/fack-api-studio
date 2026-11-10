@@ -98,7 +98,39 @@ When a request arrives at `/users/usr_481/orders/ord_990`, the router automatica
 }
 ```
 
-Extracted parameters are decoded and made available to [Conditional Chaos Rules](/docs/chaos) and request logging.
+Extracted parameters are decoded and made available to [Conditional Chaos Rules](/docs/chaos), request logging, and [Route Parameter Response Binding](#route-parameter-response-binding).
+
+### Route Parameter Response Binding
+
+When designing parameterized routes (such as `/api/v2/users/:id`), you can choose how each response field obtains its value:
+
+1. **Use URL value (Path Parameter Binding)**:
+   The response field dynamically echoes the exact decoded value supplied in the request URL segment.
+   - For example, querying `GET /api/v2/users/295` returns `{ "id": "295" }`.
+   - Strict scalar type conversions are supported: binding to a numeric or integer field parses the URL segment strictly (returning a `400 Bad Request` if the supplied segment is not a valid number), while boolean fields convert `"true"`, `"false"`, `"1"`, and `"0"`.
+
+2. **Generate with a provider (Faker)**:
+   The field generates dynamic mock data using its configured Faker provider (e.g. `string.uuid`), independent of the value passed in the URL. The route parameter still controls URL matching and stateful persistence.
+
+```json
+// Example response schema with a bound URL parameter
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "x-fack-source": { "type": "pathParam", "name": "id" }
+    },
+    "name": {
+      "type": "string",
+      "x-faker": "person.fullName"
+    }
+  },
+  "required": ["id", "name"]
+}
+```
+
+The route path and the response fields are separate concepts: the path parameter selects the route, while the field source controls what is generated.
 
 ### Catch-All Wildcards
 

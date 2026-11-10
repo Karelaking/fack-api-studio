@@ -56,6 +56,12 @@ export function FieldSettingsModal({
   const [type, setType] = React.useState<SchemaField["type"]>("string");
   const [nullable, setNullable] = React.useState(false);
   const [fakerProvider, setFakerProvider] = React.useState("");
+  const [sourceType, setSourceType] = React.useState<"faker" | "pathParam">(
+    initialData?.source?.type === "pathParam" ? "pathParam" : "faker",
+  );
+  const [paramName, setParamName] = React.useState(
+    initialData?.source?.name || "",
+  );
   const [arrayItemType, setArrayItemType] =
     React.useState<SchemaField["arrayItemType"]>("string");
   const [arrayItemFakerProvider, setArrayItemFakerProvider] =
@@ -67,6 +73,10 @@ export function FieldSettingsModal({
       setType(initialData?.type || "string");
       setNullable(initialData?.nullable || false);
       setFakerProvider(initialData?.fakerProvider || "");
+      setSourceType(
+        initialData?.source?.type === "pathParam" ? "pathParam" : "faker",
+      );
+      setParamName(initialData?.source?.name || "");
       setArrayItemType(initialData?.arrayItemType || "string");
       setArrayItemFakerProvider(initialData?.arrayItemFakerProvider || "");
     }
@@ -77,7 +87,12 @@ export function FieldSettingsModal({
       name,
       type,
       nullable,
-      fakerProvider: fakerProvider || undefined,
+      source:
+        sourceType === "pathParam" && paramName.trim()
+          ? { type: "pathParam", name: paramName.trim() }
+          : undefined,
+      fakerProvider:
+        sourceType === "faker" ? fakerProvider || undefined : undefined,
       arrayItemType: type === "array" ? arrayItemType : undefined,
       arrayItemFakerProvider:
         type === "array" && arrayItemType !== "object"
@@ -196,31 +211,85 @@ export function FieldSettingsModal({
           </div>
 
           {isPrimitive && (
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label
-                htmlFor="field-mock-data"
-                className="text-right text-sm font-semibold"
-              >
-                Mock Data
-              </label>
-              <div className="col-span-3 space-y-2">
-                <FakerProviderSelect
-                  id="field-mock-data"
-                  value={fakerProvider || undefined}
-                  onValueChange={setFakerProvider}
-                />
-                {isCustomImage && (
-                  <Input
-                    id="custom-category-name"
-                    aria-label="Custom image category"
-                    value={customCategoryName}
-                    onChange={(e) => handleCustomCategoryChange(e.target.value)}
-                    placeholder="e.g. puppy, nature, architecture"
-                    size="sm"
-                  />
-                )}
+            <>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-right text-sm font-semibold">Source</span>
+                <div className="col-span-3 grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant={sourceType === "pathParam" ? "default" : "outline"}
+                    size="xs"
+                    onClick={() => setSourceType("pathParam")}
+                    className="text-xs"
+                  >
+                    URL Parameter
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={sourceType === "faker" ? "default" : "outline"}
+                    size="xs"
+                    onClick={() => setSourceType("faker")}
+                    className="text-xs"
+                  >
+                    Faker Provider
+                  </Button>
+                </div>
               </div>
-            </div>
+
+              {sourceType === "pathParam" ? (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label
+                    htmlFor="field-param-name-modal"
+                    className="text-right text-sm font-semibold"
+                  >
+                    Param Name
+                  </label>
+                  <div className="col-span-3 space-y-1">
+                    <Input
+                      id="field-param-name-modal"
+                      value={paramName}
+                      onChange={(e) =>
+                        setParamName(e.target.value.replace(/^:/, ""))
+                      }
+                      placeholder="e.g. id"
+                      className="font-mono text-xs"
+                    />
+                    <p className="text-muted-foreground text-mini">
+                      Enter the route parameter name (e.g. &quot;id&quot; for
+                      &quot;/:id&quot;).
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label
+                    htmlFor="field-mock-data"
+                    className="text-right text-sm font-semibold"
+                  >
+                    Mock Data
+                  </label>
+                  <div className="col-span-3 space-y-2">
+                    <FakerProviderSelect
+                      id="field-mock-data"
+                      value={fakerProvider || undefined}
+                      onValueChange={setFakerProvider}
+                    />
+                    {isCustomImage && (
+                      <Input
+                        id="custom-category-name"
+                        aria-label="Custom image category"
+                        value={customCategoryName}
+                        onChange={(e) =>
+                          handleCustomCategoryChange(e.target.value)
+                        }
+                        placeholder="e.g. puppy, nature, architecture"
+                        size="sm"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {isArray && (

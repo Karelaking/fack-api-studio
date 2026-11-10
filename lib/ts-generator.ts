@@ -106,12 +106,12 @@ export async function generateTypeScript(
 // ─── Schema Cleaning ─────────────────────────────────────────────────────────
 
 /**
- * Recursively removes `x-faker` and other Faker-specific extension
- * keywords from a JSON Schema document. These custom keywords are
+ * Recursively removes `x-faker`, `x-fack-source`, and other mock-engine
+ * extension keywords from a JSON Schema document. These custom keywords are
  * used by the mock engine but are not valid for TypeScript compilation.
  *
  * @param obj - A JSON Schema object (or nested part thereof)
- * @returns A clean copy of the schema without Faker extensions
+ * @returns A clean copy of the schema without internal mock extensions
  */
 function stripFakerKeywords(
   obj: Record<string, unknown>,
@@ -119,12 +119,21 @@ function stripFakerKeywords(
   const clean: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(obj)) {
-    // Skip Faker-specific extension keywords
-    if (key === "x-faker") continue;
+    // Skip internal engine extension keywords
+    if (key === "x-faker" || key === "x-fack-source" || key === "faker") {
+      continue;
+    }
 
     // Recursively clean nested objects
     if (value && typeof value === "object" && !Array.isArray(value)) {
       clean[key] = stripFakerKeywords(value as Record<string, unknown>);
+    } else if (Array.isArray(value)) {
+      clean[key] = value.map((item) => {
+        if (item && typeof item === "object") {
+          return stripFakerKeywords(item as Record<string, unknown>);
+        }
+        return item;
+      });
     } else {
       clean[key] = value;
     }

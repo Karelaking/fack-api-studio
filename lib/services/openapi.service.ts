@@ -5,6 +5,33 @@ import type {
   OpenApiOperationObject,
   OpenApiSchemaObject,
 } from "@/lib/services/import.service";
+import { getEffectiveRoutePath } from "@/lib/services/route-param.service";
+
+/**
+ * Strips internal engine annotations (such as x-fack-source, x-faker)
+ * from the emitted OpenAPI response schemas.
+ */
+function sanitizeOpenApiSchema(node: unknown): unknown {
+  if (!node || typeof node !== "object") {
+    return node;
+  }
+
+  if (Array.isArray(node)) {
+    return node.map((item) => sanitizeOpenApiSchema(item));
+  }
+
+  const record = node as Record<string, unknown>;
+  const clean: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(record)) {
+    if (key === "x-fack-source" || key === "x-faker" || key === "faker") {
+      continue;
+    }
+    clean[key] = sanitizeOpenApiSchema(value);
+  }
+
+  return clean;
+}
 
 /**
  * Generates an OpenAPI 3.0.3 compliant JSON document for a given project.
@@ -26,17 +53,7 @@ export function generateOpenApi(
 
   for (const endpoint of project.endpoints) {
     for (const route of endpoint.routes) {
-      // Normalize path to have a leading slash
-      const basePath = endpoint.basePath.startsWith("/")
-        ? endpoint.basePath
-        : `/${endpoint.basePath}`;
-      const routePath = route.path.startsWith("/")
-        ? route.path
-        : `/${route.path}`;
-      let fullPath = `${basePath}${routePath}`.replace(/\/+/g, "/"); // remove double slashes
-      if (fullPath !== "/") {
-        fullPath = fullPath.replace(/\/$/, ""); // remove trailing slash
-      }
+      const fullPath = getEffectiveRoutePath(endpoint.basePath, route.path);
 
       // Identify OpenAPI path parameters (e.g. /users/:id -> /users/{id})
       const openApiPath = fullPath.replace(/:([a-zA-Z0-9_]+)/g, "{$1}");
@@ -51,7 +68,9 @@ export function generateOpenApi(
         try {
           const parsed: unknown = JSON.parse(route.responseSchema);
           if (parsed && typeof parsed === "object") {
-            responseSchemaObj = parsed as OpenApiSchemaObject;
+            responseSchemaObj = sanitizeOpenApiSchema(
+              parsed,
+            ) as OpenApiSchemaObject;
           }
         } catch {
           // fallback to empty object if unparseable

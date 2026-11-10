@@ -106,6 +106,11 @@ export const FieldEditor = ({
             {field.type}
             {isArray && field.arrayItemType && ` (${field.arrayItemType})`}
           </span>
+          {field.source?.type === "pathParam" && (
+            <span className="bg-primary/10 text-primary border-primary/20 text-mini rounded border px-1.5 py-0.5 font-mono font-semibold">
+              URL: :{field.source.name}
+            </span>
+          )}
           {field.nullable && (
             <span className="text-muted-foreground/70 text-mini font-bold tracking-wider uppercase">
               NULL

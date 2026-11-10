@@ -18,10 +18,14 @@ import {
   synthesizeSchema,
   type SchemaField,
 } from "@/lib/schema-synthesizer";
+import {
+  getEffectiveRoutePath,
+  extractRoutePathParameters,
+} from "@/lib/services/route-param.service";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import type { Route } from "@/db/schema";
+import type { Endpoint, Route } from "@/db/schema";
 
 const FIELD_TYPES = [
   "string",
@@ -44,6 +48,10 @@ interface NodeInspectorProps {
   inspectedFieldId?: string | null;
   /** Total count of active routes on the canvas (used in idle state). */
   activeRoutesCount: number;
+  /** Slug of the current project, used for constructing live mock endpoints. */
+  projectSlug?: string;
+  /** Available endpoint groups in this project. */
+  endpoints?: Endpoint[];
   /** Called when a route or its fields change so parent state stays synced. */
   onRouteUpdated: (updatedRoute: Route) => void;
   /** Called when a route is deleted so canvas and selection clean up. */
@@ -58,6 +66,7 @@ interface FieldEditorProps {
   field: SchemaField;
   allFields: SchemaField[];
   route: Route;
+  endpoints?: Endpoint[];
   onRouteUpdated: (updatedRoute: Route) => void;
   onBack: () => void;
   onOpenAdvanced: () => void;
@@ -67,6 +76,7 @@ const FieldEditor = ({
   field,
   allFields,
   route,
+  endpoints,
   onRouteUpdated,
   onBack,
   onOpenAdvanced,
@@ -78,6 +88,23 @@ const FieldEditor = ({
     field.fakerProvider ?? "",
   );
   const [nullable, setNullable] = React.useState(field.nullable);
+
+  const parentEndpoint = endpoints?.find((ep) => ep.id === route.endpointId);
+  const effectivePath = getEffectiveRoutePath(
+    parentEndpoint?.basePath ?? "",
+    route.path,
+  );
+  const availableParams = React.useMemo(
+    () => extractRoutePathParameters(effectivePath),
+    [effectivePath],
+  );
+
+  const [sourceType, setSourceType] = React.useState<"faker" | "pathParam">(
+    field.source?.type === "pathParam" ? "pathParam" : "faker",
+  );
+  const [selectedParamName, setSelectedParamName] = React.useState<string>(
+    field.source?.name || availableParams[0]?.name || "",
+  );
 
   const selectedProvider = fakerProvider
     ? getProviderByValue(fakerProvider)
@@ -96,7 +123,12 @@ const FieldEditor = ({
               ...f,
               name: name.trim(),
               type: type as SchemaField["type"],
-              fakerProvider: fakerProvider || undefined,
+              source:
+                sourceType === "pathParam" && selectedParamName
+                  ? { type: "pathParam" as const, name: selectedParamName }
+                  : undefined,
+              fakerProvider:
+                sourceType === "faker" ? fakerProvider || undefined : undefined,
               nullable,
             }
           : f,
@@ -107,8 +139,8 @@ const FieldEditor = ({
       });
       onRouteUpdated(updated);
       toast.success("Field updated");
-    } catch {
-      toast.error("Failed to save field");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save field");
     } finally {
       setLoading(false);
     }
@@ -206,25 +238,98 @@ const FieldEditor = ({
           </fieldset>
         </div>
 
-        {/* Faker Provider */}
+        {/* Field Value Source */}
         <div className="space-y-1.5">
           <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
-            Mock Data Provider
+            Field Value Source
           </span>
-          <FakerProviderSelect
-            value={fakerProvider}
-            onValueChange={setFakerProvider}
-            disabled={loading || type === "object" || type === "array"}
-          />
-          {selectedProvider && (
-            <p className="text-muted-foreground text-mini font-mono leading-snug">
-              Example:{" "}
-              <span className="text-foreground">
-                {selectedProvider.example}
-              </span>
-            </p>
-          )}
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              aria-pressed={sourceType === "pathParam"}
+              onClick={() => setSourceType("pathParam")}
+              disabled={loading}
+              className={cn(
+                "h-7 rounded-md border px-2 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                sourceType === "pathParam"
+                  ? "border-primary bg-primary text-primary-foreground shadow-xs"
+                  : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              URL Parameter
+            </button>
+            <button
+              type="button"
+              aria-pressed={sourceType === "faker"}
+              onClick={() => setSourceType("faker")}
+              disabled={loading}
+              className={cn(
+                "h-7 rounded-md border px-2 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                sourceType === "faker"
+                  ? "border-primary bg-primary text-primary-foreground shadow-xs"
+                  : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              Faker Provider
+            </button>
+          </div>
         </div>
+
+        {sourceType === "pathParam" ? (
+          <div className="space-y-1.5">
+            <label
+              htmlFor="field-param-name"
+              className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
+            >
+              Select Route Parameter
+            </label>
+            {availableParams.length === 0 ? (
+              <div className="border-warning/20 bg-warning/10 text-warning text-mini rounded-md border p-2">
+                No parameters found in route path. Add a segment like{" "}
+                <span className="font-mono font-bold">/:id</span> to the route
+                path.
+              </div>
+            ) : (
+              <select
+                id="field-param-name"
+                value={selectedParamName}
+                onChange={(e) => setSelectedParamName(e.target.value)}
+                disabled={loading}
+                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-8 w-full rounded-md border px-3 py-1 font-mono text-xs focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {availableParams.map((p) => (
+                  <option key={p.name} value={p.name}>
+                    :{p.name} (from URL)
+                  </option>
+                ))}
+              </select>
+            )}
+            <p className="text-muted-foreground text-mini leading-snug">
+              Requests matching this route will return the dynamic URL value in
+              this field.
+            </p>
+          </div>
+        ) : (
+          /* Faker Provider */
+          <div className="space-y-1.5">
+            <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+              Mock Data Provider
+            </span>
+            <FakerProviderSelect
+              value={fakerProvider}
+              onValueChange={setFakerProvider}
+              disabled={loading || type === "object" || type === "array"}
+            />
+            {selectedProvider && (
+              <p className="text-muted-foreground text-mini font-mono leading-snug">
+                Example:{" "}
+                <span className="text-foreground">
+                  {selectedProvider.example}
+                </span>
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Nullable */}
         <div className="flex items-center justify-between pt-1">
@@ -315,6 +420,8 @@ const FieldEditor = ({
 
 interface RouteEditorProps {
   route: Route;
+  endpoints?: Endpoint[];
+  projectSlug?: string;
   onRouteUpdated: (updatedRoute: Route) => void;
   onRouteDeleted?: (routeId: string) => void;
   onSelectField: (fieldId: string) => void;
@@ -324,6 +431,8 @@ interface RouteEditorProps {
 
 const RouteEditor = ({
   route,
+  endpoints,
+  projectSlug,
   onRouteUpdated,
   onRouteDeleted,
   onSelectField,
@@ -342,6 +451,25 @@ const RouteEditor = ({
   );
   const [latency, setLatency] = React.useState<number>(route.latencyMin || 0);
 
+  const parentEndpoint = endpoints?.find((ep) => ep.id === route.endpointId);
+  const effectiveBasePath = parentEndpoint?.basePath ?? "";
+  const effectivePath = getEffectiveRoutePath(effectiveBasePath, path);
+  const detectedParams = React.useMemo(
+    () => extractRoutePathParameters(effectivePath),
+    [effectivePath],
+  );
+
+  const [testParamValues, setTestParamValues] = React.useState<
+    Record<string, string>
+  >({});
+  const [isTryingRequest, setIsTryingRequest] = React.useState(false);
+  const [tryResponse, setTryResponse] = React.useState<{
+    status: number;
+    statusText: string;
+    timeMs: number;
+    body: string;
+  } | null>(null);
+
   // Parse fields from schema
   const routeResponseSchema = route.responseSchema;
   const fields: SchemaField[] = React.useMemo(() => {
@@ -352,6 +480,78 @@ const RouteEditor = ({
       return [];
     }
   }, [routeResponseSchema]);
+
+  const handleAddParamField = async (paramName: string): Promise<void> => {
+    setLoading(true);
+    try {
+      const newField: SchemaField = {
+        id: `field-${Date.now()}`,
+        name: paramName,
+        type: "string",
+        nullable: false,
+        source: { type: "pathParam", name: paramName },
+      };
+      const updatedFields = [...fields, newField];
+      const updated = await updateRoute({
+        id: route.id,
+        responseSchema: JSON.stringify(synthesizeSchema(updatedFields)),
+      });
+      onRouteUpdated(updated);
+      toast.success(`Field "${paramName}" added and bound to URL parameter!`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add field");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const constructedTryUrl = React.useMemo(() => {
+    let resolvedSubpath = effectivePath;
+    for (const p of detectedParams) {
+      const entered = testParamValues[p.name]?.trim();
+      const val = entered || `example_${p.name}`;
+      resolvedSubpath = resolvedSubpath.replace(
+        new RegExp(`:${p.name}\\b`, "g"),
+        val,
+      );
+    }
+    const slug = projectSlug || "demo";
+    return `/api/mock/${slug}${resolvedSubpath.startsWith("/") ? resolvedSubpath : `/${resolvedSubpath}`}`;
+  }, [effectivePath, detectedParams, testParamValues, projectSlug]);
+
+  const handleSendTryRequest = async (): Promise<void> => {
+    setIsTryingRequest(true);
+    const start = Date.now();
+    try {
+      const res = await fetch(constructedTryUrl, {
+        method,
+      });
+      const timeMs = Date.now() - start;
+      const text = await res.text();
+      let formatted = text;
+      try {
+        const json = JSON.parse(text);
+        formatted = JSON.stringify(json, null, 2);
+      } catch {
+        // preserve raw text
+      }
+      setTryResponse({
+        status: res.status,
+        statusText: res.statusText || (res.status === 200 ? "OK" : "Status"),
+        timeMs,
+        body: formatted,
+      });
+    } catch (err) {
+      setTryResponse({
+        status: 0,
+        statusText: "Network Error",
+        timeMs: Date.now() - start,
+        body: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setIsTryingRequest(false);
+    }
+  };
 
   const handleClearAllFields = async (): Promise<void> => {
     setLoading(true);
@@ -539,6 +739,56 @@ const RouteEditor = ({
           </div>
         </div>
 
+        {/* Route Path Parameters */}
+        {detectedParams.length > 0 && (
+          <div className="border-border/50 space-y-2 border-t pt-3">
+            <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+              Route Parameters ({detectedParams.length})
+            </span>
+            <div className="space-y-1.5">
+              {detectedParams.map((p) => {
+                const isMapped = fields.some(
+                  (f) =>
+                    (f.source?.type === "pathParam" &&
+                      f.source.name === p.name) ||
+                    f.name.toLowerCase() === p.name.toLowerCase(),
+                );
+                return (
+                  <div
+                    key={p.name}
+                    className="bg-card border-border/60 flex items-center justify-between rounded-md border p-2"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-foreground font-mono text-xs font-semibold">
+                        :{p.name}
+                      </span>
+                      <span className="text-muted-foreground text-mini">
+                        (required)
+                      </span>
+                    </div>
+                    {!isMapped ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="xs"
+                        onClick={() => void handleAddParamField(p.name)}
+                        disabled={loading}
+                        className="text-mini h-6 font-mono"
+                      >
+                        + Add field
+                      </Button>
+                    ) : (
+                      <span className="text-success text-mini font-medium">
+                        Field mapped
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Attached Fields */}
         <div className="border-border/50 space-y-2 border-t pt-3">
           <div className="flex items-center justify-between">
@@ -580,8 +830,14 @@ const RouteEditor = ({
                     <span className="text-foreground group-hover:text-primary truncate font-mono text-xs font-semibold transition-colors">
                       {f.name}
                     </span>
-                    <span className="text-muted-foreground text-mini truncate font-mono">
-                      {f.fakerProvider || f.type}
+                    <span className="text-muted-foreground text-mini flex items-center gap-1 truncate font-mono">
+                      {f.source?.type === "pathParam" ? (
+                        <span className="bg-primary/10 text-primary border-primary/20 text-mini rounded-xs border px-1 py-0.5 font-mono font-medium">
+                          URL: :{f.source.name}
+                        </span>
+                      ) : (
+                        f.fakerProvider || f.type
+                      )}
                     </span>
                   </button>
                   <div className="flex shrink-0 items-center gap-1">
@@ -610,6 +866,98 @@ const RouteEditor = ({
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Try Request Interactive Preview */}
+        <div className="border-border/50 space-y-2.5 border-t pt-3">
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground text-mini font-bold tracking-wider uppercase">
+              Try Request
+            </span>
+            <span className="text-muted-foreground text-mini font-mono font-semibold">
+              {method}
+            </span>
+          </div>
+
+          {detectedParams.length > 0 && (
+            <div className="space-y-2">
+              <span className="text-muted-foreground text-mini block">
+                Parameter test values:
+              </span>
+              <div className="grid gap-2">
+                {detectedParams.map((p) => (
+                  <div key={p.name} className="flex items-center gap-2">
+                    <span className="text-muted-foreground w-16 truncate font-mono text-xs">
+                      :{p.name}
+                    </span>
+                    <Input
+                      value={testParamValues[p.name] ?? ""}
+                      onChange={(e) =>
+                        setTestParamValues((prev) => ({
+                          ...prev,
+                          [p.name]: e.target.value,
+                        }))
+                      }
+                      placeholder={p.name === "id" ? "295" : "value"}
+                      variant="mono"
+                      className="h-7 flex-1 text-xs"
+                      disabled={isTryingRequest}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="bg-muted/40 border-border/60 text-muted-foreground text-mini rounded-md border p-2 font-mono break-all">
+            {constructedTryUrl}
+          </div>
+
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={handleSendTryRequest}
+            disabled={isTryingRequest}
+            className="w-full text-xs"
+          >
+            {isTryingRequest ? (
+              <>
+                <PikaIcon
+                  icon={PikaCore.RefreshIcon}
+                  size={12}
+                  className="mr-1 animate-spin motion-reduce:animate-none"
+                  aria-hidden="true"
+                />
+                Sending...
+              </>
+            ) : (
+              "Send Test Request"
+            )}
+          </Button>
+
+          {tryResponse && (
+            <div className="border-border/70 bg-card space-y-1.5 rounded-md border p-2">
+              <div className="text-mini flex items-center justify-between">
+                <span
+                  className={cn(
+                    "font-mono font-bold",
+                    tryResponse.status >= 200 && tryResponse.status < 300
+                      ? "text-success"
+                      : "text-destructive",
+                  )}
+                >
+                  {tryResponse.status} {tryResponse.statusText}
+                </span>
+                <span className="text-muted-foreground font-mono">
+                  {tryResponse.timeMs}ms
+                </span>
+              </div>
+              <pre className="bg-muted/60 text-foreground text-caption max-h-36 overflow-auto rounded p-2 font-mono">
+                {tryResponse.body}
+              </pre>
             </div>
           )}
         </div>
@@ -775,6 +1123,8 @@ export const NodeInspector = ({
   route,
   inspectedFieldId,
   activeRoutesCount,
+  projectSlug,
+  endpoints,
   onRouteUpdated,
   onRouteDeleted,
   onOpenAdvanced,
@@ -807,6 +1157,7 @@ export const NodeInspector = ({
         field={inspectedField}
         allFields={fields}
         route={route}
+        endpoints={endpoints}
         onRouteUpdated={onRouteUpdated}
         onBack={() => setInspectedField(null)}
         onOpenAdvanced={onOpenAdvanced}
@@ -819,6 +1170,8 @@ export const NodeInspector = ({
       <RouteEditor
         key={route.id}
         route={route}
+        endpoints={endpoints}
+        projectSlug={projectSlug}
         onRouteUpdated={onRouteUpdated}
         onRouteDeleted={onRouteDeleted}
         onSelectField={(fieldId) => setInspectedField(fieldId)}

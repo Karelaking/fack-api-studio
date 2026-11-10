@@ -15,6 +15,7 @@ import {
   synthesizeSchema,
   type SchemaField,
 } from "@/lib/schema-synthesizer";
+import { extractRoutePathParameters } from "@/lib/services/route-param.service";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,18 @@ function FieldInspectorForm({
   );
   const [nullable, setNullable] = React.useState(field.nullable);
 
+  const availableParams = React.useMemo(
+    () => extractRoutePathParameters(route.path),
+    [route.path],
+  );
+
+  const [sourceType, setSourceType] = React.useState<"faker" | "pathParam">(
+    field.source?.type === "pathParam" ? "pathParam" : "faker",
+  );
+  const [selectedParamName, setSelectedParamName] = React.useState<string>(
+    field.source?.name || availableParams[0]?.name || "",
+  );
+
   const selectedProvider = fakerProvider
     ? getProviderByValue(fakerProvider)
     : undefined;
@@ -78,7 +91,12 @@ function FieldInspectorForm({
               ...f,
               name,
               type: type as SchemaField["type"],
-              fakerProvider: fakerProvider || undefined,
+              source:
+                sourceType === "pathParam" && selectedParamName
+                  ? { type: "pathParam" as const, name: selectedParamName }
+                  : undefined,
+              fakerProvider:
+                sourceType === "faker" ? fakerProvider || undefined : undefined,
               nullable,
             }
           : f,
@@ -184,25 +202,98 @@ function FieldInspectorForm({
           </fieldset>
         </div>
 
-        {/* Faker Provider */}
+        {/* Field Value Source */}
         <div className="space-y-1.5">
           <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
-            Mock Data Provider
+            Field Value Source
           </span>
-          <FakerProviderSelect
-            value={fakerProvider}
-            onValueChange={setFakerProvider}
-            disabled={loading || type === "object" || type === "array"}
-          />
-          {selectedProvider && (
-            <p className="text-muted-foreground text-mini font-mono leading-snug">
-              Example:{" "}
-              <span className="text-foreground">
-                {selectedProvider.example}
-              </span>
-            </p>
-          )}
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              aria-pressed={sourceType === "pathParam"}
+              onClick={() => setSourceType("pathParam")}
+              disabled={loading}
+              className={cn(
+                "h-7 rounded-md border px-2 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                sourceType === "pathParam"
+                  ? "border-primary bg-primary text-primary-foreground shadow-xs"
+                  : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              URL Parameter
+            </button>
+            <button
+              type="button"
+              aria-pressed={sourceType === "faker"}
+              onClick={() => setSourceType("faker")}
+              disabled={loading}
+              className={cn(
+                "h-7 rounded-md border px-2 font-mono text-caption font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                sourceType === "faker"
+                  ? "border-primary bg-primary text-primary-foreground shadow-xs"
+                  : "border-border/80 text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              Faker Provider
+            </button>
+          </div>
         </div>
+
+        {sourceType === "pathParam" ? (
+          <div className="space-y-1.5">
+            <label
+              htmlFor="field-inspector-param-name"
+              className="text-muted-foreground text-mini block font-bold tracking-wider uppercase"
+            >
+              Select Route Parameter
+            </label>
+            {availableParams.length === 0 ? (
+              <div className="border-warning/20 bg-warning/10 text-warning text-mini rounded-md border p-2">
+                No parameters found in route path. Add a segment like{" "}
+                <span className="font-mono font-bold">/:id</span> to the route
+                path.
+              </div>
+            ) : (
+              <select
+                id="field-inspector-param-name"
+                value={selectedParamName}
+                onChange={(e) => setSelectedParamName(e.target.value)}
+                disabled={loading}
+                className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-8 w-full rounded-md border px-3 py-1 font-mono text-xs focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {availableParams.map((p) => (
+                  <option key={p.name} value={p.name}>
+                    :{p.name} (from URL)
+                  </option>
+                ))}
+              </select>
+            )}
+            <p className="text-muted-foreground text-mini leading-snug">
+              Requests matching this route will return the dynamic URL value in
+              this field.
+            </p>
+          </div>
+        ) : (
+          /* Faker Provider */
+          <div className="space-y-1.5">
+            <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+              Mock Data Provider
+            </span>
+            <FakerProviderSelect
+              value={fakerProvider}
+              onValueChange={setFakerProvider}
+              disabled={loading || type === "object" || type === "array"}
+            />
+            {selectedProvider && (
+              <p className="text-muted-foreground text-mini font-mono leading-snug">
+                Example:{" "}
+                <span className="text-foreground">
+                  {selectedProvider.example}
+                </span>
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Nullable */}
         <div className="flex items-center justify-between">

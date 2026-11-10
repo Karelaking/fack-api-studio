@@ -2,13 +2,17 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/v4";
 import * as PikaCore from "@pikaicons/core-free";
 import { PikaIcon } from "@pikaicons/react";
 import { createRoute } from "@/lib/actions/routes";
 import { httpMethods } from "@/lib/validators";
+import {
+  getEffectiveRoutePath,
+  extractRoutePathParameters,
+} from "@/lib/services/route-param.service";
 import type { Endpoint, Route } from "@/db/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,6 +81,17 @@ export const AddRouteDialog = ({
     },
   });
 
+  const watchedPath = useWatch({ control, name: "path" }) ?? "";
+  const watchedEndpointId = useWatch({ control, name: "endpointId" }) ?? "";
+  const selectedEndpoint = endpoints.find((ep) => ep.id === watchedEndpointId);
+  const effectivePath = getEffectiveRoutePath(
+    selectedEndpoint?.basePath ?? "",
+    watchedPath,
+  );
+  const detectedParameters = React.useMemo(() => {
+    return extractRoutePathParameters(effectivePath);
+  }, [effectivePath]);
+
   React.useEffect(() => {
     if (open && endpoints.length > 0) {
       reset({
@@ -97,26 +112,48 @@ export const AddRouteDialog = ({
     try {
       let responseSchema = "{}";
       if (values.includeDefaults) {
+        const properties: Record<string, unknown> = {};
+        const required: string[] = [];
+
+        // When route has path parameters, default same-named response field(s) to URL value
+        if (detectedParameters.length > 0) {
+          for (const param of detectedParameters) {
+            properties[param.name] = {
+              type: "string",
+              "x-fack-source": {
+                type: "pathParam",
+                name: param.name,
+              },
+            };
+            required.push(param.name);
+          }
+        } else {
+          properties.id = {
+            type: "string",
+            faker: "string.uuid",
+            "x-faker": "string.uuid",
+          };
+          required.push("id");
+        }
+
+        properties.createdAt = {
+          type: "string",
+          faker: "date.past",
+          "x-faker": "date.past",
+        };
+        required.push("createdAt");
+
+        properties.updatedAt = {
+          type: "string",
+          faker: "date.recent",
+          "x-faker": "date.recent",
+        };
+        required.push("updatedAt");
+
         responseSchema = JSON.stringify({
           type: "object",
-          properties: {
-            id: {
-              type: "string",
-              faker: "string.uuid",
-              "x-faker": "string.uuid",
-            },
-            createdAt: {
-              type: "string",
-              faker: "date.past",
-              "x-faker": "date.past",
-            },
-            updatedAt: {
-              type: "string",
-              faker: "date.recent",
-              "x-faker": "date.recent",
-            },
-          },
-          required: ["id", "createdAt", "updatedAt"],
+          properties,
+          required,
         });
       }
 
@@ -132,7 +169,9 @@ export const AddRouteDialog = ({
       onRouteAdded(newRoute);
       onOpenChange(false);
     } catch (err) {
-      toast.error("Failed to create route");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to create route",
+      );
       console.error(err);
     }
   };
@@ -271,6 +310,21 @@ export const AddRouteDialog = ({
                     errors.path ? "route-path-error" : undefined
                   }
                 />
+                {detectedParameters.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-muted-foreground text-mini font-medium">
+                      Detected parameters:
+                    </span>
+                    {detectedParameters.map((p) => (
+                      <span
+                        key={p.name}
+                        className="bg-primary/10 text-primary border-primary/20 text-mini rounded-xs border px-1.5 py-0.5 font-mono font-semibold"
+                      >
+                        :{p.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 {errors.path && (
                   <span
                     id="route-path-error"

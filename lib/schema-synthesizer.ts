@@ -17,6 +17,15 @@
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
+export type FieldSourceType = "faker" | "pathParam";
+
+export interface PathParamSource {
+  type: "pathParam";
+  name: string;
+}
+
+export type FieldSource = PathParamSource;
+
 /**
  * Represents a single field in the visual schema builder.
  * This is the internal data structure used by the Zustand store.
@@ -32,6 +41,8 @@ export interface SchemaField {
   nullable: boolean;
   /** Faker.js provider method path (e.g., "person.firstName") */
   fakerProvider?: string;
+  /** Custom data source binding (e.g. URL path parameter) */
+  source?: FieldSource;
   /** Child fields (only for type "object") */
   children?: SchemaField[];
   /** Item schema (only for type "array") */
@@ -40,11 +51,13 @@ export interface SchemaField {
   arrayItemChildren?: SchemaField[];
   /** Faker.js provider for array items of primitive types */
   arrayItemFakerProvider?: string;
+  /** Custom data source for array items of primitive types */
+  arrayItemSource?: FieldSource;
 }
 
 // ─── JSON Schema Types ───────────────────────────────────────────────────────
 
-interface JsonSchemaProperty {
+export interface JsonSchemaProperty {
   type: string | string[];
   properties?: Record<string, JsonSchemaProperty>;
   required?: string[];
@@ -52,9 +65,10 @@ interface JsonSchemaProperty {
   "x-faker"?: string;
   faker?: string;
   format?: string;
+  "x-fack-source"?: FieldSource;
 }
 
-interface JsonSchema {
+export interface JsonSchema {
   type: "object";
   properties: Record<string, JsonSchemaProperty>;
   required: string[];
@@ -126,15 +140,21 @@ function synthesizeField(field: SchemaField): JsonSchemaProperty {
     type: field.nullable ? [field.type, "null"] : field.type,
   };
 
-  // Attach Faker.js provider annotation
-  if (field.fakerProvider) {
+  // URL parameter binding takes precedence over Faker
+  if (field.source?.type === "pathParam") {
+    property["x-fack-source"] = {
+      type: "pathParam",
+      name: field.source.name,
+    };
+  } else if (field.fakerProvider) {
+    // Attach Faker.js provider annotation
     property["x-faker"] = field.fakerProvider;
     property["faker"] = field.fakerProvider;
-  }
 
-  // Handle UUID format shorthand
-  if (field.fakerProvider === "string.uuid") {
-    property.format = "uuid";
+    // Handle UUID format shorthand
+    if (field.fakerProvider === "string.uuid") {
+      property.format = "uuid";
+    }
   }
 
   // Handle nested object properties
@@ -171,7 +191,12 @@ function synthesizeArrayItems(field: SchemaField): JsonSchemaProperty {
   }
 
   const items: JsonSchemaProperty = { type: itemType };
-  if (field.arrayItemFakerProvider) {
+  if (field.arrayItemSource?.type === "pathParam") {
+    items["x-fack-source"] = {
+      type: "pathParam",
+      name: field.arrayItemSource.name,
+    };
+  } else if (field.arrayItemFakerProvider) {
     items["x-faker"] = field.arrayItemFakerProvider;
     items["faker"] = field.arrayItemFakerProvider;
   }
@@ -198,12 +223,28 @@ export function parseSchemaToFields(schema: JsonSchema): SchemaField[] {
       ? (prop.type.find((t) => t !== "null") as SchemaField["type"])
       : (prop.type as SchemaField["type"]);
 
+    let source: FieldSource | undefined = undefined;
+    const sourceObj = prop["x-fack-source"] as
+      | { type?: string; name?: string }
+      | undefined;
+    if (
+      sourceObj &&
+      typeof sourceObj === "object" &&
+      sourceObj.type === "pathParam"
+    ) {
+      source = {
+        type: "pathParam",
+        name: typeof sourceObj.name === "string" ? sourceObj.name : name,
+      };
+    }
+
     const field: SchemaField = {
       id: `field-${index}-${Date.now()}`,
       name,
       type: baseType ?? "string",
       nullable: isNullable || !requiredSet.has(name),
-      fakerProvider: prop["faker"] || prop["x-faker"],
+      source,
+      fakerProvider: source ? undefined : prop["faker"] || prop["x-faker"],
     };
 
     // Parse nested object children
@@ -230,8 +271,28 @@ export function parseSchemaToFields(schema: JsonSchema): SchemaField[] {
           required: prop.items.required ?? [],
         });
       } else {
-        field.arrayItemFakerProvider =
-          prop.items["faker"] || prop.items["x-faker"];
+        let arrayItemSource: FieldSource | undefined = undefined;
+        const arrayItemSourceObj = prop.items["x-fack-source"] as
+          | { type?: string; name?: string }
+          | undefined;
+        if (
+          arrayItemSourceObj &&
+          typeof arrayItemSourceObj === "object" &&
+          arrayItemSourceObj.type === "pathParam"
+        ) {
+          arrayItemSource = {
+            type: "pathParam",
+            name:
+              typeof arrayItemSourceObj.name === "string"
+                ? arrayItemSourceObj.name
+                : name,
+          };
+        }
+
+        field.arrayItemSource = arrayItemSource;
+        field.arrayItemFakerProvider = arrayItemSource
+          ? undefined
+          : prop.items["faker"] || prop.items["x-faker"];
       }
     }
 

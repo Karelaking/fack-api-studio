@@ -25,6 +25,11 @@ import {
   type UpdateRouteInput,
 } from "@/lib/validators";
 import { LoggerRegistry } from "@/lib/logger-registry";
+import {
+  getEffectiveRoutePath,
+  validateRoutePath,
+  validateRouteSchemaBindings,
+} from "@/lib/services/route-param.service";
 
 const routesTrace = LoggerRegistry.getTrace("db-routes");
 
@@ -143,6 +148,42 @@ export async function createRoute(input: CreateRouteInput): Promise<Route> {
   await requireEndpointAccess(input.endpointId);
   try {
     const parsed = createRouteSchema.parse(input);
+
+    const parentEndpoint = await db.query.endpoints.findFirst({
+      where: eq(endpoints.id, parsed.endpointId),
+      columns: { projectId: true, basePath: true },
+    });
+
+    const effectivePath = getEffectiveRoutePath(
+      parentEndpoint?.basePath ?? "",
+      parsed.path,
+    );
+
+    const pathValidation = validateRoutePath(effectivePath);
+    if (!pathValidation.isValid) {
+      throw new Error(pathValidation.errors.join(" "));
+    }
+
+    if (parsed.responseSchema) {
+      try {
+        const schemaObj: unknown = JSON.parse(parsed.responseSchema);
+        const declaredParamNames = pathValidation.parameters.map((p) => p.name);
+        const bindingValidation = validateRouteSchemaBindings(
+          schemaObj,
+          declaredParamNames,
+        );
+        if (!bindingValidation.isValid) {
+          throw new Error(bindingValidation.errors.join(" "));
+        }
+      } catch (parseError) {
+        if (parseError instanceof SyntaxError) {
+          // Schema is not JSON yet, ignore syntax errors for empty strings
+        } else {
+          throw parseError;
+        }
+      }
+    }
+
     const id = generateId();
 
     const [route] = await db
@@ -157,10 +198,6 @@ export async function createRoute(input: CreateRouteInput): Promise<Route> {
       })
       .returning();
 
-    const parentEndpoint = await db.query.endpoints.findFirst({
-      where: eq(endpoints.id, route.endpointId),
-      columns: { projectId: true },
-    });
     if (parentEndpoint) {
       clearProjectCache(parentEndpoint.projectId);
       markProjectDirty(parentEndpoint.projectId);
@@ -185,19 +222,64 @@ export async function updateRoute(input: UpdateRouteInput): Promise<Route> {
     const parsed = updateRouteSchema.parse(input);
     const { id, ...updates } = parsed;
 
+    const existingRoute = await db.query.routes.findFirst({
+      where: eq(routes.id, id),
+      with: {
+        endpoint: {
+          columns: { projectId: true, basePath: true },
+        },
+      },
+    });
+
+    if (!existingRoute) {
+      throw new Error(`Route "${id}" not found.`);
+    }
+
+    const effectiveBasePath = existingRoute.endpoint?.basePath ?? "";
+    const targetPath =
+      updates.path !== undefined ? updates.path : existingRoute.path;
+    const effectivePath = getEffectiveRoutePath(effectiveBasePath, targetPath);
+
+    const pathValidation = validateRoutePath(effectivePath);
+    if (!pathValidation.isValid) {
+      throw new Error(pathValidation.errors.join(" "));
+    }
+
+    const targetSchema =
+      updates.responseSchema !== undefined
+        ? updates.responseSchema
+        : existingRoute.responseSchema;
+
+    if (targetSchema) {
+      try {
+        const schemaObj: unknown = JSON.parse(targetSchema);
+        const declaredParamNames = pathValidation.parameters.map((p) => p.name);
+        const bindingValidation = validateRouteSchemaBindings(
+          schemaObj,
+          declaredParamNames,
+        );
+        if (!bindingValidation.isValid) {
+          throw new Error(bindingValidation.errors.join(" "));
+        }
+      } catch (parseError) {
+        if (parseError instanceof SyntaxError) {
+          // Ignore raw JSON syntax errors
+        } else {
+          throw parseError;
+        }
+      }
+    }
+
     const [route] = await db
       .update(routes)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(routes.id, id))
       .returning();
 
-    const parentEndpoint = await db.query.endpoints.findFirst({
-      where: eq(endpoints.id, route.endpointId),
-      columns: { projectId: true },
-    });
-    if (parentEndpoint) {
-      clearProjectCache(parentEndpoint.projectId);
-      markProjectDirty(parentEndpoint.projectId);
+    const projectId = existingRoute.endpoint?.projectId;
+    if (projectId) {
+      clearProjectCache(projectId);
+      markProjectDirty(projectId);
     }
     clearRouteCache(route.id);
     revalidatePath("/");
