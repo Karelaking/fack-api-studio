@@ -7,9 +7,7 @@ import { toast } from "sonner";
 import {
   RiSettings2Line,
   RiFileCodeLine,
-  RiGitBranchLine,
   RiPulseLine,
-  RiFileHistoryLine,
   RiPlayLine,
   RiArrowDownSLine,
   RiCodeLine,
@@ -596,6 +594,14 @@ interface RouteEditorProps {
   onDeselect: () => void;
 }
 
+const normalizeTab = (t: string): InspectorTab => {
+  if (t === "config" || t === "headers") return "route";
+  if (t === "rules" || t === "chaos") return "behavior";
+  if (t === "schema") return "schema";
+  if (t === "try") return "try";
+  return (t as InspectorTab) || "route";
+};
+
 const RouteEditor = ({
   route,
   endpoints,
@@ -616,20 +622,21 @@ const RouteEditor = ({
   const storeSetInspectorTab = useCanvasDndStore((s) => s.setInspectorTab);
 
   const [activeTab, setActiveTab] = React.useState<InspectorTab>(
-    storeInspectorTab || "config",
+    normalizeTab(storeInspectorTab || "route"),
   );
   const [prevStoreTab, setPrevStoreTab] = React.useState(storeInspectorTab);
 
   if (storeInspectorTab !== prevStoreTab) {
     setPrevStoreTab(storeInspectorTab);
-    setActiveTab(storeInspectorTab || "config");
+    setActiveTab(normalizeTab(storeInspectorTab || "route"));
   }
 
   const handleTabChange = React.useCallback(
     (tab: InspectorTab) => {
-      setActiveTab(tab);
+      const normalized = normalizeTab(tab);
+      setActiveTab(normalized);
       if (typeof storeSetInspectorTab === "function") {
-        storeSetInspectorTab(tab);
+        storeSetInspectorTab(normalized);
       }
     },
     [storeSetInspectorTab],
@@ -1315,65 +1322,21 @@ const RouteEditor = ({
         </div>
       </div>
 
-      {/* Categorized Tabs: Config, Schema, Rules, Chaos, Headers, Try */}
+      {/* Categorized Tabs: Route, Schema, Behavior, Try */}
       <Tabs
         value={activeTab}
         onValueChange={(val) => handleTabChange(val as InspectorTab)}
         className="flex min-h-0 min-w-0 flex-1 flex-col"
       >
-        <TabsList className="bg-muted/30 border-border/60 grid shrink-0 grid-cols-6 border-b p-1">
+        <TabsList className="bg-muted/30 border-border/60 grid shrink-0 grid-cols-4 border-b p-1">
           <TabsTrigger
-            value="config"
+            value="route"
             size="compact"
-            className="text-micro gap-1 px-1 py-1"
+            className="text-caption gap-1 px-1.5 py-1 font-medium transition-all"
+            title="Route, Status & Headers (⌥1)"
           >
-            <RiSettings2Line className="size-3.5" aria-hidden="true" />
-            <span>Config</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="schema"
-            size="compact"
-            className="text-micro gap-1 px-1 py-1"
-          >
-            <RiFileCodeLine className="size-3.5" aria-hidden="true" />
-            <span>Schema</span>
-            <span className="bg-muted-foreground/15 text-muted-foreground text-micro rounded px-1 font-mono">
-              {fields.length}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="rules"
-            size="compact"
-            className="text-micro gap-1 px-1 py-1"
-          >
-            <RiGitBranchLine className="size-3.5" aria-hidden="true" />
-            <span>Rules</span>
-            {rules.length > 0 && (
-              <span className="bg-primary/15 text-primary text-micro rounded px-1 font-mono font-bold">
-                {rules.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger
-            value="chaos"
-            size="compact"
-            className="text-micro gap-1 px-1 py-1"
-          >
-            <RiPulseLine className="size-3.5" aria-hidden="true" />
-            <span>Chaos</span>
-            {(latencyMin > 0 || latencyMax > 0 || errorRate > 0) && (
-              <span className="bg-warning/15 text-warning text-micro rounded px-1 font-mono font-bold">
-                ON
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger
-            value="headers"
-            size="compact"
-            className="text-micro gap-1 px-1 py-1"
-          >
-            <RiFileHistoryLine className="size-3.5" aria-hidden="true" />
-            <span>Headers</span>
+            <RiSettings2Line className="size-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">Route</span>
             {headers.length > 0 && (
               <span className="bg-info/15 text-info text-micro rounded px-1 font-mono font-bold">
                 {headers.length}
@@ -1381,18 +1344,49 @@ const RouteEditor = ({
             )}
           </TabsTrigger>
           <TabsTrigger
+            value="schema"
+            size="compact"
+            className="text-caption gap-1 px-1.5 py-1 font-medium transition-all"
+            title="Response Schema & Types (⌥2)"
+          >
+            <RiFileCodeLine className="size-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">Schema</span>
+            <span className="bg-muted-foreground/15 text-muted-foreground text-micro rounded px-1 font-mono">
+              {fields.length}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="behavior"
+            size="compact"
+            className="text-caption gap-1 px-1.5 py-1 font-medium transition-all"
+            title="Chaos Simulation & Rules (⌥3)"
+          >
+            <RiPulseLine className="size-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">Behavior</span>
+            {latencyMin > 0 || latencyMax > 0 || errorRate > 0 ? (
+              <span className="bg-warning/15 text-warning text-micro rounded px-1 font-mono font-bold">
+                ON
+              </span>
+            ) : rules.length > 0 ? (
+              <span className="bg-primary/15 text-primary text-micro rounded px-1 font-mono font-bold">
+                {rules.length}
+              </span>
+            ) : null}
+          </TabsTrigger>
+          <TabsTrigger
             value="try"
             size="compact"
-            className="text-micro gap-1 px-1 py-1"
+            className="text-caption gap-1 px-1.5 py-1 font-medium transition-all"
+            title="Try Live Request (⌥4)"
           >
-            <RiPlayLine className="size-3.5" aria-hidden="true" />
-            <span>Try</span>
+            <RiPlayLine className="size-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">Try</span>
           </TabsTrigger>
         </TabsList>
 
-        {/* Tab 1: Config (Status Code, Latency, Route URL Parameters) */}
+        {/* Tab 1: Route (Status Code, Route URL Parameters, Headers, Runtime Behavior Summary) */}
         <TabsContent
-          value="config"
+          value="route"
           className="scrollbar-subtle m-0 min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4"
         >
           {/* Status Code with Presets */}
@@ -1433,47 +1427,23 @@ const RouteEditor = ({
                 );
               })}
             </div>
-            <div className="grid grid-cols-2 gap-2 pt-0.5">
-              <div className="space-y-1">
-                <label
-                  htmlFor="route-custom-status"
-                  className="text-muted-foreground text-micro font-mono uppercase"
-                >
-                  Custom Code
-                </label>
-                <Input
-                  id="route-custom-status"
-                  type="number"
-                  value={statusCode}
-                  onChange={(e) => setStatusCode(Number(e.target.value) || 200)}
-                  variant="mono"
-                  className="h-8 font-mono text-xs"
-                  disabled={loading}
-                  placeholder="200"
-                />
-              </div>
-              <div className="space-y-1">
-                <label
-                  htmlFor="route-latency-quick"
-                  className="text-muted-foreground text-micro font-mono uppercase"
-                >
-                  Delay (ms)
-                </label>
-                <Input
-                  id="route-latency-quick"
-                  type="number"
-                  value={latencyMin}
-                  onChange={(e) => {
-                    const val = Number(e.target.value) || 0;
-                    setLatencyMin(val);
-                    if (latencyMax < val) setLatencyMax(val);
-                  }}
-                  variant="mono"
-                  className="h-8 font-mono text-xs"
-                  disabled={loading}
-                  placeholder="0"
-                />
-              </div>
+            <div className="space-y-1 pt-0.5">
+              <label
+                htmlFor="route-custom-status"
+                className="text-muted-foreground text-micro font-mono uppercase"
+              >
+                Custom Status Code
+              </label>
+              <Input
+                id="route-custom-status"
+                type="number"
+                value={statusCode}
+                onChange={(e) => setStatusCode(Number(e.target.value) || 200)}
+                variant="mono"
+                className="h-8 font-mono text-xs"
+                disabled={loading}
+                placeholder="200"
+              />
             </div>
           </div>
 
@@ -1541,6 +1511,43 @@ const RouteEditor = ({
               </div>
             </div>
           )}
+
+          {/* Custom Response Headers */}
+          <div className="border-border/50 space-y-2 border-t pt-3">
+            <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+              Response Headers {headers.length > 0 && `(${headers.length})`}
+            </span>
+            <HeadersEditor headers={headers} onHeadersChange={setHeaders} />
+          </div>
+
+          {/* Runtime Behavior Quick Summary */}
+          <div className="border-border/60 bg-muted/20 flex items-center justify-between gap-2 rounded-md border border-t p-2.5 pt-3">
+            <div className="space-y-0.5">
+              <span className="text-micro text-muted-foreground block font-bold tracking-wider uppercase">
+                Runtime Behavior
+              </span>
+              <span className="text-caption text-foreground font-mono">
+                {latencyMin > 0 || latencyMax > 0
+                  ? `Latency: ${latencyMin}${latencyMax > latencyMin ? `-${latencyMax}` : ""}ms`
+                  : "Zero latency"}
+                {" · "}
+                {errorRate > 0 ? `Chaos: ${errorRate}% err` : "100% reliable"}
+                {" · "}
+                {rules.length > 0
+                  ? `${rules.length} rule${rules.length > 1 ? "s" : ""}`
+                  : "No rules"}
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="xs"
+              onClick={() => handleTabChange("behavior")}
+              className="text-mini h-6 font-mono"
+            >
+              Configure →
+            </Button>
+          </div>
         </TabsContent>
 
         {/* Tab 2: Schema (FieldTree + TS Generator + JSON Schema Copy) */}
@@ -1639,35 +1646,33 @@ const RouteEditor = ({
           </div>
         </TabsContent>
 
-        {/* Tab 3: Rules (RulesEditor) */}
+        {/* Tab 3: Behavior (Chaos Simulation + Smart Conditional Rules) */}
         <TabsContent
-          value="rules"
-          className="scrollbar-subtle m-0 min-h-0 flex-1 overflow-y-auto px-4 py-3"
+          value="behavior"
+          className="scrollbar-subtle m-0 min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3"
         >
-          <RulesEditor rules={rules} onRulesChange={setRules} />
-        </TabsContent>
+          {/* Section 1: Chaos Simulation */}
+          <div className="space-y-2">
+            <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+              Chaos Simulation & Latency
+            </span>
+            <ChaosConfig
+              latencyMin={latencyMin}
+              latencyMax={latencyMax}
+              errorRate={errorRate}
+              onLatencyMinChange={setLatencyMin}
+              onLatencyMaxChange={setLatencyMax}
+              onErrorRateChange={setErrorRate}
+            />
+          </div>
 
-        {/* Tab 4: Chaos (ChaosConfig) */}
-        <TabsContent
-          value="chaos"
-          className="scrollbar-subtle m-0 min-h-0 flex-1 overflow-y-auto px-4 py-3"
-        >
-          <ChaosConfig
-            latencyMin={latencyMin}
-            latencyMax={latencyMax}
-            errorRate={errorRate}
-            onLatencyMinChange={setLatencyMin}
-            onLatencyMaxChange={setLatencyMax}
-            onErrorRateChange={setErrorRate}
-          />
-        </TabsContent>
-
-        {/* Tab 5: Headers (HeadersEditor) */}
-        <TabsContent
-          value="headers"
-          className="scrollbar-subtle m-0 min-h-0 flex-1 overflow-y-auto px-4 py-3"
-        >
-          <HeadersEditor headers={headers} onHeadersChange={setHeaders} />
+          {/* Section 2: Smart Conditional Rules */}
+          <div className="border-border/50 space-y-2 border-t pt-3">
+            <span className="text-muted-foreground text-mini block font-bold tracking-wider uppercase">
+              Smart Conditional Rules
+            </span>
+            <RulesEditor rules={rules} onRulesChange={setRules} />
+          </div>
         </TabsContent>
 
         {/* Tab 6: Try (Interactive Request Runner) */}

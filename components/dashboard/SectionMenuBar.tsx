@@ -180,20 +180,14 @@ export const SectionMenuBar = ({
       if (isCanvasActive && selectedRouteId && e.altKey) {
         if (e.key === "1") {
           e.preventDefault();
-          switchInspectorTab("config");
+          switchInspectorTab("route");
         } else if (e.key === "2") {
           e.preventDefault();
           switchInspectorTab("schema");
         } else if (e.key === "3") {
           e.preventDefault();
-          switchInspectorTab("rules");
+          switchInspectorTab("behavior");
         } else if (e.key === "4") {
-          e.preventDefault();
-          switchInspectorTab("chaos");
-        } else if (e.key === "5") {
-          e.preventDefault();
-          switchInspectorTab("headers");
-        } else if (e.key === "6") {
           e.preventDefault();
           switchInspectorTab("try");
         }
@@ -370,11 +364,11 @@ export const SectionMenuBar = ({
                     Route Inspector
                   </div>
                   <DropdownMenuItem
-                    onClick={() => switchInspectorTab("config")}
+                    onClick={() => switchInspectorTab("route")}
                     className="cursor-pointer text-xs"
                   >
                     <RiSettings2Line className="h-3.5 w-3.5 shrink-0" />
-                    <span>Config & Status</span>
+                    <span>Route & Headers</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => switchInspectorTab("schema")}
@@ -384,25 +378,11 @@ export const SectionMenuBar = ({
                     <span>Schema & Fields</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => switchInspectorTab("rules")}
-                    className="cursor-pointer text-xs"
-                  >
-                    <RiGitBranchLine className="h-3.5 w-3.5 shrink-0" />
-                    <span>Smart Rules</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => switchInspectorTab("chaos")}
+                    onClick={() => switchInspectorTab("behavior")}
                     className="cursor-pointer text-xs"
                   >
                     <RiPulseLine className="h-3.5 w-3.5 shrink-0" />
-                    <span>Chaos Simulation</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => switchInspectorTab("headers")}
-                    className="cursor-pointer text-xs"
-                  >
-                    <RiFileHistoryLine className="h-3.5 w-3.5 shrink-0" />
-                    <span>Custom Headers</span>
+                    <span>Behavior & Chaos</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => switchInspectorTab("try")}
@@ -635,14 +615,14 @@ export const SectionMenuBar = ({
                       Inspector Categories
                     </div>
                     <MenubarItem
-                      onClick={() => switchInspectorTab("config")}
+                      onClick={() => switchInspectorTab("route")}
                       className="cursor-pointer text-xs"
                     >
                       <RiSettings2Line
                         className="h-3.5 w-3.5 shrink-0"
                         aria-hidden="true"
                       />
-                      <span>Config & Status</span>
+                      <span>Route & Headers</span>
                       <MenubarShortcut>⌥1</MenubarShortcut>
                     </MenubarItem>
                     <MenubarItem
@@ -657,37 +637,15 @@ export const SectionMenuBar = ({
                       <MenubarShortcut>⌥2</MenubarShortcut>
                     </MenubarItem>
                     <MenubarItem
-                      onClick={() => switchInspectorTab("rules")}
-                      className="cursor-pointer text-xs"
-                    >
-                      <RiGitBranchLine
-                        className="h-3.5 w-3.5 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span>Smart Rules</span>
-                      <MenubarShortcut>⌥3</MenubarShortcut>
-                    </MenubarItem>
-                    <MenubarItem
-                      onClick={() => switchInspectorTab("chaos")}
+                      onClick={() => switchInspectorTab("behavior")}
                       className="cursor-pointer text-xs"
                     >
                       <RiPulseLine
                         className="h-3.5 w-3.5 shrink-0"
                         aria-hidden="true"
                       />
-                      <span>Chaos Simulation</span>
-                      <MenubarShortcut>⌥4</MenubarShortcut>
-                    </MenubarItem>
-                    <MenubarItem
-                      onClick={() => switchInspectorTab("headers")}
-                      className="cursor-pointer text-xs"
-                    >
-                      <RiFileHistoryLine
-                        className="h-3.5 w-3.5 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span>Custom Headers</span>
-                      <MenubarShortcut>⌥5</MenubarShortcut>
+                      <span>Behavior & Chaos</span>
+                      <MenubarShortcut>⌥3</MenubarShortcut>
                     </MenubarItem>
                     <MenubarItem
                       onClick={() => switchInspectorTab("try")}
@@ -698,7 +656,7 @@ export const SectionMenuBar = ({
                         aria-hidden="true"
                       />
                       <span>Try Live Request</span>
-                      <MenubarShortcut>⌥6</MenubarShortcut>
+                      <MenubarShortcut>⌥4</MenubarShortcut>
                     </MenubarItem>
                   </MenubarGroup>
 

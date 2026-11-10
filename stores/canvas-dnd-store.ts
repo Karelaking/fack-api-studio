@@ -4,12 +4,22 @@ import { immer } from "zustand/middleware/immer";
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type InspectorTab =
-  | "config"
+  | "route"
   | "schema"
+  | "behavior"
+  | "try"
+  | "config"
   | "rules"
   | "chaos"
-  | "headers"
-  | "try";
+  | "headers";
+
+const normalizeInspectorTab = (tab: InspectorTab): InspectorTab => {
+  if (tab === "config" || tab === "headers") return "route";
+  if (tab === "rules" || tab === "chaos") return "behavior";
+  if (tab === "schema") return "schema";
+  if (tab === "try") return "try";
+  return tab;
+};
 
 export interface CanvasDndState {
   /** The route currently selected on the canvas (target for provider drops). */
@@ -42,7 +52,7 @@ export const createCanvasDndStore = () => {
     immer((set) => ({
       selectedRouteId: null,
       inspectedFieldId: null,
-      inspectorTab: "config",
+      inspectorTab: "route",
 
       setSelectedRoute: (id) =>
         set((state) => {
@@ -58,7 +68,7 @@ export const createCanvasDndStore = () => {
 
       setInspectorTab: (tab) =>
         set((state) => {
-          state.inspectorTab = tab;
+          state.inspectorTab = normalizeInspectorTab(tab);
         }),
     })),
   );
