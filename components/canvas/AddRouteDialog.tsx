@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/v4";
-import * as PikaCore from "@pikaicons/core-free";
+import { RefreshIcon } from "@pikaicons/core-free";
 import { PikaIcon } from "@pikaicons/react";
 import { createRoute } from "@/lib/actions/routes";
 import { httpMethods } from "@/lib/validators";
@@ -241,11 +241,7 @@ export const AddRouteDialog = ({
                         }
                         className="w-full"
                       >
-                        <span className="truncate" data-slot="select-value">
-                          {endpoints.find((ep) => ep.id === field.value)
-                            ? `${endpoints.find((ep) => ep.id === field.value)?.name} (${endpoints.find((ep) => ep.id === field.value)?.basePath || "/"})`
-                            : "Select a group..."}
-                        </span>
+                        <SelectValue placeholder="Select a group..." />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -429,7 +425,7 @@ export const AddRouteDialog = ({
               {isSubmitting ? (
                 <>
                   <PikaIcon
-                    icon={PikaCore.RefreshIcon}
+                    icon={RefreshIcon}
                     className="h-4 w-4 animate-spin motion-reduce:animate-none"
                     aria-hidden="true"
                   />

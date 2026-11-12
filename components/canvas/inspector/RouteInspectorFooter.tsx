@@ -1,7 +1,11 @@
 "use client";
 
 import * as React from "react";
-import * as PikaCore from "@pikaicons/core-free";
+import {
+  DeleteDustbin01Icon,
+  FloppyIcon,
+  RefreshIcon,
+} from "@pikaicons/core-free";
 import { PikaIcon } from "@pikaicons/react";
 import { Button } from "@/components/ui/button";
 
@@ -39,7 +43,7 @@ export const RouteInspectorFooter = ({
           >
             {isDeleting ? (
               <PikaIcon
-                icon={PikaCore.RefreshIcon}
+                icon={RefreshIcon}
                 size={12}
                 className="mr-1 animate-spin motion-reduce:animate-none"
                 aria-hidden="true"
@@ -68,11 +72,7 @@ export const RouteInspectorFooter = ({
           className="text-destructive hover:bg-destructive/10 hover:text-destructive text-xs"
           aria-label="Delete this route"
         >
-          <PikaIcon
-            icon={PikaCore.DeleteDustbin01Icon}
-            size={14}
-            aria-hidden="true"
-          />
+          <PikaIcon icon={DeleteDustbin01Icon} size={14} aria-hidden="true" />
           <span>Delete Route</span>
         </Button>
       )}
@@ -90,13 +90,13 @@ export const RouteInspectorFooter = ({
         >
           {loading ? (
             <PikaIcon
-              icon={PikaCore.RefreshIcon}
+              icon={RefreshIcon}
               size={14}
               className="animate-spin motion-reduce:animate-none"
               aria-hidden="true"
             />
           ) : (
-            <PikaIcon icon={PikaCore.FloppyIcon} size={14} aria-hidden="true" />
+            <PikaIcon icon={FloppyIcon} size={14} aria-hidden="true" />
           )}
           <span>Save Route</span>
         </Button>

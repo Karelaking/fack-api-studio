@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { saveCanvasState } from "@/lib/actions/canvas";
 import { updateRoute } from "@/lib/actions/routes";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import { getProjectUrl } from "@/lib/utils/project-slug";
@@ -36,12 +37,16 @@ import { LoggerRegistry } from "@/lib/logger-registry";
 
 const canvasUiTrace = LoggerRegistry.getTrace("ui-flow-canvas");
 import { EndpointGroupNode } from "./EndpointGroupNode";
-import { AddRouteDialog } from "./AddRouteDialog";
 import type { Endpoint, Route } from "@/db/schema";
-import * as PikaCore from "@pikaicons/core-free";
+import { GitBranchIcon } from "@pikaicons/core-free";
 import { PikaIcon } from "@pikaicons/react";
 import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
+
+const LazyAddRouteDialog = dynamic(
+  () => import("./AddRouteDialog").then((mod) => mod.AddRouteDialog),
+  { ssr: false },
+);
 
 // Custom Node Types registered on React Flow canvas
 const nodeTypes = {
@@ -147,13 +152,20 @@ function reconcileNodes(
   const endpointById = new Map(endpoints.map((ep) => [ep.id, ep]));
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
+  const draftRouteCountByGroup = new Map<string, number>();
+  for (const draftRoute of draftPlan.routes) {
+    draftRouteCountByGroup.set(
+      draftRoute.parentId,
+      (draftRouteCountByGroup.get(draftRoute.parentId) ?? 0) + 1,
+    );
+  }
+  const routeSiblingCountByGroup = new Map<string, number>();
+
   // 1. Group nodes (endpoints)
   endpoints.forEach((ep, epIdx) => {
     const groupId = `group-${ep.id}`;
     const saved = savedById.get(groupId);
-    const draftRoutesInGroup = draftPlan.routes.filter(
-      (draftRoute) => draftRoute.parentId === groupId,
-    ).length;
+    const draftRoutesInGroup = draftRouteCountByGroup.get(groupId) ?? 0;
     const size = {
       width: GROUP_WIDTH,
       height: groupHeightFor(ep.routes.length + draftRoutesInGroup),
@@ -189,9 +201,8 @@ function reconcileNodes(
 
     const groupId = `group-${route.endpointId}`;
     const saved = savedById.get(route.id);
-    const siblingCount = reconciled.filter(
-      (node) => node.parentId === groupId && node.type === "routeNode",
-    ).length;
+    const siblingCount = routeSiblingCountByGroup.get(groupId) ?? 0;
+    routeSiblingCountByGroup.set(groupId, siblingCount + 1);
 
     const routeNodeData = {
       id: route.id,
@@ -232,9 +243,7 @@ function reconcileNodes(
 
   // 3. Draft endpoint groups that only exist in the pending change set.
   draftPlan.groups.forEach((group) => {
-    const draftRoutesInGroup = draftPlan.routes.filter(
-      (draftRoute) => draftRoute.parentId === group.id,
-    ).length;
+    const draftRoutesInGroup = draftRouteCountByGroup.get(group.id) ?? 0;
 
     reconciled.push({
       id: group.id,
@@ -260,10 +269,8 @@ function reconcileNodes(
 
   // 4. Draft routes, placed after any real siblings already in the group.
   draftPlan.routes.forEach((draftRoute) => {
-    const siblingCount = reconciled.filter(
-      (node) =>
-        node.parentId === draftRoute.parentId && node.type === "routeNode",
-    ).length;
+    const siblingCount = routeSiblingCountByGroup.get(draftRoute.parentId) ?? 0;
+    routeSiblingCountByGroup.set(draftRoute.parentId, siblingCount + 1);
 
     reconciled.push({
       id: draftRoute.id,
@@ -326,6 +333,7 @@ export function FlowCanvasViewport({
     parseAsBoolean.withDefault(false),
   );
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [hasOpenedAddRoute, setHasOpenedAddRoute] = React.useState(false);
 
   // Unapplied agent drafts are derived from the session so the canvas can show
   // what the agent proposes without writing anything to the database.
@@ -339,7 +347,15 @@ export function FlowCanvasViewport({
 
   const isAddRouteOpen = dialogOpen || newRouteQuery;
 
+  const openAddRoute = React.useCallback(() => {
+    setHasOpenedAddRoute(true);
+    setDialogOpen(true);
+  }, []);
+
   const handleOpenChange = (open: boolean) => {
+    if (open) {
+      setHasOpenedAddRoute(true);
+    }
     setDialogOpen(open);
     if (!open && newRouteQuery) {
       void setNewRouteQuery(null);
@@ -348,12 +364,11 @@ export function FlowCanvasViewport({
 
   // Listen for global open-add-route event
   React.useEffect(() => {
-    const handleOpen = () => setDialogOpen(true);
-    window.addEventListener("open-add-route-dialog", handleOpen);
+    window.addEventListener("open-add-route-dialog", openAddRoute);
 
     return () =>
-      window.removeEventListener("open-add-route-dialog", handleOpen);
-  }, []);
+      window.removeEventListener("open-add-route-dialog", openAddRoute);
+  }, [openAddRoute]);
 
   const handleToggleEnabled = React.useCallback(
     async (id: string, isEnabled: boolean) => {
@@ -715,11 +730,7 @@ export function FlowCanvasViewport({
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-6">
           <div className="bg-card/95 border-border pointer-events-auto flex max-w-sm flex-col items-center gap-4 rounded-xl border px-6 py-8 text-center shadow-lg backdrop-blur-sm">
             <span className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-full">
-              <PikaIcon
-                icon={PikaCore.GitBranchIcon}
-                size={20}
-                aria-hidden="true"
-              />
+              <PikaIcon icon={GitBranchIcon} size={20} aria-hidden="true" />
             </span>
             <div className="space-y-1.5">
               <h2 className="text-foreground text-base font-semibold">
@@ -734,31 +745,28 @@ export function FlowCanvasViewport({
               </p>
             </div>
             {hasEndpoints ? (
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => setDialogOpen(true)}
-              >
+              <Button type="button" size="sm" onClick={openAddRoute}>
                 Add your first route
               </Button>
             ) : (
-              <Button
-                size="sm"
-                render={<Link href={getProjectUrl(projectSlug, "endpoints")} />}
-              >
-                Create an endpoint group
+              <Button size="sm" asChild>
+                <Link href={getProjectUrl(projectSlug, "endpoints")}>
+                  Create an endpoint group
+                </Link>
               </Button>
             )}
           </div>
         </div>
       )}
 
-      <AddRouteDialog
-        open={isAddRouteOpen}
-        onOpenChange={handleOpenChange}
-        endpoints={endpoints}
-        onRouteAdded={handleRouteAdded}
-      />
+      {(hasOpenedAddRoute || isAddRouteOpen) && (
+        <LazyAddRouteDialog
+          open={isAddRouteOpen}
+          onOpenChange={handleOpenChange}
+          endpoints={endpoints}
+          onRouteAdded={handleRouteAdded}
+        />
+      )}
     </div>
   );
 }

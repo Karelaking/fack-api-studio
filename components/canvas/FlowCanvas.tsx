@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { ReactFlowProvider } from "@xyflow/react";
-import * as PikaCore from "@pikaicons/core-free";
+import { RefreshIcon } from "@pikaicons/core-free";
 import { PikaIcon } from "@pikaicons/react";
 import {
   FlowCanvasViewport,
@@ -26,7 +26,7 @@ export const FlowCanvas = (props: FlowCanvasProps): React.JSX.Element => {
     return (
       <output className="bg-card text-muted-foreground relative flex h-full w-full flex-col items-center justify-center gap-2">
         <PikaIcon
-          icon={PikaCore.RefreshIcon}
+          icon={RefreshIcon}
           size={32}
           className="h-8 w-8 animate-spin motion-reduce:animate-none"
           aria-hidden="true"

@@ -36,12 +36,16 @@ export async function generateMetadata({
   const { projectSlug } = parseProjectPath(slugParam);
 
   if (!projectSlug) {
-    return { title: "Project — Fack API's" };
+    return {
+      title: "Project — Fack API's",
+      robots: { index: false, follow: false },
+    };
   }
 
   const project = await getProjectBySlug(projectSlug);
   return {
     title: project ? `${project.name} — Fack API's` : "Project — Fack API's",
+    robots: { index: false, follow: false },
   };
 }
 

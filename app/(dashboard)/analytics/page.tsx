@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import { RiBarChartBoxLine } from "@remixicon/react";
+import { PikaIcon } from "@pikaicons/react";
+import { GraphBarLineIcon } from "@pikaicons/core-free";
 
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { PageHeading, PageShell } from "@/components/dashboard/PageShell";
@@ -27,16 +28,12 @@ export default function AnalyticsPage(): React.JSX.Element {
       />
 
       <EmptyState
-        icon={<RiBarChartBoxLine />}
+        icon={<PikaIcon icon={GraphBarLineIcon} />}
         title="No traffic to chart yet"
         description="Serve a few requests from a project endpoint and the trends for the last 24 hours will appear here."
         action={
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<Link href="/dashboard" />}
-          >
-            Browse projects
+          <Button variant="outline" asChild>
+            <Link href="/dashboard">Browse projects</Link>
           </Button>
         }
       />

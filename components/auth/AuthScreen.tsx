@@ -2,7 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeftIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -43,7 +44,11 @@ export const AuthScreen = ({ mode }: AuthScreenProps): React.JSX.Element => {
             href="/"
             className="text-muted-foreground hover:text-foreground hidden items-center gap-1.5 text-sm transition-colors lg:inline-flex"
           >
-            <ArrowLeft className="size-4" aria-hidden="true" />
+            <PikaIcon
+              icon={ArrowLeftIcon}
+              className="size-4"
+              aria-hidden="true"
+            />
             Back to home
           </Link>
 

@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { RiTimeLine, RiAlertLine } from "@remixicon/react";
+import { ClockIcon, AlertTriangleIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -116,7 +117,7 @@ export function ChaosConfig({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <RiTimeLine className="text-warning h-3.5 w-3.5" />
+            <PikaIcon icon={ClockIcon} className="text-warning size-3.5" />
             <h3 className="text-xs font-semibold">Simulated Latency</h3>
           </div>
           <span className="bg-muted border-border rounded border px-1.5 py-0.5 font-mono text-xs font-medium">
@@ -165,7 +166,10 @@ export function ChaosConfig({
       <div className="border-border space-y-3 border-t pt-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <RiAlertLine className="text-destructive h-3.5 w-3.5" />
+            <PikaIcon
+              icon={AlertTriangleIcon}
+              className="text-destructive size-3.5"
+            />
             <h3 className="text-xs font-semibold">Probabilistic Failures</h3>
           </div>
           <span className="bg-muted border-border rounded border px-1.5 py-0.5 font-mono text-xs font-medium">

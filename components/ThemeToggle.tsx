@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { RiMoonLine, RiSunLine } from "@remixicon/react";
+import { MoonIcon, SunIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -83,7 +84,8 @@ export const ThemeToggle = ({
       ) : null}
 
       {/* Sun Icon (Light Mode Filament) */}
-      <RiSunLine
+      <PikaIcon
+        icon={SunIcon}
         className={cn(
           "h-[1.15rem] w-[1.15rem] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
           isDark
@@ -93,7 +95,8 @@ export const ThemeToggle = ({
       />
 
       {/* Moon Icon (Dark Mode Filament) */}
-      <RiMoonLine
+      <PikaIcon
+        icon={MoonIcon}
         className={cn(
           "absolute h-[1.15rem] w-[1.15rem] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
           isDark

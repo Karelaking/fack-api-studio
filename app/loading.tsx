@@ -1,4 +1,5 @@
-import { RiLoader2Line } from "@remixicon/react";
+import { RefreshIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 
 /**
  * Root-level loading state.
@@ -7,7 +8,10 @@ import { RiLoader2Line } from "@remixicon/react";
 export default function RootLoading(): React.JSX.Element {
   return (
     <div className="flex min-h-[60vh] w-full items-center justify-center">
-      <RiLoader2Line className="text-muted-foreground h-8 w-8 animate-spin" />
+      <PikaIcon
+        icon={RefreshIcon}
+        className="text-muted-foreground size-8 animate-spin"
+      />
     </div>
   );
 }

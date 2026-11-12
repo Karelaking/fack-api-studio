@@ -2,12 +2,13 @@
 
 import * as React from "react";
 import {
-  RiFileCopyLine,
-  RiDownloadLine,
-  RiLoader2Line,
-  RiCodeLine,
-  RiCheckLine,
-} from "@remixicon/react";
+  CopyIcon,
+  DownloadBarDownIcon,
+  RefreshIcon,
+  CodeIcon,
+  CheckTickCircleIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -89,7 +90,7 @@ export function TypeScriptPreview({
         <DialogHeader className="shrink-0">
           <DialogTitle>
             <span className="flex items-center gap-2">
-              <RiCodeLine className="text-primary h-5 w-5" />
+              <PikaIcon icon={CodeIcon} className="text-primary size-5" />
               <span>TypeScript Definition</span>
             </span>
           </DialogTitle>
@@ -103,7 +104,10 @@ export function TypeScriptPreview({
         <div className="bg-muted border-border text-foreground scrollbar-subtle relative min-h-0 flex-1 overflow-auto border p-4 font-mono text-xs">
           {loading ? (
             <div className="bg-muted/50 absolute inset-0 flex items-center justify-center">
-              <RiLoader2Line className="text-primary h-6 w-6 animate-spin" />
+              <PikaIcon
+                icon={RefreshIcon}
+                className="text-primary size-6 animate-spin"
+              />
             </div>
           ) : (
             <pre className="whitespace-pre-wrap">
@@ -123,9 +127,12 @@ export function TypeScriptPreview({
             disabled={loading || !code}
           >
             {copied ? (
-              <RiCheckLine className="text-success h-3.5 w-3.5" />
+              <PikaIcon
+                icon={CheckTickCircleIcon}
+                className="text-success size-3.5"
+              />
             ) : (
-              <RiFileCopyLine className="h-3.5 w-3.5" />
+              <PikaIcon icon={CopyIcon} className="size-3.5" />
             )}
             <span>{copied ? "Copied" : "Copy Code"}</span>
           </Button>
@@ -137,7 +144,7 @@ export function TypeScriptPreview({
             onClick={handleDownload}
             disabled={loading || !code}
           >
-            <RiDownloadLine className="h-3.5 w-3.5" />
+            <PikaIcon icon={DownloadBarDownIcon} className="size-3.5" />
             <span>Download .d.ts</span>
           </Button>
         </DialogFooter>

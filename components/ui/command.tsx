@@ -12,7 +12,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
-import { RiSearchLine, RiCheckLine } from "@remixicon/react";
+import { PikaIcon } from "@pikaicons/react";
+import { CheckTickCircleIcon, SearchIcon } from "@pikaicons/core-free";
 
 function Command({
   className,
@@ -81,7 +82,7 @@ function CommandInput({
           {...props}
         />
         <InputGroupAddon>
-          <RiSearchLine className="size-4 shrink-0 opacity-50" />
+          <PikaIcon icon={SearchIcon} className="size-4 shrink-0 opacity-50" />
         </InputGroupAddon>
       </InputGroup>
     </div>
@@ -161,7 +162,10 @@ function CommandItem({
       {...props}
     >
       {children}
-      <RiCheckLine className="ml-auto hidden group-has-data-[slot=command-shortcut]/command-item:hidden group-data-[checked=true]/command-item:block" />
+      <PikaIcon
+        icon={CheckTickCircleIcon}
+        className="ml-auto hidden group-has-data-[slot=command-shortcut]/command-item:hidden group-data-[checked=true]/command-item:block"
+      />
     </CommandPrimitive.Item>
   );
 }

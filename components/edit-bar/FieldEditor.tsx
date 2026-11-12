@@ -2,14 +2,21 @@
 
 import * as React from "react";
 import {
-  RiAddLine,
-  RiDeleteBin6Line,
-  RiCornerDownRightLine,
-  RiArrowUpLine,
-  RiArrowDownLine,
-  RiDragMove2Line,
-  RiEditLine,
-} from "@remixicon/react";
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { PikaIcon } from "@pikaicons/react";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ChevronRightIcon,
+  DeleteDustbin01Icon,
+  PencilEditIcon,
+  PlusIcon,
+  ThreeDotsMenuVerticalIcon,
+} from "@pikaicons/core-free";
 import { useSchemaStore } from "@/stores/store-provider";
 import type { SchemaField } from "@/lib/schema-synthesizer";
 import { Button } from "@/components/ui/button";
@@ -21,8 +28,6 @@ interface FieldEditorProps {
   depth: number;
 }
 
-let activeDraggedFieldId: string | null = null;
-
 export const FieldEditor = ({
   field,
   depth,
@@ -31,71 +36,60 @@ export const FieldEditor = ({
   const removeField = useSchemaStore((state) => state.removeField);
   const addField = useSchemaStore((state) => state.addField);
   const moveField = useSchemaStore((state) => state.moveField);
-  const reorderField = useSchemaStore((state) => state.reorderField);
 
-  const [isDragOver, setIsDragOver] = React.useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
   const [isAddChildModalOpen, setIsAddChildModalOpen] = React.useState(false);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: field.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+  };
 
   const isObject = field.type === "object";
   const isArray = field.type === "array";
 
-  const handleDragStart = (event: React.DragEvent<HTMLElement>) => {
-    activeDraggedFieldId = field.id;
-    event.dataTransfer.setData("application/x-fack-field-id", field.id);
-    event.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleDragEnd = () => {
-    activeDraggedFieldId = null;
-    setIsDragOver(false);
-  };
-
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    if (!activeDraggedFieldId || activeDraggedFieldId === field.id) return;
-    event.preventDefault();
-    if (!isDragOver) setIsDragOver(true);
-  };
-
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const draggedId =
-      activeDraggedFieldId ??
-      event.dataTransfer.getData("application/x-fack-field-id");
-    setIsDragOver(false);
-    if (!draggedId || draggedId === field.id) return;
-    reorderField(draggedId, field.id);
-    activeDraggedFieldId = null;
-  };
-
   return (
-    <div className="space-y-1.5">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn("space-y-1.5", isDragging && "relative z-10 opacity-60")}
+    >
       {/* Field Row */}
       <div
         className={cn(
           "border-border bg-card/65 hover:border-muted-foreground/15 relative flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 shadow-sm transition-all",
-          isDragOver && "border-primary/60 bg-primary/5",
+          isDragging && "border-primary/60 bg-primary/5 shadow-md",
           depth > 0 && "ml-3",
         )}
-        onDragOver={handleDragOver}
-        onDragLeave={() => setIsDragOver(false)}
-        onDrop={handleDrop}
       >
         {/* Nesting Indicator */}
         {depth > 0 && (
-          <RiCornerDownRightLine className="text-muted-foreground/60 absolute top-3 -left-3 h-3 w-3" />
+          <PikaIcon
+            icon={ChevronRightIcon}
+            className="text-muted-foreground/60 absolute top-3 -left-3 size-3"
+          />
         )}
 
         {/* Drag Handle */}
-        <span
-          draggable
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          className="text-muted-foreground/70 inline-flex h-7 w-5 cursor-grab items-center justify-center"
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="text-muted-foreground/70 hover:text-foreground inline-flex h-7 w-5 shrink-0 cursor-grab touch-none items-center justify-center rounded active:cursor-grabbing"
           title="Drag to reorder"
+          aria-label={`Reorder ${field.name}`}
         >
-          <RiDragMove2Line className="h-3.5 w-3.5" />
-        </span>
+          <PikaIcon icon={ThreeDotsMenuVerticalIcon} className="size-3.5" />
+        </button>
 
         {/* Field Name & Type display */}
         <div className="flex flex-1 items-center gap-2 overflow-hidden">
@@ -149,7 +143,7 @@ export const FieldEditor = ({
             aria-label="Move Up"
             onClick={() => moveField(field.id, "up")}
           >
-            <RiArrowUpLine className="h-3.5 w-3.5" />
+            <PikaIcon icon={ArrowUpIcon} className="size-3.5" />
           </Button>
           <Button
             type="button"
@@ -159,7 +153,7 @@ export const FieldEditor = ({
             aria-label="Move Down"
             onClick={() => moveField(field.id, "down")}
           >
-            <RiArrowDownLine className="h-3.5 w-3.5" />
+            <PikaIcon icon={ArrowDownIcon} className="size-3.5" />
           </Button>
 
           {/* Edit Button */}
@@ -171,7 +165,7 @@ export const FieldEditor = ({
             aria-label="Edit Field"
             onClick={() => setIsEditModalOpen(true)}
           >
-            <RiEditLine className="h-3.5 w-3.5" />
+            <PikaIcon icon={PencilEditIcon} className="size-3.5" />
           </Button>
 
           {/* Add Child Button (Only for Object type, or Array items of type Object) */}
@@ -184,7 +178,7 @@ export const FieldEditor = ({
               aria-label="Add Child Field"
               onClick={() => setIsAddChildModalOpen(true)}
             >
-              <RiAddLine className="h-3.5 w-3.5" />
+              <PikaIcon icon={PlusIcon} className="size-3.5" />
             </Button>
           )}
           <Button
@@ -195,7 +189,7 @@ export const FieldEditor = ({
             aria-label="Delete Field"
             onClick={() => removeField(field.id)}
           >
-            <RiDeleteBin6Line className="h-3.5 w-3.5" />
+            <PikaIcon icon={DeleteDustbin01Icon} className="size-3.5" />
           </Button>
         </div>
       </div>
@@ -217,11 +211,16 @@ export const FieldEditor = ({
 
       {/* Recursive Children (Object Children) */}
       {isObject && field.children && field.children.length > 0 && (
-        <div className="border-border/80 mt-1 space-y-1.5 border-l pl-2">
-          {field.children.map((child) => (
-            <FieldEditor key={child.id} field={child} depth={depth + 1} />
-          ))}
-        </div>
+        <SortableContext
+          items={field.children.map((child) => child.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="border-border/80 mt-1 space-y-1.5 border-l pl-2">
+            {field.children.map((child) => (
+              <FieldEditor key={child.id} field={child} depth={depth + 1} />
+            ))}
+          </div>
+        </SortableContext>
       )}
 
       {/* Recursive Children (Array Item Object Children) */}
@@ -229,11 +228,16 @@ export const FieldEditor = ({
         field.arrayItemType === "object" &&
         field.arrayItemChildren &&
         field.arrayItemChildren.length > 0 && (
-          <div className="border-border/80 mt-1 space-y-1.5 border-l pl-2">
-            {field.arrayItemChildren.map((child) => (
-              <FieldEditor key={child.id} field={child} depth={depth + 1} />
-            ))}
-          </div>
+          <SortableContext
+            items={field.arrayItemChildren.map((child) => child.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="border-border/80 mt-1 space-y-1.5 border-l pl-2">
+              {field.arrayItemChildren.map((child) => (
+                <FieldEditor key={child.id} field={child} depth={depth + 1} />
+              ))}
+            </div>
+          </SortableContext>
         )}
     </div>
   );

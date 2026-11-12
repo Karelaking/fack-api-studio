@@ -2,15 +2,16 @@
 
 import * as React from "react";
 import {
-  RiCheckLine,
-  RiCloseLine,
-  RiComputerLine,
-  RiErrorWarningLine,
-  RiLoader4Line,
-  RiShieldCheckLine,
-  RiTerminalBoxLine,
-  RiTimeLine,
-} from "@remixicon/react";
+  CheckTickCircleIcon,
+  MultipleCrossCancelIcon,
+  LaptopIcon,
+  AlertCircleIcon,
+  RefreshIcon,
+  ShieldCheckIcon,
+  CodeIcon,
+  ClockIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 
 import {
   approveDevice,
@@ -187,7 +188,11 @@ export function AuthorizeDeviceForm({
       <AuthorizeDeviceCardFrame>
         <div className="flex flex-col items-center text-center">
           <span className="bg-primary/10 text-primary flex size-12 items-center justify-center rounded-full">
-            <RiShieldCheckLine className="size-6" aria-hidden="true" />
+            <PikaIcon
+              icon={ShieldCheckIcon}
+              className="size-6"
+              aria-hidden="true"
+            />
           </span>
           <h1 className="font-heading mt-5 text-xl font-semibold tracking-tight">
             Terminal authorized
@@ -217,7 +222,11 @@ export function AuthorizeDeviceForm({
       <AuthorizeDeviceCardFrame>
         <div className="flex flex-col items-center text-center">
           <span className="bg-destructive/10 text-destructive flex size-12 items-center justify-center rounded-full">
-            <RiCloseLine className="size-6" aria-hidden="true" />
+            <PikaIcon
+              icon={MultipleCrossCancelIcon}
+              className="size-6"
+              aria-hidden="true"
+            />
           </span>
           <h1 className="font-heading mt-5 text-xl font-semibold tracking-tight">
             Request denied
@@ -289,7 +298,8 @@ export function AuthorizeDeviceForm({
             role="alert"
             className="text-destructive flex items-start gap-1.5 text-xs leading-relaxed"
           >
-            <RiErrorWarningLine
+            <PikaIcon
+              icon={AlertCircleIcon}
               className="mt-0.5 size-3.5 shrink-0"
               aria-hidden="true"
             />
@@ -302,17 +312,17 @@ export function AuthorizeDeviceForm({
         <div className="mt-6">
           <dl className="border-border/60 divide-border/60 divide-y rounded-lg border">
             <AuthorizeDeviceRow
-              icon={<RiComputerLine />}
+              icon={<PikaIcon icon={LaptopIcon} />}
               label="Device"
               value={request.deviceName}
             />
             <AuthorizeDeviceRow
-              icon={<RiTerminalBoxLine />}
+              icon={<PikaIcon icon={CodeIcon} />}
               label="Platform"
               value={request.platform}
             />
             <AuthorizeDeviceRow
-              icon={<RiTimeLine />}
+              icon={<PikaIcon icon={ClockIcon} />}
               label="Requested"
               value={relativeTime(request.createdAt)}
             />
@@ -335,9 +345,13 @@ export function AuthorizeDeviceForm({
               className="h-10 w-full"
             >
               {phase === "approving" ? (
-                <RiLoader4Line className="animate-spin" aria-hidden="true" />
+                <PikaIcon
+                  icon={RefreshIcon}
+                  className="animate-spin"
+                  aria-hidden="true"
+                />
               ) : (
-                <RiCheckLine aria-hidden="true" />
+                <PikaIcon icon={CheckTickCircleIcon} aria-hidden="true" />
               )}
               Authorize terminal
             </Button>
@@ -349,9 +363,13 @@ export function AuthorizeDeviceForm({
               className="h-10 w-full"
             >
               {phase === "denying" ? (
-                <RiLoader4Line className="animate-spin" aria-hidden="true" />
+                <PikaIcon
+                  icon={RefreshIcon}
+                  className="animate-spin"
+                  aria-hidden="true"
+                />
               ) : (
-                <RiCloseLine aria-hidden="true" />
+                <PikaIcon icon={MultipleCrossCancelIcon} aria-hidden="true" />
               )}
               Deny
             </Button>
@@ -364,7 +382,11 @@ export function AuthorizeDeviceForm({
             className="h-10 w-full"
           >
             {busy ? (
-              <RiLoader4Line className="animate-spin" aria-hidden="true" />
+              <PikaIcon
+                icon={RefreshIcon}
+                className="animate-spin"
+                aria-hidden="true"
+              />
             ) : null}
             Continue
           </Button>

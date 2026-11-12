@@ -4,13 +4,21 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  RiFileCodeLine,
-  RiCloseLine,
-  RiLoader2Line,
-  RiCheckLine,
-  RiArrowGoBackLine,
-} from "@remixicon/react";
+  File02Icon,
+  MultipleCrossCancelIcon,
+  RefreshIcon,
+  CheckTickCircleIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiChangeSetPreview } from "./ApiChangeSetPreview";
 import { ConflictResolutionDialog } from "./ConflictResolutionDialog";
@@ -183,41 +191,54 @@ export const ImportOpenApiDialog = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <button
-        type="button"
-        aria-label="Close dialog"
-        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
-        onClick={handleClose}
-      />
-      <div className="bg-card border-border relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl border shadow-2xl transition-all">
-        <div className="border-border/80 flex items-center justify-between border-b px-6 py-4">
-          <div className="flex items-center gap-2.5">
-            <div className="bg-primary/10 text-primary flex size-9 items-center justify-center rounded-xl">
-              <RiFileCodeLine className="size-5" />
+    <Dialog
+      open={isOpen}
+      onOpenChange={(nextOpen): void => {
+        if (!nextOpen && !isGenerating && !isApplying) {
+          handleClose();
+        }
+      }}
+    >
+      <DialogContent
+        showCloseButton={false}
+        onEscapeKeyDown={(event): void => {
+          if (isGenerating || isApplying) {
+            event.preventDefault();
+          }
+        }}
+        onPointerDownOutside={(event): void => {
+          if (isGenerating || isApplying) {
+            event.preventDefault();
+          }
+        }}
+        className="bg-card border-border flex max-h-[90vh] w-full max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl border p-0 shadow-2xl sm:max-w-3xl"
+      >
+        <DialogHeader className="border-border/80 flex-row items-center justify-between border-b px-6 py-4">
+          <div className="flex items-center gap-2.5 text-left">
+            <div className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl">
+              <PikaIcon icon={File02Icon} className="size-5" />
             </div>
             <div>
-              <h3 className="text-foreground text-base font-bold">
+              <DialogTitle className="text-foreground text-base leading-normal font-bold">
                 Import OpenAPI
-              </h3>
-              <p className="text-muted-foreground text-xs">
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground text-xs">
                 Paste your OpenAPI 3.x JSON specification
-              </p>
+              </DialogDescription>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={isGenerating || isApplying}
-            aria-label="Close dialog"
-            className="border-border hover:bg-muted text-muted-foreground hover:text-foreground flex size-8 cursor-pointer items-center justify-center rounded-lg border transition-colors"
-          >
-            <RiCloseLine className="size-4" />
-          </button>
-        </div>
+          <DialogClose asChild>
+            <button
+              type="button"
+              disabled={isGenerating || isApplying}
+              aria-label="Close dialog"
+              className="border-border hover:bg-muted text-muted-foreground hover:text-foreground flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:pointer-events-none disabled:opacity-50"
+            >
+              <PikaIcon icon={MultipleCrossCancelIcon} className="size-4" />
+            </button>
+          </DialogClose>
+        </DialogHeader>
 
         <div className="scrollbar-subtle flex-1 overflow-y-auto p-6">
           {!generatedApi ? (
@@ -241,12 +262,15 @@ export const ImportOpenApiDialog = ({
                   >
                     {isGenerating ? (
                       <>
-                        <RiLoader2Line className="mr-2 size-4 animate-spin" />
+                        <PikaIcon
+                          icon={RefreshIcon}
+                          className="mr-2 size-4 animate-spin"
+                        />
                         Importing...
                       </>
                     ) : (
                       <>
-                        <RiFileCodeLine className="mr-2 size-4" />
+                        <PikaIcon icon={File02Icon} className="mr-2 size-4" />
                         Import Schema
                       </>
                     )}
@@ -288,7 +312,8 @@ export const ImportOpenApiDialog = ({
           >
             {generatedApi ? (
               <>
-                <RiArrowGoBackLine className="mr-2 size-4" /> Back to Import
+                <PikaIcon icon={RefreshIcon} className="mr-2 size-4" /> Back to
+                Import
               </>
             ) : (
               "Cancel"
@@ -304,19 +329,25 @@ export const ImportOpenApiDialog = ({
             >
               {isApplying ? (
                 <>
-                  <RiLoader2Line className="mr-2 size-4 animate-spin" />
+                  <PikaIcon
+                    icon={RefreshIcon}
+                    className="mr-2 size-4 animate-spin"
+                  />
                   Applying Changes...
                 </>
               ) : (
                 <>
-                  <RiCheckLine className="mr-2 size-4" />
+                  <PikaIcon
+                    icon={CheckTickCircleIcon}
+                    className="mr-2 size-4"
+                  />
                   Approve &amp; Apply
                 </>
               )}
             </Button>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

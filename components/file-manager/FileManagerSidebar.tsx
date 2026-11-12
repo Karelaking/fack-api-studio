@@ -4,17 +4,18 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  RiHardDrive2Line,
-  RiAddLine,
-  RiFolderOpenLine,
-  RiSave3Line,
-  RiFileCodeLine,
-  RiSettings3Line,
-  RiLayoutGridLine,
-  RiLoader2Line,
-  RiCloseLine,
-  RiDownload2Line,
-} from "@remixicon/react";
+  DatabaseIcon,
+  DownloadBarDownIcon,
+  File02Icon,
+  FloppyIcon,
+  FolderIcon,
+  GridDashboard02Icon,
+  MultipleCrossCancelIcon,
+  PlusIcon,
+  RefreshIcon,
+  Settings01Icon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
 
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -230,7 +231,7 @@ export function FileManagerSidebar({
               variant="secondary"
               className="text-mini px-1.5 py-0 font-medium group-data-[collapsible=icon]:hidden"
             >
-              <RiHardDrive2Line className="mr-1 h-3 w-3" />
+              <PikaIcon icon={DatabaseIcon} className="mr-1 size-3" />
               Local
             </Badge>
           </div>
@@ -248,7 +249,7 @@ export function FileManagerSidebar({
                 );
               }}
             >
-              <RiAddLine className="mr-1 h-3.5 w-3.5" />
+              <PikaIcon icon={PlusIcon} className="mr-1 size-3.5" />
               New Project
             </Button>
 
@@ -261,9 +262,12 @@ export function FileManagerSidebar({
               onClick={() => fileInputRef.current?.click()}
             >
               {isOpening ? (
-                <RiLoader2Line className="mr-1 h-3.5 w-3.5 animate-spin" />
+                <PikaIcon
+                  icon={RefreshIcon}
+                  className="mr-1 size-3.5 animate-spin"
+                />
               ) : (
-                <RiFolderOpenLine className="mr-1 h-3.5 w-3.5" />
+                <PikaIcon icon={FolderIcon} className="mr-1 size-3.5" />
               )}
               Open .fack
             </Button>
@@ -304,41 +308,43 @@ export function FileManagerSidebar({
 
                   return (
                     <SidebarMenuItem key={project.projectId}>
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        render={
+                      <div className="group/item relative flex items-center">
+                        <SidebarMenuButton
+                          isActive={isActive}
+                          asChild
+                          className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary flex-1 pr-14 transition-colors"
+                        >
                           <Link
                             href={getProjectUrl(project.slug, "canvas")}
                             aria-label={project.name}
-                          />
-                        }
-                        className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary group/item relative flex items-center justify-between pr-1 transition-colors"
-                      >
-                        <div className="flex min-w-0 flex-1 items-center gap-2">
-                          {/* Saved / Unsaved Indicator */}
-                          <span
-                            title={
-                              project.isDirty ? "Unsaved changes" : "Saved"
-                            }
-                            className={`size-2 shrink-0 rounded-full ${
-                              project.isDirty
-                                ? "bg-warning animate-pulse motion-reduce:animate-none"
-                                : "bg-success"
-                            }`}
-                          />
-                          <div className="flex min-w-0 flex-col">
-                            <span className="truncate text-xs font-semibold">
-                              {project.name}
-                            </span>
-                            <span className="text-muted-foreground text-mini truncate">
-                              {project.routeCount} routes ·{" "}
-                              {project.endpointCount} endpoints
-                            </span>
-                          </div>
-                        </div>
+                          >
+                            <div className="flex min-w-0 flex-1 items-center gap-2">
+                              {/* Saved / Unsaved Indicator */}
+                              <span
+                                title={
+                                  project.isDirty ? "Unsaved changes" : "Saved"
+                                }
+                                className={`size-2 shrink-0 rounded-full ${
+                                  project.isDirty
+                                    ? "bg-warning animate-pulse motion-reduce:animate-none"
+                                    : "bg-success"
+                                }`}
+                              />
+                              <div className="flex min-w-0 flex-col">
+                                <span className="truncate text-xs font-semibold">
+                                  {project.name}
+                                </span>
+                                <span className="text-muted-foreground text-mini truncate">
+                                  {project.routeCount} routes ·{" "}
+                                  {project.endpointCount} endpoints
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        </SidebarMenuButton>
 
                         {/* Save Action Button */}
-                        <div className="flex items-center gap-0.5 group-data-[collapsible=icon]:hidden">
+                        <div className="absolute right-1.5 flex items-center gap-0.5 group-data-[collapsible=icon]:hidden">
                           <button
                             type="button"
                             title="Save to file"
@@ -350,9 +356,15 @@ export function FileManagerSidebar({
                             className="text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded p-1 transition-colors"
                           >
                             {isSavingThis ? (
-                              <RiLoader2Line className="h-3.5 w-3.5 animate-spin" />
+                              <PikaIcon
+                                icon={RefreshIcon}
+                                className="size-3.5 animate-spin"
+                              />
                             ) : (
-                              <RiSave3Line className="h-3.5 w-3.5" />
+                              <PikaIcon
+                                icon={FloppyIcon}
+                                className="size-3.5"
+                              />
                             )}
                           </button>
                           <a
@@ -362,10 +374,13 @@ export function FileManagerSidebar({
                             title="Download .fack file"
                             className="text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded p-1 transition-colors"
                           >
-                            <RiDownload2Line className="h-3.5 w-3.5" />
+                            <PikaIcon
+                              icon={DownloadBarDownIcon}
+                              className="size-3.5"
+                            />
                           </a>
                         </div>
-                      </SidebarMenuButton>
+                      </div>
                     </SidebarMenuItem>
                   );
                 })}
@@ -395,7 +410,10 @@ export function FileManagerSidebar({
                       className="group/recent flex items-center justify-between text-xs"
                     >
                       <div className="flex min-w-0 flex-1 items-center gap-2">
-                        <RiFileCodeLine className="text-muted-foreground size-3.5 shrink-0" />
+                        <PikaIcon
+                          icon={File02Icon}
+                          className="text-muted-foreground size-3.5 shrink-0"
+                        />
                         <div className="flex min-w-0 flex-col">
                           <span className="truncate font-medium">
                             {recent.fileName}
@@ -413,7 +431,10 @@ export function FileManagerSidebar({
                         }
                         className="text-muted-foreground hover:text-foreground hidden rounded p-0.5 group-hover/recent:inline-block"
                       >
-                        <RiCloseLine className="size-3" />
+                        <PikaIcon
+                          icon={MultipleCrossCancelIcon}
+                          className="size-3"
+                        />
                       </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -435,23 +456,25 @@ export function FileManagerSidebar({
               <SidebarMenuItem>
                 <SidebarMenuButton
                   isActive={pathname === "/dashboard"}
-                  render={<Link href="/dashboard" aria-label="All Projects" />}
+                  asChild
                   className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
                 >
-                  <RiLayoutGridLine className="h-4 w-4" />
-                  <span>All Projects</span>
+                  <Link href="/dashboard" aria-label="All Projects">
+                    <PikaIcon icon={GridDashboard02Icon} className="size-4" />
+                    <span>All Projects</span>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   isActive={pathname === "/settings"}
-                  render={
-                    <Link href="/settings" aria-label="Settings & Storage" />
-                  }
+                  asChild
                   className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
                 >
-                  <RiSettings3Line className="h-4 w-4" />
-                  <span>Settings &amp; Storage</span>
+                  <Link href="/settings" aria-label="Settings & Storage">
+                    <PikaIcon icon={Settings01Icon} className="size-4" />
+                    <span>Settings &amp; Storage</span>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -462,7 +485,7 @@ export function FileManagerSidebar({
       <SidebarFooter>
         <div className="border-border/50 flex w-full items-center justify-between border-t p-3">
           <div className="text-muted-foreground flex items-center gap-1.5 font-mono text-xs">
-            <RiHardDrive2Line className="text-success size-3.5" />
+            <PikaIcon icon={DatabaseIcon} className="text-success size-3.5" />
             <span>Local Mode</span>
           </div>
           <ThemeToggle />

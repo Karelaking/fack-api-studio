@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import {
-  RiArrowDownSLine,
-  RiArrowRightSLine,
-  RiFolderLine,
-} from "@remixicon/react";
+  ChevronDownIcon,
+  ChevronRightIcon,
+  FolderIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { Badge } from "@/components/ui/badge";
 import type { GeneratedEndpoint } from "@/lib/ai/types";
 import { ApiRoutePreviewRow } from "./ApiRoutePreviewRow";
@@ -32,11 +33,20 @@ export const ApiEndpointPreviewCard = ({
       >
         <div className="flex items-center gap-2">
           {isExpanded ? (
-            <RiArrowDownSLine className="text-muted-foreground size-4 shrink-0" />
+            <PikaIcon
+              icon={ChevronDownIcon}
+              className="text-muted-foreground size-4 shrink-0"
+            />
           ) : (
-            <RiArrowRightSLine className="text-muted-foreground size-4 shrink-0" />
+            <PikaIcon
+              icon={ChevronRightIcon}
+              className="text-muted-foreground size-4 shrink-0"
+            />
           )}
-          <RiFolderLine className="text-primary size-4 shrink-0" />
+          <PikaIcon
+            icon={FolderIcon}
+            className="text-primary size-4 shrink-0"
+          />
           <span className="text-foreground text-xs font-semibold">
             {endpoint.name}
           </span>

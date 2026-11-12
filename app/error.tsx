@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { RiErrorWarningLine, RiRefreshLine } from "@remixicon/react";
+import { AlertCircleIcon, RefreshIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -22,7 +23,7 @@ export default function Error({
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-6 p-8">
       <div className="bg-destructive/10 flex h-20 w-20 items-center justify-center rounded-full">
-        <RiErrorWarningLine className="text-destructive h-10 w-10" />
+        <PikaIcon icon={AlertCircleIcon} className="text-destructive size-10" />
       </div>
       <div className="text-center">
         <h2 className="text-foreground text-2xl font-semibold">
@@ -39,7 +40,7 @@ export default function Error({
         )}
       </div>
       <Button onClick={reset} variant="default" size="sm">
-        <RiRefreshLine className="mr-2 h-4 w-4" />
+        <PikaIcon icon={RefreshIcon} className="mr-2 size-4" />
         Try Again
       </Button>
     </div>

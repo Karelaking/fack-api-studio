@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { RiFolder3Line, RiArrowLeftLine } from "@remixicon/react";
+import { ArrowLeftIcon, FolderIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { buttonVariants } from "@/components/ui/button";
 
 /**
@@ -9,7 +10,7 @@ export default function ProjectNotFound() {
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-6 p-8">
       <div className="bg-muted flex h-16 w-16 items-center justify-center rounded-full">
-        <RiFolder3Line className="text-muted-foreground h-8 w-8" />
+        <PikaIcon icon={FolderIcon} className="text-muted-foreground size-8" />
       </div>
       <div className="text-center">
         <h2 className="text-foreground text-xl font-semibold">
@@ -24,7 +25,7 @@ export default function ProjectNotFound() {
         href="/dashboard"
         className={buttonVariants({ variant: "outline", size: "sm" })}
       >
-        <RiArrowLeftLine className="mr-2 h-4 w-4" />
+        <PikaIcon icon={ArrowLeftIcon} className="mr-2 size-4" />
         Back to Projects
       </Link>
     </div>

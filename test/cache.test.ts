@@ -17,6 +17,7 @@ import {
   getCachedCanvasState,
   setCachedCanvasState,
 } from "../lib/cache";
+import { encodeSharedValue, decodeSharedValue } from "@/lib/cache/shared-store";
 import type { Project } from "@/db/schema";
 
 describe("Mock Data Caching", () => {
@@ -141,5 +142,27 @@ describe("Mock Data Caching", () => {
     expect(getCachedPageData(pagedRouteId, 1, 10)).toBeUndefined();
     expect(getCachedProjectsList()).toBeUndefined();
     expect(getCachedProjectBySlug("sample-slug")).toBeUndefined();
+  });
+
+  it("safely encodes and decodes shared cache values with Date preservation", () => {
+    const now = new Date();
+    const payload = {
+      id: "test_1",
+      createdAt: now,
+      items: ["a", "b"],
+      count: 42,
+    };
+
+    const encoded = encodeSharedValue(payload);
+    expect(encoded).not.toBeNull();
+    expect(typeof encoded).toBe("string");
+
+    const decoded = decodeSharedValue<typeof payload>(encoded!);
+    expect(decoded).toBeDefined();
+    expect(decoded?.id).toBe("test_1");
+    expect(decoded?.createdAt).toBeInstanceOf(Date);
+    expect(decoded?.createdAt.getTime()).toBe(now.getTime());
+    expect(decoded?.items).toEqual(["a", "b"]);
+    expect(decoded?.count).toBe(42);
   });
 });

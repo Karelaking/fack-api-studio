@@ -1,17 +1,18 @@
 import React from "react";
 import Link from "next/link";
 import {
-  Zap,
-  Code2,
-  Terminal,
-  ShieldCheck,
-  ArrowRight,
-  Sparkles,
-  Activity,
-} from "lucide-react";
+  LightningThunderElectricOnIcon,
+  File02Icon,
+  CodeIcon,
+  ShieldCheckIcon,
+  ArrowRightIcon,
+  SparkleAi01Icon,
+  GraphTrendLineIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon, type IconSvgElement } from "@pikaicons/react";
 
 type Feature = {
-  icon: typeof Zap;
+  icon: IconSvgElement;
   badge: string;
   title: string;
   description: string;
@@ -21,7 +22,7 @@ type Feature = {
 
 const FEATURES: Feature[] = [
   {
-    icon: Zap,
+    icon: LightningThunderElectricOnIcon,
     badge: "Flow canvas",
     title: "Visual Flow Canvas",
     description:
@@ -30,7 +31,7 @@ const FEATURES: Feature[] = [
     iconBg: "bg-info/15 border-info/30",
   },
   {
-    icon: Sparkles,
+    icon: SparkleAi01Icon,
     badge: "Faker.js",
     title: "20+ Faker.js Generators",
     description:
@@ -39,7 +40,7 @@ const FEATURES: Feature[] = [
     iconBg: "bg-primary/15 border-primary/30",
   },
   {
-    icon: Activity,
+    icon: GraphTrendLineIcon,
     badge: "Chaos engine",
     title: "Chaos & Latency Injector",
     description:
@@ -48,7 +49,7 @@ const FEATURES: Feature[] = [
     iconBg: "bg-warning/15 border-warning/30",
   },
   {
-    icon: ShieldCheck,
+    icon: ShieldCheckIcon,
     badge: "Local first",
     title: "Local-First SQLite Engine",
     description:
@@ -57,7 +58,7 @@ const FEATURES: Feature[] = [
     iconBg: "bg-success/15 border-success/30",
   },
   {
-    icon: Code2,
+    icon: File02Icon,
     badge: "DTO & OpenAPI",
     title: "1-Click DTO Export",
     description:
@@ -66,7 +67,7 @@ const FEATURES: Feature[] = [
     iconBg: "bg-method-patch/15 border-method-patch/30",
   },
   {
-    icon: Terminal,
+    icon: CodeIcon,
     badge: "Low latency",
     title: "Low-Latency Mocks",
     description:
@@ -96,7 +97,6 @@ export const FeaturesSection = (): React.JSX.Element => {
 
         <div className="border-border/40 grid grid-cols-1 border-t md:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((feat) => {
-            const Icon = feat.icon;
             return (
               <article
                 key={feat.title}
@@ -107,7 +107,8 @@ export const FeaturesSection = (): React.JSX.Element => {
                     <div
                       className={`flex size-10 items-center justify-center rounded-xl border ${feat.iconBg}`}
                     >
-                      <Icon
+                      <PikaIcon
+                        icon={feat.icon}
                         className={`size-4.5 ${feat.iconColor}`}
                         aria-hidden="true"
                       />
@@ -140,7 +141,10 @@ export const FeaturesSection = (): React.JSX.Element => {
                       aria-hidden="true"
                       className="bg-background group-hover:bg-background/20 border-border/60 group-hover:border-background/30 flex size-5 shrink-0 items-center justify-center rounded border transition-colors"
                     >
-                      <ArrowRight className="text-foreground group-hover:text-background size-3 transition-transform duration-300 group-hover:translate-x-0.5" />
+                      <PikaIcon
+                        icon={ArrowRightIcon}
+                        className="text-foreground group-hover:text-background size-3 transition-transform duration-300 group-hover:translate-x-0.5"
+                      />
                     </span>
                   </Link>
                 </div>

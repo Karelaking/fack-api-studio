@@ -3,7 +3,8 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { RiLoader2Line, RiSaveLine } from "@remixicon/react";
+import { RefreshIcon, FloppyIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 
 import { saveWorkspaceName } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
@@ -58,9 +59,13 @@ export function WorkspaceNameForm({
           disabled={saving || name.trim().length === 0 || name === initialName}
         >
           {saving ? (
-            <RiLoader2Line className="animate-spin" aria-hidden="true" />
+            <PikaIcon
+              icon={RefreshIcon}
+              className="animate-spin"
+              aria-hidden="true"
+            />
           ) : (
-            <RiSaveLine aria-hidden="true" />
+            <PikaIcon icon={FloppyIcon} aria-hidden="true" />
           )}
           Save
         </Button>

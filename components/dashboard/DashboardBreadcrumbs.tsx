@@ -4,7 +4,8 @@ import * as React from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { RiArrowRightSLine, RiArrowUpDownLine } from "@remixicon/react";
+import { ChevronDownIcon, ChevronRightIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -163,9 +164,10 @@ export function DashboardBreadcrumbs({
           return (
             <React.Fragment key={`${crumb.href}-${idx}`}>
               {idx > 0 && (
-                <RiArrowRightSLine
+                <PikaIcon
+                  icon={ChevronRightIcon}
                   className={cn(
-                    "text-muted-foreground/45 h-3.5 w-3.5 shrink-0",
+                    "text-muted-foreground/45 size-3.5 shrink-0",
                     isPrevFirst && "hidden sm:inline",
                   )}
                 />
@@ -174,19 +176,20 @@ export function DashboardBreadcrumbs({
                 {isLast ? (
                   crumb.isProject && projectsList.length > 0 ? (
                     <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={
-                          <button
-                            type="button"
-                            aria-label={`Select active project (Current: ${crumb.label})`}
-                            className="group hover:bg-muted/60 focus-visible:ring-ring flex min-w-0 cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-1"
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label={`Select active project (Current: ${crumb.label})`}
+                          className="group hover:bg-muted/60 focus-visible:ring-ring flex min-w-0 cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-1"
+                        >
+                          <span className="text-foreground max-w-37.5 truncate font-semibold sm:max-w-xs">
+                            {crumb.label}
+                          </span>
+                          <PikaIcon
+                            icon={ChevronDownIcon}
+                            className="text-muted-foreground/60 group-hover:text-foreground size-3.5 shrink-0 transition-colors"
                           />
-                        }
-                      >
-                        <span className="text-foreground max-w-37.5 truncate font-semibold sm:max-w-xs">
-                          {crumb.label}
-                        </span>
-                        <RiArrowUpDownLine className="text-muted-foreground/60 group-hover:text-foreground h-3.5 w-3.5 shrink-0 transition-colors" />
+                        </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
                         align="start"
@@ -229,19 +232,20 @@ export function DashboardBreadcrumbs({
                   )
                 ) : crumb.isProject && projectsList.length > 0 ? (
                   <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <button
-                          type="button"
-                          aria-label={`Select active project (Current: ${crumb.label})`}
-                          className="group hover:bg-muted/60 focus-visible:ring-ring flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-1"
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={`Select active project (Current: ${crumb.label})`}
+                        className="group hover:bg-muted/60 focus-visible:ring-ring flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-1"
+                      >
+                        <span className="text-muted-foreground hover:text-foreground max-w-37.5 truncate font-normal transition-colors sm:max-w-xs">
+                          {crumb.label}
+                        </span>
+                        <PikaIcon
+                          icon={ChevronDownIcon}
+                          className="text-muted-foreground/40 group-hover:text-foreground size-3 shrink-0 transition-colors"
                         />
-                      }
-                    >
-                      <span className="text-muted-foreground hover:text-foreground max-w-37.5 truncate font-normal transition-colors sm:max-w-xs">
-                        {crumb.label}
-                      </span>
-                      <RiArrowUpDownLine className="text-muted-foreground/40 group-hover:text-foreground h-3 w-3 shrink-0 transition-colors" />
+                      </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="start"

@@ -6,12 +6,13 @@
 
 import * as React from "react";
 import {
-  RiArrowDownSLine,
-  RiArrowRightSLine,
-  RiCheckLine,
-  RiFileCopyLine,
-  RiFileTextLine,
-} from "@remixicon/react";
+  ChevronDownIcon,
+  ChevronRightIcon,
+  CheckTickCircleIcon,
+  CopyIcon,
+  File02Icon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { Button } from "@/components/ui/button";
 
 export interface ApiArchitectureSpecCardProps {
@@ -57,11 +58,20 @@ export const ApiArchitectureSpecCard = ({
       >
         <div className="flex items-center gap-2.5">
           {isExpanded ? (
-            <RiArrowDownSLine className="text-muted-foreground size-4 shrink-0" />
+            <PikaIcon
+              icon={ChevronDownIcon}
+              className="text-muted-foreground size-4 shrink-0"
+            />
           ) : (
-            <RiArrowRightSLine className="text-muted-foreground size-4 shrink-0" />
+            <PikaIcon
+              icon={ChevronRightIcon}
+              className="text-muted-foreground size-4 shrink-0"
+            />
           )}
-          <RiFileTextLine className="text-primary size-4 shrink-0" />
+          <PikaIcon
+            icon={File02Icon}
+            className="text-primary size-4 shrink-0"
+          />
           <div className="flex flex-col text-left">
             <span className="text-foreground text-xs font-semibold">
               Architecture Design Specification
@@ -77,12 +87,12 @@ export const ApiArchitectureSpecCard = ({
           <Button type="button" variant="ghost" size="xs" onClick={handleCopy}>
             {copied ? (
               <span className="text-success flex items-center gap-1">
-                <RiCheckLine className="size-3.5" />
+                <PikaIcon icon={CheckTickCircleIcon} className="size-3.5" />
                 <span>Copied</span>
               </span>
             ) : (
               <span className="flex items-center gap-1">
-                <RiFileCopyLine className="size-3.5" />
+                <PikaIcon icon={CopyIcon} className="size-3.5" />
                 <span>Copy Spec</span>
               </span>
             )}

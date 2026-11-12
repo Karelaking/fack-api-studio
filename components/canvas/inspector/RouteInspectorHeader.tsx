@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import * as PikaCore from "@pikaicons/core-free";
+import { MultipleCrossCancelIcon } from "@pikaicons/core-free";
+import { ChevronDownIcon } from "@pikaicons/core-free";
 import { PikaIcon } from "@pikaicons/react";
-import { RiArrowDownSLine } from "@remixicon/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -57,42 +57,41 @@ export const RouteInspectorHeader = ({
         <div className="flex items-center gap-2">
           {/* Method Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    "h-9 w-28 justify-between gap-1.5 px-3 font-mono text-xs font-bold tracking-wider",
-                    METHOD_STYLES[method]?.border,
-                    METHOD_STYLES[method]?.bg,
-                  )}
-                  aria-label={`Select HTTP method. Current: ${method}`}
-                />
-              }
-            >
-              <span className="flex min-w-0 items-center gap-1.5">
-                <span
-                  className={cn(
-                    "size-1.5 shrink-0 rounded-full",
-                    METHOD_STYLES[method]?.dot,
-                  )}
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "h-9 w-28 justify-between gap-1.5 px-3 font-mono text-xs font-bold tracking-wider",
+                  METHOD_STYLES[method]?.border,
+                  METHOD_STYLES[method]?.bg,
+                )}
+                aria-label={`Select HTTP method. Current: ${method}`}
+              >
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span
+                    className={cn(
+                      "size-1.5 shrink-0 rounded-full",
+                      METHOD_STYLES[method]?.dot,
+                    )}
+                    aria-hidden="true"
+                  />
+                  <span
+                    className={cn(
+                      "text-xs font-mono font-bold tracking-wider",
+                      METHOD_STYLES[method]?.text,
+                    )}
+                  >
+                    {method}
+                  </span>
+                </span>
+                <PikaIcon
+                  icon={ChevronDownIcon}
+                  className="text-muted-foreground size-3.5 shrink-0"
                   aria-hidden="true"
                 />
-                <span
-                  className={cn(
-                    "font-mono font-bold tracking-wider text-xs",
-                    METHOD_STYLES[method]?.text,
-                  )}
-                >
-                  {method}
-                </span>
-              </span>
-              <RiArrowDownSLine
-                className="text-muted-foreground size-3.5 shrink-0"
-                aria-hidden="true"
-              />
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="min-w-32">
               <DropdownMenuRadioGroup
@@ -158,7 +157,7 @@ export const RouteInspectorHeader = ({
           aria-label="Deselect route"
         >
           <PikaIcon
-            icon={PikaCore.MultipleCrossCancelIcon}
+            icon={MultipleCrossCancelIcon}
             size={16}
             aria-hidden="true"
           />
@@ -175,7 +174,7 @@ export const RouteInspectorHeader = ({
             Route Path
           </label>
           <span
-            className="text-muted-foreground max-w-[200px] truncate font-mono text-xs"
+            className="text-muted-foreground max-w-50 truncate font-mono text-xs"
             title={effectivePath}
           >
             {effectivePath}

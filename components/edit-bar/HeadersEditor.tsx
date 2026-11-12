@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { RiAddLine, RiDeleteBin6Line } from "@remixicon/react";
+import { PlusIcon, DeleteDustbin01Icon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,7 +82,7 @@ export const HeadersEditor = ({
             </p>
           </div>
           <Button type="button" size="sm" variant="outline" onClick={handleAdd}>
-            <RiAddLine className="size-3.5" />
+            <PikaIcon icon={PlusIcon} className="size-3.5" />
             <span>Add Header</span>
           </Button>
         </div>
@@ -91,7 +92,7 @@ export const HeadersEditor = ({
             Injected into mock responses on matching requests.
           </p>
           <Button type="button" size="sm" variant="outline" onClick={handleAdd}>
-            <RiAddLine className="size-3.5" />
+            <PikaIcon icon={PlusIcon} className="size-3.5" />
             <span>Add Header</span>
           </Button>
         </div>
@@ -110,7 +111,10 @@ export const HeadersEditor = ({
               onClick={() => handleAddPreset(preset.key, preset.value)}
               className="bg-muted/40 hover:bg-muted border-border text-foreground hover:border-muted-foreground/30 flex cursor-pointer items-center gap-1 rounded-md border px-2.5 py-1 font-mono text-xs transition-colors"
             >
-              <RiAddLine className="text-muted-foreground size-3" />
+              <PikaIcon
+                icon={PlusIcon}
+                className="text-muted-foreground size-3"
+              />
               <span>{preset.key}</span>
             </button>
           ))}
@@ -170,7 +174,7 @@ export const HeadersEditor = ({
                 aria-label="Delete Header"
                 onClick={() => handleRemove(index)}
               >
-                <RiDeleteBin6Line className="size-4" />
+                <PikaIcon icon={DeleteDustbin01Icon} className="size-4" />
               </Button>
             </div>
           ))}

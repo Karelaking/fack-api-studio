@@ -17,23 +17,24 @@ function resolveSiteUrl(): string {
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = resolveSiteUrl();
+  const stableLastModified = new Date("2026-11-10T00:00:00.000Z");
 
   return [
     {
       url: baseUrl,
-      lastModified: new Date(),
+      lastModified: stableLastModified,
       changeFrequency: "weekly",
       priority: 1.0,
     },
     {
       url: `${baseUrl}/llms.txt`,
-      lastModified: new Date(),
+      lastModified: stableLastModified,
       changeFrequency: "monthly",
       priority: 0.5,
     },
     {
       url: `${baseUrl}/llms-full.txt`,
-      lastModified: new Date(),
+      lastModified: stableLastModified,
       changeFrequency: "monthly",
       priority: 0.5,
     },

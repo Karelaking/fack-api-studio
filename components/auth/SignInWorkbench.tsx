@@ -1,7 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Activity, Check, Copy, Lock, Terminal } from "lucide-react";
+import {
+  GraphTrendLineIcon,
+  CheckTickCircleIcon,
+  CopyIcon,
+  LockCloseIcon,
+  CodeIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 /**
  * Terminal and live traffic workbench for returning users on the Sign-In flow.
@@ -20,7 +28,11 @@ export const SignInWorkbench = (): React.JSX.Element => {
   };
 
   return (
-    <div className="border-border/80 bg-card/95 text-card-foreground ring-border/50 relative overflow-hidden rounded-xl border shadow-lg ring-1 backdrop-blur-xs transition-all duration-300">
+    <Tabs
+      value={activeTab}
+      onValueChange={(value): void => setActiveTab(value as "traffic" | "cli")}
+      className="border-border/80 bg-card/95 text-card-foreground ring-border/50 relative gap-0 overflow-hidden rounded-xl border shadow-lg ring-1 backdrop-blur-xs transition-all duration-300"
+    >
       {/* Titlebar with window controls and interactive tab switcher */}
       <div className="border-border/70 bg-muted/40 flex flex-wrap items-center justify-between gap-2 border-b px-3.5 py-2">
         <div className="flex items-center gap-1.5">
@@ -36,30 +48,22 @@ export const SignInWorkbench = (): React.JSX.Element => {
             aria-hidden="true"
             className="bg-success/60 size-2.5 rounded-full"
           />
-          <div className="bg-muted/70 ml-2 inline-flex rounded-lg p-0.5">
-            <button
-              type="button"
-              onClick={(): void => setActiveTab("traffic")}
-              className={`text-mini rounded-md px-2 py-0.5 font-mono font-medium transition-all ${
-                activeTab === "traffic"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+          <TabsList className="bg-muted/70 ml-2 h-auto rounded-lg p-0.5">
+            <TabsTrigger
+              value="traffic"
+              size="compact"
+              className="text-mini h-auto rounded-md px-2 py-0.5 font-mono font-medium"
             >
               Live Traffic
-            </button>
-            <button
-              type="button"
-              onClick={(): void => setActiveTab("cli")}
-              className={`text-mini rounded-md px-2 py-0.5 font-mono font-medium transition-all ${
-                activeTab === "cli"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+            </TabsTrigger>
+            <TabsTrigger
+              value="cli"
+              size="compact"
+              className="text-mini h-auto rounded-md px-2 py-0.5 font-mono font-medium"
             >
               CLI Terminal
-            </button>
-          </div>
+            </TabsTrigger>
+          </TabsList>
         </div>
 
         <div className="border-success/25 bg-success/10 text-mini text-success inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono font-semibold">
@@ -72,7 +76,7 @@ export const SignInWorkbench = (): React.JSX.Element => {
       </div>
 
       {/* Tab 1: Live Traffic Log */}
-      {activeTab === "traffic" && (
+      <TabsContent value="traffic">
         <div className="text-caption space-y-2 p-3.5 font-mono leading-relaxed">
           <div className="border-border/40 bg-muted/20 hover:border-border/80 flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 transition-colors">
             <div className="flex items-center gap-2 truncate">
@@ -125,15 +129,19 @@ export const SignInWorkbench = (): React.JSX.Element => {
             </span>
           </div>
         </div>
-      )}
+      </TabsContent>
 
       {/* Tab 2: Interactive CLI Terminal */}
-      {activeTab === "cli" && (
+      <TabsContent value="cli">
         <div className="text-caption p-3.5 font-mono leading-relaxed">
           <div className="border-border/50 bg-muted/30 text-foreground/90 space-y-2 rounded-lg border p-3">
             <div className="flex items-center justify-between">
               <div className="text-primary flex items-center gap-2">
-                <Terminal className="size-3.5" aria-hidden="true" />
+                <PikaIcon
+                  icon={CodeIcon}
+                  className="size-3.5"
+                  aria-hidden="true"
+                />
                 <span className="font-semibold">$ fack dev --port 4000</span>
               </div>
               <button
@@ -143,9 +151,12 @@ export const SignInWorkbench = (): React.JSX.Element => {
                 aria-label="Copy terminal command"
               >
                 {hasCopied ? (
-                  <Check className="text-success size-3.5" />
+                  <PikaIcon
+                    icon={CheckTickCircleIcon}
+                    className="text-success size-3.5"
+                  />
                 ) : (
-                  <Copy className="size-3.5" />
+                  <PikaIcon icon={CopyIcon} className="size-3.5" />
                 )}
               </button>
             </div>
@@ -160,19 +171,23 @@ export const SignInWorkbench = (): React.JSX.Element => {
             </div>
           </div>
         </div>
-      )}
+      </TabsContent>
 
       {/* Footer bar */}
       <div className="border-border/60 bg-muted/20 text-muted-foreground text-mini flex items-center justify-between border-t px-3.5 py-1.5 font-mono">
         <span className="flex items-center gap-1.5">
-          <Lock className="text-primary size-3" aria-hidden="true" />
+          <PikaIcon
+            icon={LockCloseIcon}
+            className="text-primary size-3"
+            aria-hidden="true"
+          />
           fack.enc · AES-256-GCM
         </span>
         <span className="flex items-center gap-1">
-          <Activity className="text-success size-3" />
+          <PikaIcon icon={GraphTrendLineIcon} className="text-success size-3" />
           SQLite WAL Mode
         </span>
       </div>
-    </div>
+    </Tabs>
   );
 };

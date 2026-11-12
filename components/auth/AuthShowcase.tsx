@@ -1,7 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, Radio, Sparkles } from "lucide-react";
+import {
+  CheckTickCircleIcon,
+  WifiOnIcon,
+  SparkleAi01Icon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { SignInWorkbench } from "./SignInWorkbench";
 import { SignUpWorkbench } from "./SignUpWorkbench";
@@ -68,12 +73,15 @@ export const AuthShowcase = ({
 
         {isSignIn ? (
           <div className="border-border/80 bg-background/80 text-foreground inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium shadow-xs">
-            <Radio className="text-success size-3 animate-pulse motion-reduce:animate-none" />
+            <PikaIcon
+              icon={WifiOnIcon}
+              className="text-success size-3 animate-pulse motion-reduce:animate-none"
+            />
             <span>Workspace Login</span>
           </div>
         ) : (
           <div className="border-border/80 bg-background/80 text-foreground inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium shadow-xs">
-            <Sparkles className="text-primary size-3" />
+            <PikaIcon icon={SparkleAi01Icon} className="text-primary size-3" />
             <span>New Workspace</span>
           </div>
         )}
@@ -104,7 +112,8 @@ export const AuthShowcase = ({
               key={capability}
               className="text-foreground/80 flex items-center gap-2.5 text-xs font-medium"
             >
-              <CheckCircle2
+              <PikaIcon
+                icon={CheckTickCircleIcon}
                 className="text-primary size-4 shrink-0"
                 aria-hidden="true"
               />

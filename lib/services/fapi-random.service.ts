@@ -11,6 +11,7 @@
 
 import { faker } from "@faker-js/faker";
 import { getProviderByValue } from "@/lib/faker-registry";
+export { getDefaultProviderForParam } from "./fapi-preview.service";
 
 const FORBIDDEN_PROPERTIES = new Set(["__proto__", "prototype", "constructor"]);
 
@@ -69,61 +70,6 @@ export function generateRandomFapiValue(providerPath: string): string {
 
   const provider = getProviderByValue(trimmed);
   return provider?.example ?? "sample_value";
-}
-
-/**
- * Suggests an intelligent default FAPI provider method based on the parameter name.
- */
-export function getDefaultProviderForParam(paramName: string): string {
-  const lower = paramName.toLowerCase().replace(/[-_]/g, "");
-
-  if (lower === "id") {
-    return "number.int";
-  }
-  if (lower.includes("uuid") || lower.includes("guid")) {
-    return "string.uuid";
-  }
-  if (lower.endsWith("id")) {
-    return "number.int";
-  }
-  if (lower.includes("email")) {
-    return "internet.email";
-  }
-  if (
-    lower.includes("user") ||
-    lower.includes("author") ||
-    lower.includes("name")
-  ) {
-    return "person.firstName";
-  }
-  if (lower.includes("slug")) {
-    return "lorem.slug";
-  }
-  if (
-    lower.includes("category") ||
-    lower.includes("dept") ||
-    lower.includes("department")
-  ) {
-    return "commerce.department";
-  }
-  if (
-    lower.includes("date") ||
-    lower.includes("time") ||
-    lower.includes("year")
-  ) {
-    return "date.recent";
-  }
-  if (lower.includes("phone") || lower.includes("mobile")) {
-    return "phone.number";
-  }
-  if (lower.includes("city")) {
-    return "location.city";
-  }
-  if (lower.includes("country")) {
-    return "location.country";
-  }
-
-  return "string.alphanumeric";
 }
 
 /**

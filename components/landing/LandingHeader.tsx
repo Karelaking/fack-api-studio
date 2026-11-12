@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { AlignJustify } from "lucide-react";
+import { PikaIcon } from "@pikaicons/react";
+import { BurgerMenuThreeIcon } from "@pikaicons/core-free";
 import { cn } from "@/lib/utils";
 import { CollaborateButton } from "@/components/landing/CollaborateButton";
 import {
@@ -142,18 +143,16 @@ export const LandingHeader = (): React.JSX.Element => {
         <div className="flex items-center gap-2 lg:hidden">
           <ThemeToggle />
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label="Toggle Navigation Menu"
-                />
-              }
-            >
-              <AlignJustify size={18} />
-              <span className="sr-only">Toggle Navigation Menu</span>
+            <SheetTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Toggle Navigation Menu"
+              >
+                <PikaIcon icon={BurgerMenuThreeIcon} size={18} />
+                <span className="sr-only">Toggle Navigation Menu</span>
+              </Button>
             </SheetTrigger>
 
             <SheetContent side="right" className="w-80">

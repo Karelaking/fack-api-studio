@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import * as PikaCore from "@pikaicons/core-free";
+import { SearchIcon, MultipleCrossCancelIcon } from "@pikaicons/core-free";
 import { PikaIcon } from "@pikaicons/react";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +76,7 @@ export const ProviderPaletteSearch = ({
       {/* Search input */}
       <div className="relative">
         <PikaIcon
-          icon={PikaCore.SearchIcon}
+          icon={SearchIcon}
           size={14}
           className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2"
           aria-hidden="true"
@@ -102,7 +102,7 @@ export const ProviderPaletteSearch = ({
             aria-label="Clear search"
           >
             <PikaIcon
-              icon={PikaCore.MultipleCrossCancelIcon}
+              icon={MultipleCrossCancelIcon}
               size={14}
               aria-hidden="true"
             />

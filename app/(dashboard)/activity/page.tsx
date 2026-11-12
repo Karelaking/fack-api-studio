@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import { RiFileList3Line } from "@remixicon/react";
+import { PikaIcon } from "@pikaicons/react";
+import { File02Icon } from "@pikaicons/core-free";
 
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { PageHeading, PageShell } from "@/components/dashboard/PageShell";
@@ -20,16 +21,12 @@ export default function ActivityLogsPage(): React.JSX.Element {
       />
 
       <EmptyState
-        icon={<RiFileList3Line />}
+        icon={<PikaIcon icon={File02Icon} />}
         title="No requests recorded yet"
         description="Request logs live inside each project. Open one and switch to Logs to watch traffic arrive as it happens."
         action={
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<Link href="/dashboard" />}
-          >
-            Browse projects
+          <Button variant="outline" asChild>
+            <Link href="/dashboard">Browse projects</Link>
           </Button>
         }
       />

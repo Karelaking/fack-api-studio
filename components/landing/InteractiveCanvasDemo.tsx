@@ -1,21 +1,30 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  Copy,
-  Check,
-  Sparkles,
-  Activity,
-  ArrowRight,
-  Globe,
-  Terminal,
-  RefreshCw,
-  Layers,
-  Timer,
-  TriangleAlert,
-  Zap,
-} from "lucide-react";
+  CopyIcon,
+  CheckTickCircleIcon,
+  SparkleAi01Icon,
+  GraphTrendLineIcon,
+  ArrowRightIcon,
+  GlobeIcon,
+  CodeIcon,
+  RefreshIcon,
+  LayerThreeIcon,
+  ClockIcon,
+  AlertTriangleIcon,
+  LightningThunderElectricOnIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { HttpMethod } from "@/db/schema";
 
@@ -188,39 +197,7 @@ export const InteractiveCanvasDemo = (): React.JSX.Element => {
   const [generatedAt, setGeneratedAt] = useState<string>(
     "2026-08-01T12:00:00.000Z",
   );
-  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const demoOrigin = useDemoOrigin();
-
-  const handleTabKeyDown = (
-    event: React.KeyboardEvent<HTMLDivElement>,
-  ): void => {
-    const currentIndex = RESPONSE_TABS.findIndex(
-      (tab): boolean => tab.id === activeTab,
-    );
-    let nextIndex: number;
-
-    switch (event.key) {
-      case "ArrowRight":
-        nextIndex = (currentIndex + 1) % RESPONSE_TABS.length;
-        break;
-      case "ArrowLeft":
-        nextIndex =
-          (currentIndex - 1 + RESPONSE_TABS.length) % RESPONSE_TABS.length;
-        break;
-      case "Home":
-        nextIndex = 0;
-        break;
-      case "End":
-        nextIndex = RESPONSE_TABS.length - 1;
-        break;
-      default:
-        return;
-    }
-
-    event.preventDefault();
-    setActiveTab(RESPONSE_TABS[nextIndex].id);
-    tabRefs.current[nextIndex]?.focus();
-  };
 
   const toggleField = (id: string): void => {
     setFields((prev: FieldItem[]): FieldItem[] =>
@@ -381,7 +358,11 @@ export type ApiResponse = {
           <div className="bg-card/30 flex flex-col justify-between space-y-5 p-5 sm:p-6 lg:col-span-6 lg:p-7">
             <div className="border-border/40 flex items-center justify-between gap-3 border-b pb-4">
               <span className="text-foreground flex min-w-0 items-center gap-1.5 text-xs font-bold">
-                <Layers className="text-info size-3.5" aria-hidden="true" />
+                <PikaIcon
+                  icon={LayerThreeIcon}
+                  className="text-info size-3.5"
+                  aria-hidden="true"
+                />
                 <span className="truncate">Dashboard: Endpoint Builder</span>
               </span>
               <span className="text-muted-foreground bg-muted/60 border-border/60 text-caption shrink-0 rounded-full border px-2.5 py-0.5 font-semibold">
@@ -420,18 +401,34 @@ export type ApiResponse = {
                   )}
                 </fieldset>
 
-                <select
-                  value={routePath}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                    setRoutePath(e.target.value)
-                  }
-                  className="border-border/60 bg-background text-foreground focus-visible:ring-ring/50 flex-1 cursor-pointer rounded-xl border px-3 py-1.5 font-mono text-xs font-semibold shadow-xs focus-visible:ring-3 focus-visible:outline-none"
-                  aria-label="Select route path"
-                >
-                  <option value="/api/v1/users">/api/v1/users</option>
-                  <option value="/api/v1/products">/api/v1/products</option>
-                  <option value="/api/v1/orders">/api/v1/orders</option>
-                </select>
+                <Select value={routePath} onValueChange={setRoutePath}>
+                  <SelectTrigger
+                    aria-label="Select route path"
+                    className="border-border/60 bg-background text-foreground h-auto flex-1 rounded-xl border px-3 py-1.5 font-mono text-xs font-semibold shadow-xs"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem
+                      value="/api/v1/users"
+                      className="font-mono text-xs"
+                    >
+                      /api/v1/users
+                    </SelectItem>
+                    <SelectItem
+                      value="/api/v1/products"
+                      className="font-mono text-xs"
+                    >
+                      /api/v1/products
+                    </SelectItem>
+                    <SelectItem
+                      value="/api/v1/orders"
+                      className="font-mono text-xs"
+                    >
+                      /api/v1/orders
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -467,7 +464,10 @@ export type ApiResponse = {
                             : "border-border/60 text-transparent",
                         )}
                       >
-                        <Check className="size-3" />
+                        <PikaIcon
+                          icon={CheckTickCircleIcon}
+                          className="size-3"
+                        />
                       </span>
                       <span className="truncate font-bold">{f.key}</span>
                     </span>
@@ -482,7 +482,8 @@ export type ApiResponse = {
             <div className="space-y-2">
               <span className="text-foreground flex items-center justify-between gap-3 text-xs font-bold">
                 <span className="flex items-center gap-1">
-                  <Activity
+                  <PikaIcon
+                    icon={GraphTrendLineIcon}
                     className="text-warning size-3.5"
                     aria-hidden="true"
                   />
@@ -506,7 +507,12 @@ export type ApiResponse = {
                       : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted",
                   )}
                 >
-                  <Zap className="size-3" aria-hidden="true" /> 6ms
+                  <PikaIcon
+                    icon={LightningThunderElectricOnIcon}
+                    className="size-3"
+                    aria-hidden="true"
+                  />{" "}
+                  6ms
                 </button>
                 <button
                   type="button"
@@ -519,7 +525,12 @@ export type ApiResponse = {
                       : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted",
                   )}
                 >
-                  <Globe className="size-3" aria-hidden="true" /> 24ms
+                  <PikaIcon
+                    icon={GlobeIcon}
+                    className="size-3"
+                    aria-hidden="true"
+                  />{" "}
+                  24ms
                 </button>
                 <button
                   type="button"
@@ -532,7 +543,12 @@ export type ApiResponse = {
                       : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted",
                   )}
                 >
-                  <Timer className="size-3" aria-hidden="true" /> 280ms
+                  <PikaIcon
+                    icon={ClockIcon}
+                    className="size-3"
+                    aria-hidden="true"
+                  />{" "}
+                  280ms
                 </button>
                 <button
                   type="button"
@@ -545,8 +561,12 @@ export type ApiResponse = {
                       : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted",
                   )}
                 >
-                  <TriangleAlert className="size-3" aria-hidden="true" /> 500
-                  error
+                  <PikaIcon
+                    icon={AlertTriangleIcon}
+                    className="size-3"
+                    aria-hidden="true"
+                  />{" "}
+                  500 error
                 </button>
               </fieldset>
             </div>
@@ -557,44 +577,36 @@ export type ApiResponse = {
                 className="bg-foreground text-background focus-visible:ring-ring/50 hover:bg-foreground/90 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-6 py-3 text-xs font-bold whitespace-nowrap shadow-md transition-colors focus-visible:ring-3 focus-visible:outline-none sm:text-sm"
               >
                 <span>Launch dashboard to create yours</span>
-                <ArrowRight className="size-3.5" aria-hidden="true" />
+                <PikaIcon
+                  icon={ArrowRightIcon}
+                  className="size-3.5"
+                  aria-hidden="true"
+                />
               </Link>
             </div>
           </div>
 
-          <div className="bg-background flex flex-col justify-between space-y-4 p-6 sm:p-8 lg:col-span-6">
+          <Tabs
+            value={activeTab}
+            onValueChange={(value): void => setActiveTab(value as ResponseTab)}
+            className="bg-background flex flex-col justify-between gap-4 p-6 sm:p-8 lg:col-span-6"
+          >
             <div className="border-border/40 flex flex-wrap items-center justify-between gap-3 border-b pb-4">
-              <div
-                role="tablist"
+              <TabsList
                 aria-label="Response format"
-                tabIndex={-1}
-                onKeyDown={handleTabKeyDown}
-                className="bg-muted/50 border-border/40 flex items-center gap-1 rounded-xl border p-1"
+                className="bg-muted/50 border-border/40 flex h-auto items-center gap-1 rounded-xl border p-1"
               >
-                {RESPONSE_TABS.map((tab, index: number) => (
-                  <button
+                {RESPONSE_TABS.map((tab) => (
+                  <TabsTrigger
                     key={tab.id}
-                    ref={(node): void => {
-                      tabRefs.current[index] = node;
-                    }}
-                    type="button"
-                    role="tab"
-                    id={`demo-tab-${tab.id}`}
-                    aria-selected={activeTab === tab.id}
-                    aria-controls="demo-panel"
-                    tabIndex={activeTab === tab.id ? 0 : -1}
-                    onClick={(): void => setActiveTab(tab.id)}
-                    className={cn(
-                      "cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold transition-colors focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none",
-                      activeTab === tab.id
-                        ? "bg-background text-foreground border-border/60 border shadow-xs"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
+                    value={tab.id}
+                    size="compact"
+                    className="h-auto cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold"
                   >
                     {tab.label}
-                  </button>
+                  </TabsTrigger>
                 ))}
-              </div>
+              </TabsList>
 
               <div className="flex items-center gap-2">
                 <button
@@ -603,7 +615,8 @@ export type ApiResponse = {
                   aria-label="Regenerate sample values"
                   className="border-border/60 bg-muted/40 hover:bg-muted text-foreground focus-visible:ring-ring/50 cursor-pointer rounded-lg border p-1.5 transition-colors focus-visible:ring-3 focus-visible:outline-none"
                 >
-                  <RefreshCw
+                  <PikaIcon
+                    icon={RefreshIcon}
                     className={cn(
                       "size-3.5",
                       refreshing && "text-info animate-spin",
@@ -627,7 +640,8 @@ export type ApiResponse = {
                 >
                   {copyState === "copied" ? (
                     <>
-                      <Check
+                      <PikaIcon
+                        icon={CheckTickCircleIcon}
                         className="text-success size-3.5"
                         aria-hidden="true"
                       />
@@ -635,7 +649,8 @@ export type ApiResponse = {
                     </>
                   ) : copyState === "failed" ? (
                     <>
-                      <TriangleAlert
+                      <PikaIcon
+                        icon={AlertTriangleIcon}
                         className="text-danger size-3.5"
                         aria-hidden="true"
                       />
@@ -643,7 +658,11 @@ export type ApiResponse = {
                     </>
                   ) : (
                     <>
-                      <Copy className="size-3.5" aria-hidden="true" />
+                      <PikaIcon
+                        icon={CopyIcon}
+                        className="size-3.5"
+                        aria-hidden="true"
+                      />
                       <span>Copy</span>
                     </>
                   )}
@@ -679,32 +698,40 @@ export type ApiResponse = {
               </span>
             </div>
 
-            <div
-              id="demo-panel"
-              role="tabpanel"
-              aria-labelledby={`demo-tab-${activeTab}`}
-              tabIndex={0}
-              className="border-border/60 bg-muted/30 focus-visible:ring-ring/50 scrollbar-subtle relative min-h-77.5 flex-1 overflow-x-auto rounded-2xl border p-5 font-mono text-xs shadow-sm focus-visible:ring-3 focus-visible:outline-none"
-            >
-              <pre className="text-foreground font-mono text-xs leading-relaxed whitespace-pre">
-                {currentCode}
-              </pre>
-            </div>
+            {RESPONSE_TABS.map((tab) => (
+              <TabsContent
+                key={tab.id}
+                value={tab.id}
+                className="border-border/60 bg-muted/30 focus-visible:ring-ring/50 scrollbar-subtle relative mt-0 min-h-77.5 flex-1 overflow-x-auto rounded-2xl border p-5 font-mono text-xs shadow-sm focus-visible:ring-3 focus-visible:outline-none"
+              >
+                <pre className="text-foreground font-mono text-xs leading-relaxed whitespace-pre">
+                  {currentCode}
+                </pre>
+              </TabsContent>
+            ))}
 
             <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-success flex items-center gap-1">
-                  <Sparkles className="size-3" aria-hidden="true" />
+                  <PikaIcon
+                    icon={SparkleAi01Icon}
+                    className="size-3"
+                    aria-hidden="true"
+                  />
                   <span>Instant dynamic synthesis</span>
                 </span>
                 <span className="text-info flex items-center gap-1">
-                  <Terminal className="size-3" aria-hidden="true" />
+                  <PikaIcon
+                    icon={CodeIcon}
+                    className="size-3"
+                    aria-hidden="true"
+                  />
                   <span>Ready for curl and fetch</span>
                 </span>
               </div>
               <span className="text-muted-foreground">Result</span>
             </div>
-          </div>
+          </Tabs>
         </div>
       </div>
 

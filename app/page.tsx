@@ -2,39 +2,16 @@ import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { HeroSection } from "@/components/landing/HeroSection";
+import { LazyInteractiveCanvasDemo } from "@/components/landing/LazyInteractiveCanvasDemo";
 import { HowToStartSection } from "@/components/landing/HowToStartSection";
+import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { Footer } from "@/components/landing/Footer";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const LogoCloudSection = dynamic(() =>
   import("@/components/landing/LogoCloudSection").then(
     (mod) => mod.LogoCloudSection,
   ),
-);
-
-const FeaturesSection = dynamic(() =>
-  import("@/components/landing/FeaturesSection").then(
-    (mod) => mod.FeaturesSection,
-  ),
-);
-
-const InteractiveCanvasDemo = dynamic(
-  () =>
-    import("@/components/landing/InteractiveCanvasDemo").then(
-      (mod) => mod.InteractiveCanvasDemo,
-    ),
-  {
-    loading: (): React.JSX.Element => (
-      <div className="bg-background border-border/40 w-full border-b py-16 md:py-24">
-        <div className="border-border/40 mx-auto max-w-7xl border-x px-4 sm:px-6 lg:px-8">
-          <div className="border-border/40 overflow-hidden rounded-xl border">
-            <Skeleton className="h-112.5 w-full" />
-          </div>
-        </div>
-      </div>
-    ),
-  },
 );
 
 export const metadata: Metadata = {
@@ -168,7 +145,7 @@ export default function HomePage(): React.JSX.Element {
       <LandingHeader />
       <main className="w-full flex-1" id="main-content">
         <HeroSection />
-        <InteractiveCanvasDemo />
+        <LazyInteractiveCanvasDemo />
         <HowToStartSection />
         <LogoCloudSection />
         <FeaturesSection />

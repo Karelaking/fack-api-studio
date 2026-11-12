@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import * as PikaCore from "@pikaicons/core-free";
+import { CopyIcon, RefreshIcon } from "@pikaicons/core-free";
 import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ export const InspectorTryUrlBar = ({
             className="h-6 shrink-0 gap-1 px-1.5 text-xs"
             title="Copy full mock URL"
           >
-            <PikaIcon icon={PikaCore.CopyIcon} size={12} aria-hidden="true" />
+            <PikaIcon icon={CopyIcon} size={12} aria-hidden="true" />
             <span>Copy</span>
           </Button>
         </div>
@@ -60,7 +60,7 @@ export const InspectorTryUrlBar = ({
         {isTryingRequest ? (
           <>
             <PikaIcon
-              icon={PikaCore.RefreshIcon}
+              icon={RefreshIcon}
               size={12}
               className="mr-1 animate-spin motion-reduce:animate-none"
               aria-hidden="true"

@@ -5,15 +5,27 @@
 /* eslint-disable jsx-a11y/prefer-tag-over-role */
 
 import * as React from "react";
+import { PikaIcon } from "@pikaicons/react";
 import {
-  RiDeleteBin6Line,
-  RiRefreshLine,
-  RiSearchLine,
-  RiTimeLine,
-  RiArrowDownSLine,
-  RiArrowRightSLine,
-  RiTerminalBoxLine,
-} from "@remixicon/react";
+  ChevronDownIcon,
+  ChevronRightIcon,
+  ClockIcon,
+  CodeIcon,
+  DeleteDustbin01Icon,
+  RefreshIcon,
+  SearchIcon,
+} from "@pikaicons/core-free";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   InputGroup,
@@ -62,11 +74,6 @@ export const ProjectLogs = ({
   };
 
   const handleClear = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to clear all request logs for this project?",
-    );
-    if (!confirmed) return;
-
     setLoading(true);
     try {
       await clearRequestLogs(projectId);
@@ -129,7 +136,10 @@ export const ProjectLogs = ({
         <div className="flex max-w-md min-w-60 flex-1 items-center gap-2">
           <InputGroup className="flex-1">
             <InputGroupAddon>
-              <RiSearchLine className="text-muted-foreground h-4 w-4" />
+              <PikaIcon
+                icon={SearchIcon}
+                className="text-muted-foreground size-4"
+              />
             </InputGroupAddon>
             <InputGroupInput
               value={search}
@@ -166,23 +176,46 @@ export const ProjectLogs = ({
             onClick={handleRefresh}
             disabled={loading}
           >
-            <RiRefreshLine
-              className={cn("h-4 w-4", loading && "animate-spin")}
+            <PikaIcon
+              icon={RefreshIcon}
+              className={cn("size-4", loading && "animate-spin")}
             />
             <span>Refresh</span>
           </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            title="Clear Logs"
-            aria-label="Clear Logs"
-            onClick={handleClear}
-            disabled={loading || logs.length === 0}
-          >
-            <RiDeleteBin6Line className="h-4 w-4" />
-            <span>Clear Logs</span>
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                title="Clear Logs"
+                aria-label="Clear Logs"
+                disabled={loading || logs.length === 0}
+              >
+                <PikaIcon icon={DeleteDustbin01Icon} className="size-4" />
+                <span>Clear Logs</span>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Clear all request logs?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to clear all request logs for this
+                  project? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  disabled={loading}
+                  onClick={() => void handleClear()}
+                >
+                  Clear Logs
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
@@ -193,7 +226,10 @@ export const ProjectLogs = ({
       >
         {filteredLogs.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-            <RiTerminalBoxLine className="text-muted-foreground/30 h-10 w-10" />
+            <PikaIcon
+              icon={CodeIcon}
+              className="text-muted-foreground/30 size-10"
+            />
             <div className="flex flex-col gap-0.5">
               <span className="text-sm font-semibold">
                 No Request Logs Found
@@ -264,7 +300,7 @@ export const ProjectLogs = ({
                     className="flex cursor-pointer items-center gap-4 px-4 py-3 text-xs font-medium select-none"
                   >
                     <span className="text-muted-foreground/60 flex w-16 items-center gap-1 font-mono">
-                      <RiTimeLine className="h-3 w-3" />
+                      <PikaIcon icon={ClockIcon} className="size-3" />
                       {formatTimestamp(log.timestamp)}
                     </span>
                     <span
@@ -297,9 +333,15 @@ export const ProjectLogs = ({
                       {log.statusCode}
                     </span>
                     {isExpanded ? (
-                      <RiArrowDownSLine className="text-muted-foreground h-4 w-4" />
+                      <PikaIcon
+                        icon={ChevronDownIcon}
+                        className="text-muted-foreground size-4"
+                      />
                     ) : (
-                      <RiArrowRightSLine className="text-muted-foreground h-4 w-4" />
+                      <PikaIcon
+                        icon={ChevronRightIcon}
+                        className="text-muted-foreground size-4"
+                      />
                     )}
                   </div>
 

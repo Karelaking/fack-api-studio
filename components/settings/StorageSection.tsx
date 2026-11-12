@@ -4,12 +4,13 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  RiDownload2Line,
-  RiLoader2Line,
-  RiUpload2Line,
-  RiHardDrive2Line,
-  RiCloudLine,
-} from "@remixicon/react";
+  CloudIcon,
+  DatabaseIcon,
+  DownloadBarDownIcon,
+  RefreshIcon,
+  UploadBarUpIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 
 import type { StorageStatus } from "@/lib/storage/status";
 import { Button } from "@/components/ui/button";
@@ -121,13 +122,15 @@ export function StorageSection({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             {isLocal ? (
-              <RiHardDrive2Line
-                className="text-primary h-5 w-5"
+              <PikaIcon
+                icon={DatabaseIcon}
+                className="text-primary size-5"
                 aria-hidden="true"
               />
             ) : (
-              <RiCloudLine
-                className="text-primary h-5 w-5"
+              <PikaIcon
+                icon={CloudIcon}
+                className="text-primary size-5"
                 aria-hidden="true"
               />
             )}
@@ -174,7 +177,7 @@ export function StorageSection({
                 }));
               }}
             >
-              <RiDownload2Line aria-hidden="true" />
+              <PikaIcon icon={DownloadBarDownIcon} aria-hidden="true" />
               Download backup
             </Button>
 
@@ -185,9 +188,13 @@ export function StorageSection({
               onClick={() => fileInputRef.current?.click()}
             >
               {importing ? (
-                <RiLoader2Line className="animate-spin" aria-hidden="true" />
+                <PikaIcon
+                  icon={RefreshIcon}
+                  className="size-4 animate-spin"
+                  aria-hidden="true"
+                />
               ) : (
-                <RiUpload2Line aria-hidden="true" />
+                <PikaIcon icon={UploadBarUpIcon} aria-hidden="true" />
               )}
               Import backup
             </Button>

@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import { RiEarthLine } from "@remixicon/react";
+import { PikaIcon } from "@pikaicons/react";
+import { GlobeIcon } from "@pikaicons/core-free";
 
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { PageHeading, PageShell } from "@/components/dashboard/PageShell";
@@ -22,7 +23,7 @@ export default function DomainsPage(): React.JSX.Element {
       />
 
       <EmptyState
-        icon={<RiEarthLine />}
+        icon={<PikaIcon icon={GlobeIcon} />}
         title="Domain mapping isn't available in this build"
         description={
           <>
@@ -34,12 +35,8 @@ export default function DomainsPage(): React.JSX.Element {
           </>
         }
         action={
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<Link href="/dashboard" />}
-          >
-            Browse projects
+          <Button variant="outline" asChild>
+            <Link href="/dashboard">Browse projects</Link>
           </Button>
         }
       />

@@ -4,7 +4,8 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import { toast } from "sonner";
-import { RiLoader2Line } from "@remixicon/react";
+import { RefreshIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { createProject } from "@/lib/actions/projects";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,8 +169,9 @@ export function CreateProjectDialog(): React.JSX.Element {
             >
               {loading ? (
                 <>
-                  <RiLoader2Line
-                    className="h-4 w-4 animate-spin"
+                  <PikaIcon
+                    icon={RefreshIcon}
+                    className="size-4 animate-spin"
                     aria-hidden="true"
                   />
                   <span>Creating...</span>

@@ -133,9 +133,10 @@ export async function applyLatency(min: number, max: number): Promise<void> {
 
   const effectiveMin = Math.max(0, min);
   const effectiveMax = Math.max(effectiveMin, max);
-  const delay =
+  const rawDelay =
     Math.floor(Math.random() * (effectiveMax - effectiveMin + 1)) +
     effectiveMin;
+  const delay = Math.min(rawDelay, 30_000);
 
   await new Promise((resolve) => setTimeout(resolve, delay));
   mockTrace.traceSuccess("applyLatency", `Delayed by ${delay}ms`);

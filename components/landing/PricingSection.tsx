@@ -1,9 +1,13 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
-import { Check, HardDrive, Server, ArrowRight } from "lucide-react";
-import { RiGithubFill } from "@remixicon/react";
+import {
+  CheckTickCircleIcon,
+  DatabaseIcon,
+  ServerIcon,
+  ArrowRightIcon,
+  GithubSolidIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 
 /**
  * Open Source Storage Options & Licensing section styled in Hero grid theme.
@@ -35,7 +39,11 @@ export const PricingSection = (): React.JSX.Element => {
             <div>
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-foreground flex items-center gap-2 text-xl font-extrabold">
-                  <HardDrive className="text-info size-5" aria-hidden="true" />
+                  <PikaIcon
+                    icon={DatabaseIcon}
+                    className="text-info size-5"
+                    aria-hidden="true"
+                  />
                   Local-First Self-Hosted
                 </h3>
                 <span className="text-muted-foreground bg-muted/60 border-border/60 text-caption rounded-full border px-2.5 py-0.5 font-semibold">
@@ -59,28 +67,32 @@ export const PricingSection = (): React.JSX.Element => {
 
               <ul className="text-foreground mt-8 space-y-3 text-xs font-medium">
                 <li className="flex items-center gap-2">
-                  <Check
+                  <PikaIcon
+                    icon={CheckTickCircleIcon}
                     className="text-success size-4 shrink-0"
                     aria-hidden="true"
                   />
                   <span>SQLite persistence on your own machine</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check
+                  <PikaIcon
+                    icon={CheckTickCircleIcon}
                     className="text-success size-4 shrink-0"
                     aria-hidden="true"
                   />
                   <span>Instant local auto-save & workspace sync</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check
+                  <PikaIcon
+                    icon={CheckTickCircleIcon}
                     className="text-success size-4 shrink-0"
                     aria-hidden="true"
                   />
                   <span>Portable single-file OpenAPI & JSON schema export</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check
+                  <PikaIcon
+                    icon={CheckTickCircleIcon}
                     className="text-success size-4 shrink-0"
                     aria-hidden="true"
                   />
@@ -95,7 +107,11 @@ export const PricingSection = (): React.JSX.Element => {
               className="border-border/80 bg-background text-foreground hover:bg-muted focus-visible:ring-ring/50 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border px-6 py-3 text-center text-xs font-bold shadow-xs transition-colors focus-visible:ring-3 focus-visible:outline-none sm:text-sm"
             >
               <span>Launch Local Workspace</span>
-              <ArrowRight className="size-3.5" aria-hidden="true" />
+              <PikaIcon
+                icon={ArrowRightIcon}
+                className="size-3.5"
+                aria-hidden="true"
+              />
             </Link>
           </article>
 
@@ -104,7 +120,11 @@ export const PricingSection = (): React.JSX.Element => {
             <div>
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-foreground flex items-center gap-2 text-xl font-extrabold">
-                  <Server className="text-info size-5" aria-hidden="true" />
+                  <PikaIcon
+                    icon={ServerIcon}
+                    className="text-info size-5"
+                    aria-hidden="true"
+                  />
                   Self-Hosted & Docker
                 </h3>
                 <span className="text-muted-foreground bg-muted/60 border-border/60 text-caption rounded-full border px-2.5 py-0.5 font-semibold">
@@ -124,7 +144,8 @@ export const PricingSection = (): React.JSX.Element => {
 
               <ul className="text-foreground mt-8 space-y-3 text-xs font-medium">
                 <li className="flex items-center gap-2">
-                  <Check
+                  <PikaIcon
+                    icon={CheckTickCircleIcon}
                     className="text-success size-4 shrink-0"
                     aria-hidden="true"
                   />
@@ -133,7 +154,8 @@ export const PricingSection = (): React.JSX.Element => {
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check
+                  <PikaIcon
+                    icon={CheckTickCircleIcon}
                     className="text-success size-4 shrink-0"
                     aria-hidden="true"
                   />
@@ -142,14 +164,16 @@ export const PricingSection = (): React.JSX.Element => {
                   </span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check
+                  <PikaIcon
+                    icon={CheckTickCircleIcon}
                     className="text-success size-4 shrink-0"
                     aria-hidden="true"
                   />
                   <span>Docker container & docker-compose ready to run</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check
+                  <PikaIcon
+                    icon={CheckTickCircleIcon}
                     className="text-success size-4 shrink-0"
                     aria-hidden="true"
                   />
@@ -165,9 +189,17 @@ export const PricingSection = (): React.JSX.Element => {
               aria-label="View Fack API source on GitHub"
               className="bg-foreground text-background focus-visible:ring-ring/50 hover:bg-foreground/90 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-6 py-3 text-xs font-bold shadow-md transition-colors focus-visible:ring-3 focus-visible:outline-none sm:text-sm"
             >
-              <RiGithubFill className="size-4" aria-hidden="true" />
+              <PikaIcon
+                icon={GithubSolidIcon}
+                className="size-4"
+                aria-hidden="true"
+              />
               <span>View on GitHub</span>
-              <ArrowRight className="size-3.5" aria-hidden="true" />
+              <PikaIcon
+                icon={ArrowRightIcon}
+                className="size-3.5"
+                aria-hidden="true"
+              />
             </a>
           </article>
         </div>

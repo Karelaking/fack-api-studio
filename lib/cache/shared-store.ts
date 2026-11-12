@@ -15,7 +15,6 @@
  * local state after a short circuit-breaker window instead of failing requests.
  */
 
-import { deserialize, serialize } from "node:v8";
 import { LoggerRegistry } from "@/lib/logger-registry";
 
 const sharedStoreLogger = LoggerRegistry.get("shared-store");
@@ -354,18 +353,43 @@ async function withShared<T>(
 
 // ── Serialization ───────────────────────────────────────────────────────────
 
+const DATE_FIELD_FLAG = "__$fack_date";
+
+function safeJsonReplacer(this: unknown, key: string, value: unknown): unknown {
+  const container = this as Record<string, unknown> | undefined;
+  const raw = container && key ? container[key] : value;
+  if (raw instanceof Date) {
+    return { [DATE_FIELD_FLAG]: raw.toISOString() };
+  }
+  return value;
+}
+
+function safeJsonReviver(_key: string, value: unknown): unknown {
+  if (
+    value &&
+    typeof value === "object" &&
+    DATE_FIELD_FLAG in value &&
+    typeof (value as Record<string, unknown>)[DATE_FIELD_FLAG] === "string"
+  ) {
+    return new Date(
+      (value as Record<string, unknown>)[DATE_FIELD_FLAG] as string,
+    );
+  }
+  return value;
+}
+
 /**
- * `v8.serialize` keeps `Date` and other built-in values intact, unlike JSON.
- * Cached rows (projects, routes) contain `Date` columns, so a plain JSON
- * round-trip would turn them into strings and break callers.
+ * Secure JSON serialization with Date preservation.
+ * Bypasses insecure v8.deserialize to prevent prototype pollution and RCE on shared caches.
  */
 export function encodeSharedValue(value: unknown): string | null {
   try {
-    const buffer = serialize(value);
+    const json = JSON.stringify(value, safeJsonReplacer);
+    const buffer = Buffer.from(json, "utf-8");
     if (buffer.byteLength > MAX_SHARED_VALUE_BYTES) {
       return null;
     }
-    return buffer.toString("base64");
+    return json;
   } catch (error) {
     sharedStoreLogger.warn("Could not serialize shared cache value", error);
     return null;
@@ -374,7 +398,7 @@ export function encodeSharedValue(value: unknown): string | null {
 
 export function decodeSharedValue<T>(raw: string): T | undefined {
   try {
-    return deserialize(Buffer.from(raw, "base64")) as T;
+    return JSON.parse(raw, safeJsonReviver) as T;
   } catch (error) {
     sharedStoreLogger.warn("Could not deserialize shared cache value", error);
     return undefined;

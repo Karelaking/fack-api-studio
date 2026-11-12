@@ -3,14 +3,15 @@
 import * as React from "react";
 import { toast } from "sonner";
 import {
-  RiTerminalBoxLine,
-  RiKey2Line,
-  RiFileCopyLine,
-  RiEyeLine,
-  RiEyeOffLine,
-  RiCheckLine,
-  RiDownloadCloud2Line,
-} from "@remixicon/react";
+  CodeIcon,
+  KeyLeftIcon,
+  CopyIcon,
+  EyeOnIcon,
+  EyeOffIcon,
+  CheckTickCircleIcon,
+  CloudArrowDownloadIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import {
   getProjectCliDetails,
   type ProjectCliDetails,
@@ -81,28 +82,32 @@ export const CliRunDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          trigger ?? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="shrink-0 gap-1.5"
-              title="Run with Local CLI"
-              aria-label="Run with Local CLI"
-            >
-              <RiTerminalBoxLine className="text-primary h-4 w-4" />
-              <span>Run with CLI</span>
-            </Button>
+      <DialogTrigger asChild>
+        {trigger ? (
+          React.isValidElement(trigger) ? (
+            trigger
+          ) : (
+            <span>{trigger}</span>
           )
-        }
-      />
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-1.5"
+            title="Run with Local CLI"
+            aria-label="Run with Local CLI"
+          >
+            <PikaIcon icon={CodeIcon} className="text-primary size-4" />
+            <span>Run with CLI</span>
+          </Button>
+        )}
+      </DialogTrigger>
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <div className="flex items-center justify-between pr-4">
             <DialogTitle className="flex items-center gap-2">
-              <RiTerminalBoxLine className="text-primary h-5 w-5" />
+              <PikaIcon icon={CodeIcon} className="text-primary size-5" />
               <span>Run with Local CLI</span>
             </DialogTitle>
             <span className="bg-primary/10 text-primary border-primary/20 rounded-full border px-2.5 py-0.5 text-xs font-semibold">
@@ -124,7 +129,7 @@ export const CliRunDialog = ({
                 htmlFor="cli-dialog-key"
                 className="text-muted-foreground flex items-center gap-1.5 text-xs font-semibold"
               >
-                <RiKey2Line className="h-4 w-4" />
+                <PikaIcon icon={KeyLeftIcon} className="size-4" />
                 <span>Project Decryption Key</span>
               </label>
               <span className="text-muted-foreground text-caption">
@@ -147,9 +152,9 @@ export const CliRunDialog = ({
                   title={showKey ? "Hide key" : "Show key"}
                 >
                   {showKey ? (
-                    <RiEyeOffLine className="h-4 w-4" />
+                    <PikaIcon icon={EyeOffIcon} className="size-4" />
                   ) : (
-                    <RiEyeLine className="h-4 w-4" />
+                    <PikaIcon icon={EyeOnIcon} className="size-4" />
                   )}
                 </button>
               </div>
@@ -161,12 +166,15 @@ export const CliRunDialog = ({
               >
                 {copiedKey ? (
                   <>
-                    <RiCheckLine className="text-success mr-1.5 h-4 w-4" />
+                    <PikaIcon
+                      icon={CheckTickCircleIcon}
+                      className="text-success mr-1.5 size-4"
+                    />
                     <span>Copied</span>
                   </>
                 ) : (
                   <>
-                    <RiFileCopyLine className="mr-1.5 h-4 w-4" />
+                    <PikaIcon icon={CopyIcon} className="mr-1.5 size-4" />
                     <span>Copy Key</span>
                   </>
                 )}
@@ -192,12 +200,15 @@ export const CliRunDialog = ({
                 >
                   {copiedPull ? (
                     <>
-                      <RiCheckLine className="text-success h-3.5 w-3.5" />
+                      <PikaIcon
+                        icon={CheckTickCircleIcon}
+                        className="text-success size-3.5"
+                      />
                       <span>Copied</span>
                     </>
                   ) : (
                     <>
-                      <RiFileCopyLine className="h-3.5 w-3.5" />
+                      <PikaIcon icon={CopyIcon} className="size-3.5" />
                       <span>Copy</span>
                     </>
                   )}
@@ -223,12 +234,15 @@ export const CliRunDialog = ({
                 >
                   {copiedDev ? (
                     <>
-                      <RiCheckLine className="text-success h-3.5 w-3.5" />
+                      <PikaIcon
+                        icon={CheckTickCircleIcon}
+                        className="text-success size-3.5"
+                      />
                       <span>Copied</span>
                     </>
                   ) : (
                     <>
-                      <RiFileCopyLine className="h-3.5 w-3.5" />
+                      <PikaIcon icon={CopyIcon} className="size-3.5" />
                       <span>Copy</span>
                     </>
                   )}
@@ -253,7 +267,7 @@ export const CliRunDialog = ({
               window.open(`/api/projects/${projectSlug}/bundle`, "_blank");
             }}
           >
-            <RiDownloadCloud2Line className="mr-1.5 h-4 w-4" />
+            <PikaIcon icon={CloudArrowDownloadIcon} className="mr-1.5 size-4" />
             <span>Download fack.enc</span>
           </Button>
         </div>

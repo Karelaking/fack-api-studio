@@ -5,7 +5,8 @@
 /* eslint-disable jsx-a11y/prefer-tag-over-role */
 
 import * as React from "react";
-import { RiCheckLine, RiArrowUpDownLine } from "@remixicon/react";
+import { CheckTickCircleIcon, ChevronDownIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { cn } from "@/lib/utils";
 import { getGroupedProviders, getProviderByValue } from "@/lib/faker-registry";
 import { Button } from "@/components/ui/button";
@@ -50,29 +51,30 @@ export function FakerProviderSelect({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <Button
-            type="button"
-            id={id}
-            variant="outline"
-            size="sm"
-            role="combobox"
-            aria-expanded={open}
-            aria-controls={open ? listboxId : undefined}
-            aria-label="Select data provider"
-            title="Select data provider"
-            disabled={disabled}
-            className="w-full justify-between"
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          id={id}
+          variant="outline"
+          size="sm"
+          role="combobox"
+          aria-expanded={open}
+          aria-controls={open ? listboxId : undefined}
+          aria-label="Select data provider"
+          title="Select data provider"
+          disabled={disabled}
+          className="w-full justify-between"
+        >
+          <span className="truncate">
+            {selectedProvider
+              ? `${selectedProvider.category}: ${selectedProvider.label}`
+              : "Select data provider..."}
+          </span>
+          <PikaIcon
+            icon={ChevronDownIcon}
+            className="ml-2 size-4 shrink-0 opacity-50"
           />
-        }
-      >
-        <span className="truncate">
-          {selectedProvider
-            ? `${selectedProvider.category}: ${selectedProvider.label}`
-            : "Select data provider..."}
-        </span>
-        <RiArrowUpDownLine className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
       </PopoverTrigger>
       <PopoverContent variant="flush" className="w-75" align="start">
         <Command>
@@ -99,9 +101,10 @@ export function FakerProviderSelect({
                         Example: {provider.example}
                       </span>
                     </div>
-                    <RiCheckLine
+                    <PikaIcon
+                      icon={CheckTickCircleIcon}
                       className={cn(
-                        "text-primary h-4 w-4 shrink-0",
+                        "text-primary size-4 shrink-0",
                         value === provider.value ? "opacity-100" : "opacity-0",
                       )}
                     />

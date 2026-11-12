@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { RiCheckLine } from "@remixicon/react";
+import { CheckTickCircleIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { cn } from "@/lib/utils";
 import type { SchemaField, RouteParamConfig } from "@/lib/schema-synthesizer";
 import { Button } from "@/components/ui/button";
@@ -86,7 +87,7 @@ export const InspectorRouteParamsList = ({
                 </Button>
               ) : (
                 <span className="text-success flex shrink-0 items-center gap-1 text-xs font-medium">
-                  <RiCheckLine className="size-3.5" />
+                  <PikaIcon icon={CheckTickCircleIcon} className="size-3.5" />
                   <span>Field mapped</span>
                 </span>
               )}

@@ -3,6 +3,13 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FakerProviderSelect } from "@/components/edit-bar/FakerProviderSelect";
 import { getProviderByValue } from "@/lib/faker-registry";
 
@@ -110,19 +117,29 @@ export const FieldValueSourceConfig = ({
               path.
             </div>
           ) : (
-            <select
-              id="field-param-name"
+            <Select
               value={selectedParamName}
-              onChange={(e) => setSelectedParamName(e.target.value)}
+              onValueChange={setSelectedParamName}
               disabled={loading}
-              className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-8 w-full rounded-md border px-3 py-1 font-mono text-xs focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {availableParams.map((p) => (
-                <option key={p.name} value={p.name}>
-                  :{p.name} (from URL)
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                id="field-param-name"
+                className="h-8 w-full font-mono text-xs"
+              >
+                <SelectValue placeholder="Select param" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableParams.map((p) => (
+                  <SelectItem
+                    key={p.name}
+                    value={p.name}
+                    className="font-mono text-xs"
+                  >
+                    :{p.name} (from URL)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
           <p className="text-muted-foreground text-xs leading-snug">
             Requests matching this route will return the dynamic URL value in

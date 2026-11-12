@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import { useClerk, useSignIn, useSignUp } from "@clerk/nextjs";
-import { RiGithubFill, RiGoogleFill } from "@remixicon/react";
-import { Loader2 } from "lucide-react";
+import { GithubSolidIcon, GoogleIcon, RefreshIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { Button } from "@/components/ui/button";
 
 export interface SocialAuthButtonsProps {
@@ -78,9 +78,17 @@ export const SocialAuthButtons = ({
         aria-label={`${mode === "sign-in" ? "Sign in" : "Sign up"} with GitHub`}
       >
         {loadingProvider === "github" ? (
-          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          <PikaIcon
+            icon={RefreshIcon}
+            className="size-4 animate-spin"
+            aria-hidden="true"
+          />
         ) : (
-          <RiGithubFill className="size-4 shrink-0" aria-hidden="true" />
+          <PikaIcon
+            icon={GithubSolidIcon}
+            className="size-4 shrink-0"
+            aria-hidden="true"
+          />
         )}
         <span>GitHub</span>
       </Button>
@@ -95,9 +103,14 @@ export const SocialAuthButtons = ({
         aria-label={`${mode === "sign-in" ? "Sign in" : "Sign up"} with Google`}
       >
         {loadingProvider === "google" ? (
-          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          <PikaIcon
+            icon={RefreshIcon}
+            className="size-4 animate-spin"
+            aria-hidden="true"
+          />
         ) : (
-          <RiGoogleFill
+          <PikaIcon
+            icon={GoogleIcon}
             className="size-4 shrink-0 text-red-500"
             aria-hidden="true"
           />

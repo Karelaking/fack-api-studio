@@ -1,6 +1,6 @@
 import React from "react";
-import { ArrowDown } from "lucide-react";
-import { RiGithubFill } from "@remixicon/react";
+import { ArrowDownIcon, GithubSolidIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { CollaborateButton } from "@/components/landing/CollaborateButton";
 import { HeroMotion } from "@/components/landing/HeroMotion";
 import { HeroLogoModel } from "@/components/landing/HeroLogoModel";
@@ -66,7 +66,8 @@ export const HeroSection = (): React.JSX.Element => {
                   rel="noopener noreferrer"
                   className="group border-border/40 text-foreground hover:border-border hover:bg-muted/50 focus-visible:ring-ring/50 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border px-6 text-sm font-semibold transition-colors focus-visible:ring-3 focus-visible:outline-none sm:w-auto"
                 >
-                  <RiGithubFill
+                  <PikaIcon
+                    icon={GithubSolidIcon}
                     className="size-4 transition-transform duration-300 group-hover:-rotate-6"
                     aria-hidden="true"
                   />
@@ -90,7 +91,8 @@ export const HeroSection = (): React.JSX.Element => {
               className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 group text-caption inline-flex min-h-6 w-fit items-center gap-2 py-1.5 transition-colors focus-visible:ring-3 focus-visible:outline-none"
             >
               <span>How to start</span>
-              <ArrowDown
+              <PikaIcon
+                icon={ArrowDownIcon}
                 className="size-3.5 transition-transform duration-300 group-hover:translate-y-0.5"
                 aria-hidden="true"
               />

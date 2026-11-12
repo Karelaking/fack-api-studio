@@ -3,13 +3,14 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
-  RiAddLine,
-  RiMoonLine,
-  RiSunLine,
-  RiComputerLine,
-  RiHomeLine,
-  RiFolderLine,
-} from "@remixicon/react";
+  PlusIcon,
+  MoonIcon,
+  SunIcon,
+  LaptopIcon,
+  HomeIcon,
+  FolderIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import {
   CommandDialog,
   CommandInput,
@@ -64,13 +65,13 @@ export function CommandMenu() {
           <CommandItem
             onSelect={() => runCommand(() => router.push("/dashboard"))}
           >
-            <RiHomeLine className="mr-2 h-4 w-4" />
+            <PikaIcon icon={HomeIcon} className="mr-2 size-4" />
             <span>Go to Dashboard</span>
           </CommandItem>
           <CommandItem
             onSelect={() => runCommand(() => router.push("/dashboard"))}
           >
-            <RiFolderLine className="mr-2 h-4 w-4" />
+            <PikaIcon icon={FolderIcon} className="mr-2 size-4" />
             <span>Browse Projects</span>
           </CommandItem>
         </CommandGroup>
@@ -84,21 +85,21 @@ export function CommandMenu() {
               })
             }
           >
-            <RiAddLine className="mr-2 h-4 w-4" />
+            <PikaIcon icon={PlusIcon} className="mr-2 size-4" />
             <span>Create New Project</span>
             <CommandShortcut>⌘N</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => setTheme("light"))}>
-            <RiSunLine className="mr-2 h-4 w-4" />
+            <PikaIcon icon={SunIcon} className="mr-2 size-4" />
             <span>Light Theme</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => setTheme("dark"))}>
-            <RiMoonLine className="mr-2 h-4 w-4" />
+            <PikaIcon icon={MoonIcon} className="mr-2 size-4" />
             <span>Dark Theme</span>
             <CommandShortcut>⌘D</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => setTheme("system"))}>
-            <RiComputerLine className="mr-2 h-4 w-4" />
+            <PikaIcon icon={LaptopIcon} className="mr-2 size-4" />
             <span>System Theme (Auto)</span>
           </CommandItem>
         </CommandGroup>

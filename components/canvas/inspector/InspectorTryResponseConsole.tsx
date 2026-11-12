@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import * as PikaCore from "@pikaicons/core-free";
+import { CopyIcon } from "@pikaicons/core-free";
 import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -51,7 +51,7 @@ export const InspectorTryResponseConsole = ({
           className="h-6 gap-1 px-1.5 text-xs"
           title="Copy response body"
         >
-          <PikaIcon icon={PikaCore.CopyIcon} size={12} aria-hidden="true" />
+          <PikaIcon icon={CopyIcon} size={12} aria-hidden="true" />
           <span>Copy</span>
         </Button>
       </div>

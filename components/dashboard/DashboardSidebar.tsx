@@ -5,18 +5,19 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import {
-  RiLoader2Line,
-  RiDatabase2Line,
-  RiRouteLine,
-  RiSearchLine,
-  RiAddLine,
-  RiArrowLeftSLine,
-  RiArrowRightSLine,
-  RiCloseLine,
-  RiSubtractLine,
-  RiPushpinLine,
-  RiFocus2Line,
-} from "@remixicon/react";
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DatabaseIcon,
+  GitBranchIcon,
+  MinusIcon,
+  MultipleCrossCancelIcon,
+  PinIcon,
+  PlusIcon,
+  RefreshIcon,
+  SearchBigIcon,
+  SearchIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
 import { createProject } from "@/lib/actions/projects";
 import type { Project } from "@/db/schema";
@@ -261,7 +262,7 @@ export const DashboardSidebar = ({
         className="overflow-hidden border-r-0"
         aria-label="Mock providers and project navigation"
       >
-        <TooltipProvider delay={300}>
+        <TooltipProvider delayDuration={300}>
           <div className="flex h-full w-full overflow-hidden">
             {/* ── Tier 1: 48px Fixed Tool Rail (Always Visible) ── */}
             <div
@@ -272,17 +273,15 @@ export const DashboardSidebar = ({
               {/* Top: Brand Logo / Home */}
               <div className="flex flex-col items-center gap-2.5">
                 <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Link
-                        href="/"
-                        className="hover:bg-muted/80 focus-visible:ring-ring flex size-8 items-center justify-center rounded-lg transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-offset-1"
-                        aria-label="Fack API Home"
-                      >
-                        <BrandLogo size={22} />
-                      </Link>
-                    }
-                  />
+                  <TooltipTrigger asChild>
+                    <Link
+                      href="/"
+                      className="hover:bg-muted/80 focus-visible:ring-ring flex size-8 items-center justify-center rounded-lg transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-offset-1"
+                      aria-label="Fack API Home"
+                    >
+                      <BrandLogo size={22} />
+                    </Link>
+                  </TooltipTrigger>
                   <TooltipContent side="right">Fack API Home</TooltipContent>
                 </Tooltip>
 
@@ -292,24 +291,22 @@ export const DashboardSidebar = ({
                 <div className="flex flex-col items-center gap-1.5">
                   {/* Providers Palette Tab */}
                   <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <button
-                          type="button"
-                          onClick={() => handleRailTabClick("providers")}
-                          aria-pressed={open && activeTab === "providers"}
-                          className={cn(
-                            "flex size-8 items-center justify-center rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-                            open && activeTab === "providers"
-                              ? "bg-primary text-primary-foreground shadow-xs"
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                          )}
-                          aria-label="Mock Data Providers"
-                        >
-                          <RiDatabase2Line className="size-4" />
-                        </button>
-                      }
-                    />
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => handleRailTabClick("providers")}
+                        aria-pressed={open && activeTab === "providers"}
+                        className={cn(
+                          "flex size-8 items-center justify-center rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                          open && activeTab === "providers"
+                            ? "bg-primary text-primary-foreground shadow-xs"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                        aria-label="Mock Data Providers"
+                      >
+                        <PikaIcon icon={DatabaseIcon} className="size-4" />
+                      </button>
+                    </TooltipTrigger>
                     <TooltipContent side="right">
                       Mock Data Providers
                     </TooltipContent>
@@ -317,30 +314,28 @@ export const DashboardSidebar = ({
 
                   {/* Selected Route Inspector Tab */}
                   <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <button
-                          type="button"
-                          onClick={() => handleRailTabClick("route")}
-                          aria-pressed={open && activeTab === "route"}
-                          className={cn(
-                            "relative flex size-8 items-center justify-center rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-                            open && activeTab === "route"
-                              ? "bg-primary text-primary-foreground shadow-xs"
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                          )}
-                          aria-label="Selected Route Links & Params"
-                        >
-                          <RiRouteLine className="size-4" />
-                          {selectedRoute && (
-                            <span
-                              className="border-sidebar bg-success absolute top-1 right-1 size-2 rounded-full border-2"
-                              aria-hidden="true"
-                            />
-                          )}
-                        </button>
-                      }
-                    />
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => handleRailTabClick("route")}
+                        aria-pressed={open && activeTab === "route"}
+                        className={cn(
+                          "relative flex size-8 items-center justify-center rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                          open && activeTab === "route"
+                            ? "bg-primary text-primary-foreground shadow-xs"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                        aria-label="Selected Route Links & Params"
+                      >
+                        <PikaIcon icon={GitBranchIcon} className="size-4" />
+                        {selectedRoute && (
+                          <span
+                            className="border-sidebar bg-success absolute top-1 right-1 size-2 rounded-full border-2"
+                            aria-hidden="true"
+                          />
+                        )}
+                      </button>
+                    </TooltipTrigger>
                     <TooltipContent side="right">
                       {selectedRoute
                         ? `Route: ${selectedRoute.method} ${selectedRoute.path}`
@@ -350,22 +345,20 @@ export const DashboardSidebar = ({
 
                   {/* Command Menu Shortcut */}
                   <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <button
-                          type="button"
-                          onClick={() =>
-                            window.dispatchEvent(
-                              new CustomEvent("open-command-menu"),
-                            )
-                          }
-                          className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring flex size-8 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
-                          aria-label="Command Menu (⌘K / Ctrl+K)"
-                        >
-                          <RiSearchLine className="size-4" />
-                        </button>
-                      }
-                    />
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          window.dispatchEvent(
+                            new CustomEvent("open-command-menu"),
+                          )
+                        }
+                        className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring flex size-8 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
+                        aria-label="Command Menu (⌘K / Ctrl+K)"
+                      >
+                        <PikaIcon icon={SearchIcon} className="size-4" />
+                      </button>
+                    </TooltipTrigger>
                     <TooltipContent side="right">
                       Command Menu (⌘K)
                     </TooltipContent>
@@ -373,18 +366,16 @@ export const DashboardSidebar = ({
 
                   {/* New Project Dialog Trigger */}
                   <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <button
-                          type="button"
-                          onClick={() => setDialogOpen(true)}
-                          className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring flex size-8 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
-                          aria-label="Create Project"
-                        >
-                          <RiAddLine className="size-4" />
-                        </button>
-                      }
-                    />
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => setDialogOpen(true)}
+                        className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring flex size-8 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
+                        aria-label="Create Project"
+                      >
+                        <PikaIcon icon={PlusIcon} className="size-4" />
+                      </button>
+                    </TooltipTrigger>
                     <TooltipContent side="right">New Project</TooltipContent>
                   </Tooltip>
                 </div>
@@ -396,18 +387,16 @@ export const DashboardSidebar = ({
 
                 {/* Float over Canvas Toggle */}
                 <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <button
-                        type="button"
-                        onClick={() => handleToggleFloating(true)}
-                        className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring flex size-8 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
-                        aria-label="Detach & Float palette over canvas"
-                      >
-                        <RiFocus2Line className="size-4" />
-                      </button>
-                    }
-                  />
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleFloating(true)}
+                      className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring flex size-8 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
+                      aria-label="Detach & Float palette over canvas"
+                    >
+                      <PikaIcon icon={SearchBigIcon} className="size-4" />
+                    </button>
+                  </TooltipTrigger>
                   <TooltipContent side="right">
                     Detach & Float over Canvas
                   </TooltipContent>
@@ -415,26 +404,24 @@ export const DashboardSidebar = ({
 
                 {/* Drawer Expand/Collapse Toggle */}
                 <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <button
-                        type="button"
-                        onClick={toggleSidebar}
-                        className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring flex size-8 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
-                        aria-label={
-                          open
-                            ? "Collapse drawer (Ctrl+B)"
-                            : "Expand drawer (Ctrl+B)"
-                        }
-                      >
-                        {open ? (
-                          <RiArrowLeftSLine className="size-4" />
-                        ) : (
-                          <RiArrowRightSLine className="size-4" />
-                        )}
-                      </button>
-                    }
-                  />
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={toggleSidebar}
+                      className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring flex size-8 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
+                      aria-label={
+                        open
+                          ? "Collapse drawer (Ctrl+B)"
+                          : "Expand drawer (Ctrl+B)"
+                      }
+                    >
+                      {open ? (
+                        <PikaIcon icon={ChevronLeftIcon} className="size-4" />
+                      ) : (
+                        <PikaIcon icon={ChevronRightIcon} className="size-4" />
+                      )}
+                    </button>
+                  </TooltipTrigger>
                   <TooltipContent side="right">
                     {open ? "Collapse drawer" : "Expand drawer"}
                   </TooltipContent>
@@ -473,7 +460,7 @@ export const DashboardSidebar = ({
                     aria-label="Float palette over canvas"
                     title="Float palette over canvas"
                   >
-                    <RiFocus2Line className="size-3.5" />
+                    <PikaIcon icon={SearchBigIcon} className="size-3.5" />
                   </button>
                   <button
                     type="button"
@@ -482,7 +469,10 @@ export const DashboardSidebar = ({
                     aria-label="Close drawer"
                     title="Close drawer"
                   >
-                    <RiCloseLine className="size-3.5" />
+                    <PikaIcon
+                      icon={MultipleCrossCancelIcon}
+                      className="size-3.5"
+                    />
                   </button>
                 </div>
               </div>
@@ -521,7 +511,7 @@ export const DashboardSidebar = ({
                 className="text-foreground hover:text-primary focus-visible:ring-ring flex items-center gap-2 rounded-full px-1 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-offset-1"
                 aria-label="Expand Providers Dock"
               >
-                <RiDatabase2Line className="text-primary size-4" />
+                <PikaIcon icon={DatabaseIcon} className="text-primary size-4" />
                 <span>Providers Dock</span>
                 {selectedRoute ? (
                   <span className="border-success/30 bg-success/10 text-success text-mini flex items-center gap-1 rounded-full border px-1.5 py-0.5 font-mono">
@@ -542,12 +532,12 @@ export const DashboardSidebar = ({
                 title="Dock to side rail"
                 aria-label="Dock to side rail"
               >
-                <RiPushpinLine className="size-3.5" />
+                <PikaIcon icon={PinIcon} className="size-3.5" />
               </button>
             </div>
           ) : (
             /* Expanded Floating Dock Window */
-            <div className="bg-card/95 dark:bg-card/90 border-border/80 flex max-h-[calc(100vh-6rem)] w-[23rem] flex-col overflow-hidden rounded-xl border shadow-2xl backdrop-blur-md">
+            <div className="bg-card/95 dark:bg-card/90 border-border/80 flex max-h-[calc(100vh-6rem)] w-92 flex-col overflow-hidden rounded-xl border shadow-2xl backdrop-blur-md">
               {/* Floating Dock Header */}
               <div className="bg-muted/30 border-border/60 flex h-11 shrink-0 items-center justify-between border-b px-3">
                 {/* Tab Switcher */}
@@ -563,7 +553,10 @@ export const DashboardSidebar = ({
                         : "text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    <RiDatabase2Line className="text-primary size-3.5" />
+                    <PikaIcon
+                      icon={DatabaseIcon}
+                      className="text-primary size-3.5"
+                    />
                     <span>Providers</span>
                   </button>
                   <button
@@ -577,7 +570,7 @@ export const DashboardSidebar = ({
                         : "text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    <RiRouteLine className="size-3.5" />
+                    <PikaIcon icon={GitBranchIcon} className="size-3.5" />
                     <span>Route</span>
                     {selectedRoute && (
                       <span
@@ -597,7 +590,7 @@ export const DashboardSidebar = ({
                     title="Minimize to pill (Esc)"
                     aria-label="Minimize to pill"
                   >
-                    <RiSubtractLine className="size-3.5" />
+                    <PikaIcon icon={MinusIcon} className="size-3.5" />
                   </button>
                   <button
                     type="button"
@@ -606,7 +599,7 @@ export const DashboardSidebar = ({
                     title="Dock to side rail"
                     aria-label="Dock to side rail"
                   >
-                    <RiPushpinLine className="size-3.5" />
+                    <PikaIcon icon={PinIcon} className="size-3.5" />
                   </button>
                 </div>
               </div>
@@ -722,8 +715,9 @@ export const DashboardSidebar = ({
               >
                 {loading ? (
                   <>
-                    <RiLoader2Line
-                      className="h-4 w-4 animate-spin motion-reduce:animate-none"
+                    <PikaIcon
+                      icon={RefreshIcon}
+                      className="size-4 animate-spin motion-reduce:animate-none"
                       aria-hidden="true"
                     />
                     <span>Creating...</span>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import {
   validateWebhookUrl,
+  validateWebhookUrlAsync,
   assertSafeWebhookUrl,
   SsrfSecurityError,
 } from "@/lib/security/ssrf.service";
@@ -39,6 +40,24 @@ describe("ssrf.service", () => {
     expect(
       validateWebhookUrl("http://instance-data/latest/meta-data/").safe,
     ).toBe(false);
+    expect(
+      validateWebhookUrl("http://169.254.169.254.nip.io/meta-data").safe,
+    ).toBe(false);
+    expect(
+      validateWebhookUrl("http://app.127.0.0.1.sslip.io:8080/hook", false).safe,
+    ).toBe(false);
+  });
+
+  it("should validate webhook destinations asynchronously with DNS resolution", async () => {
+    const safeResult = await validateWebhookUrlAsync(
+      "https://api.github.com/webhooks",
+    );
+    expect(safeResult.safe).toBe(true);
+
+    const blockedResult = await validateWebhookUrlAsync(
+      "http://169.254.169.254/computeMetadata/v1/",
+    );
+    expect(blockedResult.safe).toBe(false);
   });
 
   it("should reject private RFC 1918 subnets in hosted environments", () => {

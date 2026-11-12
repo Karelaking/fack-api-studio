@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Check, Copy, TriangleAlert } from "lucide-react";
+import {
+  ExternalLinkSquareIcon,
+  CheckTickCircleIcon,
+  CopyIcon,
+  AlertTriangleIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { cn } from "@/lib/utils";
 
 /** The two supported ways to stand up a local instance. */
@@ -320,7 +326,8 @@ export const HowToStartSection = (): React.JSX.Element => {
                   >
                     {copyState === "copied" ? (
                       <>
-                        <Check
+                        <PikaIcon
+                          icon={CheckTickCircleIcon}
                           className="text-success size-3.5"
                           aria-hidden="true"
                         />
@@ -328,7 +335,8 @@ export const HowToStartSection = (): React.JSX.Element => {
                       </>
                     ) : copyState === "failed" ? (
                       <>
-                        <TriangleAlert
+                        <PikaIcon
+                          icon={AlertTriangleIcon}
                           className="text-destructive size-3.5"
                           aria-hidden="true"
                         />
@@ -338,7 +346,11 @@ export const HowToStartSection = (): React.JSX.Element => {
                       </>
                     ) : (
                       <>
-                        <Copy className="size-3.5" aria-hidden="true" />
+                        <PikaIcon
+                          icon={CopyIcon}
+                          className="size-3.5"
+                          aria-hidden="true"
+                        />
                         <span>Copy</span>
                       </>
                     )}
@@ -537,7 +549,8 @@ export const HowToStartSection = (): React.JSX.Element => {
               className="group border-border/60 text-foreground hover:bg-muted focus-visible:ring-ring/50 inline-flex h-11 shrink-0 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition-colors focus-visible:ring-3 focus-visible:outline-none"
             >
               Read the walkthrough
-              <ArrowUpRight
+              <PikaIcon
+                icon={ExternalLinkSquareIcon}
                 className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                 aria-hidden="true"
               />

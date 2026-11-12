@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { RiAlertFill } from "@remixicon/react";
+import { AlertTriangleSolidIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { Badge } from "@/components/ui/badge";
 import type { RouteConflict } from "@/lib/ai/types";
 
@@ -26,7 +27,7 @@ export const ConflictResolutionDialog = ({
   return (
     <div className="border-warning/30 bg-warning/10 flex flex-col gap-3 rounded-xl border p-4">
       <div className="text-warning flex items-center gap-2">
-        <RiAlertFill className="size-4 shrink-0" />
+        <PikaIcon icon={AlertTriangleSolidIcon} className="size-4 shrink-0" />
         <span className="text-xs font-semibold tracking-wider uppercase">
           {conflicts.length} Route Collision{conflicts.length > 1 ? "s" : ""}{" "}
           Detected

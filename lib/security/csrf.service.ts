@@ -27,15 +27,43 @@ export function isTrustedHost(host: string): boolean {
   if (
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
-    hostname.endsWith(".localhost") ||
-    hostname === "lotusapi-studio.vercel.app" ||
-    hostname.endsWith(".vercel.app")
+    hostname.endsWith(".localhost")
   ) {
     return true;
   }
 
-  const appDomain =
-    process.env.APP_DOMAIN || process.env.NEXT_PUBLIC_APP_DOMAIN;
+  // Explicit project domains and recognized deployment prefixes
+  if (
+    hostname === "lotusapi-studio.vercel.app" ||
+    hostname === "fackapi.studio" ||
+    hostname.endsWith(".fackapi.studio") ||
+    (hostname.startsWith("fack-api") && hostname.endsWith(".vercel.app"))
+  ) {
+    return true;
+  }
+
+  const vercelProdUrl =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.toLowerCase();
+  if (
+    vercelProdUrl &&
+    (hostname === vercelProdUrl || hostname.endsWith(`.${vercelProdUrl}`))
+  ) {
+    return true;
+  }
+
+  const vercelUrl = (
+    process.env.VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL
+  )?.toLowerCase();
+  if (
+    vercelUrl &&
+    (hostname === vercelUrl || hostname.endsWith(`.${vercelUrl}`))
+  ) {
+    return true;
+  }
+
+  const appDomain = (
+    process.env.APP_DOMAIN || process.env.NEXT_PUBLIC_APP_DOMAIN
+  )?.toLowerCase();
   if (
     appDomain &&
     (hostname === appDomain || hostname.endsWith(`.${appDomain}`))
@@ -53,6 +81,7 @@ export function getTrustedOrigins(host?: string): string[] {
   const origins = new Set<string>([
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://fackapi.studio",
     "https://lotusapi-studio.vercel.app",
   ]);
 

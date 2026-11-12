@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { PikaIcon, type IconSvgElement } from "@pikaicons/react";
-import * as PikaCore from "@pikaicons/core-free";
+import { FolderIcon } from "@pikaicons/core-free";
 
 interface PikaiconRendererProps {
   name?: string | null;
@@ -15,43 +15,77 @@ interface PikaiconRendererProps {
 }
 
 type PikaIconData = IconSvgElement;
+type PikaIconsRecord = Record<string, PikaIconData | undefined>;
 
-/**
- * Resolves an icon name against @pikaicons/core-free with automatic fallback.
- * Maps legacy icon names seamlessly to Pikaicons equivalents.
- */
-export function resolvePikaicon(name?: string | null): PikaIconData {
+const STATIC_ICONS: PikaIconsRecord = {
+  Folder: FolderIcon,
+  FolderIcon,
+};
+
+let loadedIconsRecord: PikaIconsRecord | undefined;
+let loadedIconsLowercaseMap: Map<string, PikaIconData> | undefined;
+let pikaCoreLoadPromise: Promise<void> | undefined;
+
+function buildLowercaseIndex(
+  record: PikaIconsRecord,
+): Map<string, PikaIconData> {
+  const index = new Map<string, PikaIconData>();
+  for (const [key, value] of Object.entries(record)) {
+    if (key.endsWith("Icon") && Array.isArray(value)) {
+      index.set(key.toLowerCase(), value);
+    }
+  }
+  return index;
+}
+
+function loadPikaCoreModule(): Promise<void> {
+  if (!pikaCoreLoadPromise) {
+    pikaCoreLoadPromise = import("@pikaicons/core-free").then((mod) => {
+      const record = mod as unknown as PikaIconsRecord;
+      loadedIconsRecord = record;
+      loadedIconsLowercaseMap = buildLowercaseIndex(record);
+    });
+  }
+  return pikaCoreLoadPromise;
+}
+
+function lookupPikaiconExact(name?: string | null): PikaIconData | undefined {
   if (!name) {
-    return PikaCore.FolderIcon;
+    return FolderIcon;
   }
 
   const trimmed = name.trim();
-  const iconsRecord = PikaCore as unknown as Record<
-    string,
-    PikaIconData | undefined
-  >;
-
-  // Direct match (e.g. "AirplaneIcon")
-  if (iconsRecord[trimmed]) {
-    return iconsRecord[trimmed]!;
+  if (!trimmed) {
+    return FolderIcon;
   }
 
-  // Appended with Icon (e.g. "Airplane" -> "AirplaneIcon")
-  if (iconsRecord[`${trimmed}Icon`]) {
-    return iconsRecord[`${trimmed}Icon`]!;
+  const staticHit = STATIC_ICONS[trimmed] ?? STATIC_ICONS[`${trimmed}Icon`];
+  if (staticHit) {
+    return staticHit;
   }
 
-  // Case-insensitive match
-  const lower = trimmed.toLowerCase();
-  const matchKey = Object.keys(PikaCore).find(
-    (k) => k.toLowerCase() === lower || k.toLowerCase() === `${lower}icon`,
-  );
-  if (matchKey && iconsRecord[matchKey]) {
-    return iconsRecord[matchKey]!;
+  if (loadedIconsRecord && loadedIconsLowercaseMap) {
+    const directHit =
+      loadedIconsRecord[trimmed] ?? loadedIconsRecord[`${trimmed}Icon`];
+    if (directHit) {
+      return directHit;
+    }
+
+    const lower = trimmed.toLowerCase();
+    return (
+      loadedIconsLowercaseMap.get(lower) ??
+      loadedIconsLowercaseMap.get(`${lower}icon`)
+    );
   }
 
-  // Default fallback
-  return PikaCore.FolderIcon;
+  return undefined;
+}
+
+/**
+ * Resolves an icon name against cached icons or @pikaicons/core-free once loaded, with FolderIcon fallback.
+ */
+export function resolvePikaicon(name?: string | null): PikaIconData {
+  return lookupPikaiconExact(name) ?? FolderIcon;
 }
 
 // Backwards compatibility alias
@@ -59,7 +93,7 @@ export const resolveHugeicon = resolvePikaicon;
 
 /**
  * Lightweight, resilient icon renderer powered by Pikaicons (https://pikaicons.com/).
- * Supports all 990+ hand-crafted free Pikaicons with zero runtime failure and fallback safety.
+ * Resolves FolderIcon synchronously and lazily loads the full icon catalog only for custom icon names.
  */
 export const PikaiconRenderer = React.memo(
   ({
@@ -71,7 +105,26 @@ export const PikaiconRenderer = React.memo(
     style,
     "aria-hidden": ariaHidden = true,
   }: PikaiconRendererProps): React.JSX.Element => {
-    const icon = React.useMemo(() => resolvePikaicon(name), [name]);
+    const [, setCatalogVersion] = React.useState(0);
+
+    React.useEffect(() => {
+      if (!name || lookupPikaiconExact(name) || loadedIconsRecord) {
+        return;
+      }
+
+      let cancelled = false;
+      void loadPikaCoreModule().then(() => {
+        if (!cancelled) {
+          setCatalogVersion((v) => v + 1);
+        }
+      });
+
+      return () => {
+        cancelled = true;
+      };
+    }, [name]);
+
+    const icon = resolvePikaicon(name);
 
     return (
       <PikaIcon

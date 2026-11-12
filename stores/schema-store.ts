@@ -1,3 +1,4 @@
+import { arrayMove } from "@dnd-kit/sortable";
 import { createStore } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import type { SchemaField } from "@/lib/schema-synthesizer";
@@ -245,9 +246,8 @@ export const createSchemaStore = (initialFields: SchemaField[] = []) => {
           if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex)
             return;
 
-          const [draggedField] = sourceArray.splice(fromIndex, 1);
-          const adjustedIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
-          sourceArray.splice(adjustedIndex, 0, draggedField);
+          const reordered = arrayMove(sourceArray, fromIndex, toIndex);
+          sourceArray.splice(0, sourceArray.length, ...reordered);
         }),
     })),
   );

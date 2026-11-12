@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import * as PikaCore from "@pikaicons/core-free";
+import { MultipleCrossCancelIcon } from "@pikaicons/core-free";
 import { PikaIcon } from "@pikaicons/react";
 import { cn } from "@/lib/utils";
 import type { SchemaField } from "@/lib/schema-synthesizer";
@@ -118,11 +118,7 @@ export const FieldBadge = ({
         title={`Remove field "${field.name}"`}
         aria-label={`Remove field ${field.name}`}
       >
-        <PikaIcon
-          icon={PikaCore.MultipleCrossCancelIcon}
-          size={12}
-          aria-hidden="true"
-        />
+        <PikaIcon icon={MultipleCrossCancelIcon} size={12} aria-hidden="true" />
       </button>
     </div>
   );

@@ -4,30 +4,30 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  RiHardDrive2Line,
-  RiCloudLine,
-  RiDownload2Line,
-  RiUpload2Line,
-  RiLoader2Line,
-  RiSaveLine,
-  RiDeleteBin6Line,
-  RiTerminalBoxLine,
-  RiFileCopyLine,
-  RiEyeLine,
-  RiEyeOffLine,
-  RiCheckLine,
-  RiLayoutTopLine,
-  RiSideBarLine,
-  RiPulseLine,
-  RiFolderSettingsLine,
-  RiAlertLine,
-  RiArrowRightSLine,
-  RiSearchLine,
-  RiShieldCheckLine,
-  RiFlashlightLine,
-  RiDatabase2Line,
-  RiGitBranchLine,
-} from "@remixicon/react";
+  AlertTriangleIcon,
+  CheckTickCircleIcon,
+  ChevronRightIcon,
+  CloudIcon,
+  CodeIcon,
+  CopyIcon,
+  DatabaseIcon,
+  DeleteDustbin01Icon,
+  DownloadBarDownIcon,
+  EyeOffIcon,
+  EyeOnIcon,
+  FloppyIcon,
+  GitBranchIcon,
+  LayoutGridStackUpIcon,
+  LightningThunderElectricOnIcon,
+  RefreshIcon,
+  SearchIcon,
+  Settings01Icon,
+  ShieldCheckIcon,
+  SidebarMenuIcon,
+  TroubleshootIcon,
+  UploadBarUpIcon,
+} from "@pikaicons/core-free";
+import { type IconSvgElement, PikaIcon } from "@pikaicons/react";
 
 import type { StorageStatus } from "@/lib/storage/status";
 import type { WorkspaceConfig } from "@/lib/storage/config-store";
@@ -67,6 +67,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export interface UnifiedSettingsViewProps {
   initialStatus: StorageStatus;
@@ -112,7 +113,7 @@ interface SettingsCategoryMeta {
   key: SidebarCategoryKey;
   label: string;
   scope: "workspace" | "project";
-  icon: React.ComponentType<{ className?: string }>;
+  icon: IconSvgElement;
   keywords: string[];
 }
 
@@ -121,14 +122,14 @@ const SETTINGS_CATEGORIES: SettingsCategoryMeta[] = [
     key: "workspace-identity",
     label: "Identity & Branding",
     scope: "workspace",
-    icon: RiFolderSettingsLine,
+    icon: Settings01Icon,
     keywords: ["identity", "branding", "name", "workspace", "rename", "config"],
   },
   {
     key: "workspace-storage",
     label: "Storage & Backup",
     scope: "workspace",
-    icon: RiHardDrive2Line,
+    icon: DatabaseIcon,
     keywords: [
       "storage",
       "backup",
@@ -145,7 +146,7 @@ const SETTINGS_CATEGORIES: SettingsCategoryMeta[] = [
     key: "workspace-telemetry",
     label: "Telemetry & Cache",
     scope: "workspace",
-    icon: RiPulseLine,
+    icon: TroubleshootIcon,
     keywords: [
       "telemetry",
       "cache",
@@ -161,7 +162,7 @@ const SETTINGS_CATEGORIES: SettingsCategoryMeta[] = [
     key: "project-meta",
     label: "Metadata & Routing",
     scope: "project",
-    icon: RiGitBranchLine,
+    icon: GitBranchIcon,
     keywords: [
       "metadata",
       "routing",
@@ -176,7 +177,7 @@ const SETTINGS_CATEGORIES: SettingsCategoryMeta[] = [
     key: "project-chaos",
     label: "Chaos & Resilience",
     scope: "project",
-    icon: RiFlashlightLine,
+    icon: LightningThunderElectricOnIcon,
     keywords: [
       "chaos",
       "monkey",
@@ -192,7 +193,7 @@ const SETTINGS_CATEGORIES: SettingsCategoryMeta[] = [
     key: "project-cli",
     label: "CLI Credentials",
     scope: "project",
-    icon: RiTerminalBoxLine,
+    icon: CodeIcon,
     keywords: [
       "cli",
       "credentials",
@@ -209,7 +210,7 @@ const SETTINGS_CATEGORIES: SettingsCategoryMeta[] = [
     key: "danger-zone",
     label: "Danger Zone",
     scope: "project",
-    icon: RiAlertLine,
+    icon: AlertTriangleIcon,
     keywords: ["danger", "delete", "destroy", "purge", "remove"],
   },
 ];
@@ -533,7 +534,7 @@ export const UnifiedSettingsView = ({
       <Card className="border-border/60 bg-card shadow-xs">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <RiFolderSettingsLine className="text-primary h-5 w-5" />
+            <PikaIcon icon={Settings01Icon} className="text-primary size-5" />
             <CardTitle className="text-base font-semibold">
               Workspace Identity
             </CardTitle>
@@ -571,9 +572,12 @@ export const UnifiedSettingsView = ({
                 className="h-8 gap-1.5 text-xs font-medium"
               >
                 {savingWorkspace ? (
-                  <RiLoader2Line className="h-3.5 w-3.5 animate-spin" />
+                  <PikaIcon
+                    icon={RefreshIcon}
+                    className="size-3.5 animate-spin"
+                  />
                 ) : (
-                  <RiSaveLine className="h-3.5 w-3.5" />
+                  <PikaIcon icon={FloppyIcon} className="size-3.5" />
                 )}
                 Save Name
               </Button>
@@ -586,7 +590,10 @@ export const UnifiedSettingsView = ({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <RiShieldCheckLine className="text-success h-5 w-5" />
+              <PikaIcon
+                icon={ShieldCheckIcon}
+                className="text-success size-5"
+              />
               <CardTitle className="text-base font-semibold">
                 Architecture &amp; Node Status
               </CardTitle>
@@ -648,9 +655,9 @@ export const UnifiedSettingsView = ({
         <CardHeader>
           <div className="flex items-center gap-2">
             {isLocal ? (
-              <RiHardDrive2Line className="text-primary h-5 w-5" />
+              <PikaIcon icon={DatabaseIcon} className="text-primary size-5" />
             ) : (
-              <RiCloudLine className="text-primary h-5 w-5" />
+              <PikaIcon icon={CloudIcon} className="text-primary size-5" />
             )}
             <CardTitle className="text-base font-semibold">
               Storage &amp; Backup Operations
@@ -679,9 +686,12 @@ export const UnifiedSettingsView = ({
               className="h-8 gap-1.5 text-xs font-medium"
             >
               {importing ? (
-                <RiLoader2Line className="h-3.5 w-3.5 animate-spin" />
+                <PikaIcon
+                  icon={RefreshIcon}
+                  className="size-3.5 animate-spin"
+                />
               ) : (
-                <RiUpload2Line className="h-3.5 w-3.5" />
+                <PikaIcon icon={UploadBarUpIcon} className="size-3.5" />
               )}
               Import JSON Backup
             </Button>
@@ -693,7 +703,7 @@ export const UnifiedSettingsView = ({
                 "h-8 gap-1.5 text-xs font-medium",
               )}
             >
-              <RiDownload2Line className="h-3.5 w-3.5" />
+              <PikaIcon icon={DownloadBarDownIcon} className="size-3.5" />
               Download JSON Backup
             </a>
           </div>
@@ -703,7 +713,7 @@ export const UnifiedSettingsView = ({
       <Card className="border-border/60 bg-card shadow-xs">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <RiDatabase2Line className="text-primary h-5 w-5" />
+            <PikaIcon icon={DatabaseIcon} className="text-primary size-5" />
             <CardTitle className="text-base font-semibold">
               Engine Telemetry &amp; Metrics
             </CardTitle>
@@ -731,9 +741,12 @@ export const UnifiedSettingsView = ({
                   title="Copy path"
                 >
                   {copiedDbPath ? (
-                    <RiCheckLine className="text-success h-3.5 w-3.5" />
+                    <PikaIcon
+                      icon={CheckTickCircleIcon}
+                      className="text-success size-3.5"
+                    />
                   ) : (
-                    <RiFileCopyLine className="h-3.5 w-3.5" />
+                    <PikaIcon icon={CopyIcon} className="size-3.5" />
                   )}
                 </button>
               </dd>
@@ -778,7 +791,10 @@ export const UnifiedSettingsView = ({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <RiPulseLine className="text-primary h-5 w-5" />
+              <PikaIcon
+                icon={TroubleshootIcon}
+                className="text-primary size-5"
+              />
               <CardTitle className="text-base font-semibold">
                 Request Logging Telemetry
               </CardTitle>
@@ -825,7 +841,10 @@ export const UnifiedSettingsView = ({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <RiFlashlightLine className="text-warning h-5 w-5" />
+              <PikaIcon
+                icon={LightningThunderElectricOnIcon}
+                className="text-warning size-5"
+              />
               <CardTitle className="text-base font-semibold">
                 LRU Memory Caching Tier
               </CardTitle>
@@ -900,7 +919,10 @@ export const UnifiedSettingsView = ({
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <RiGitBranchLine className="text-primary h-5 w-5" />
+                  <PikaIcon
+                    icon={GitBranchIcon}
+                    className="text-primary size-5"
+                  />
                   <CardTitle className="text-base font-semibold">
                     Project Identity &amp; Routing
                   </CardTitle>
@@ -963,9 +985,12 @@ export const UnifiedSettingsView = ({
                     className="text-primary flex items-center gap-1 text-xs font-medium hover:underline"
                   >
                     {copiedMockBase ? (
-                      <RiCheckLine className="text-success h-3.5 w-3.5" />
+                      <PikaIcon
+                        icon={CheckTickCircleIcon}
+                        className="text-success size-3.5"
+                      />
                     ) : (
-                      <RiFileCopyLine className="h-3.5 w-3.5" />
+                      <PikaIcon icon={CopyIcon} className="size-3.5" />
                     )}
                     <span>{copiedMockBase ? "Copied" : "Copy"}</span>
                   </button>
@@ -998,7 +1023,10 @@ export const UnifiedSettingsView = ({
           <Card className="border-border/60 bg-card shadow-xs">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <RiPulseLine className="text-primary h-5 w-5" />
+                <PikaIcon
+                  icon={TroubleshootIcon}
+                  className="text-primary size-5"
+                />
                 <CardTitle className="text-base font-semibold">
                   Execution Engine Rules
                 </CardTitle>
@@ -1084,9 +1112,9 @@ export const UnifiedSettingsView = ({
             className="h-9 gap-1.5 text-xs font-semibold"
           >
             {savingProject ? (
-              <RiLoader2Line className="h-4 w-4 animate-spin" />
+              <PikaIcon icon={RefreshIcon} className="size-4 animate-spin" />
             ) : (
-              <RiSaveLine className="h-4 w-4" />
+              <PikaIcon icon={FloppyIcon} className="size-4" />
             )}
             Save Project Settings
           </Button>
@@ -1104,7 +1132,10 @@ export const UnifiedSettingsView = ({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <RiFlashlightLine className="text-warning h-5 w-5" />
+              <PikaIcon
+                icon={LightningThunderElectricOnIcon}
+                className="text-warning size-5"
+              />
               <CardTitle className="text-base font-semibold">
                 Chaos Monkey Simulation
               </CardTitle>
@@ -1228,7 +1259,7 @@ export const UnifiedSettingsView = ({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <RiTerminalBoxLine className="text-primary h-5 w-5" />
+              <PikaIcon icon={CodeIcon} className="text-primary size-5" />
               <CardTitle className="text-base font-semibold">
                 Developer CLI &amp; AES-256 Credentials
               </CardTitle>
@@ -1245,7 +1276,10 @@ export const UnifiedSettingsView = ({
         <CardContent>
           {loadingCli ? (
             <div className="flex items-center justify-center p-8">
-              <RiLoader2Line className="text-muted-foreground h-6 w-6 animate-spin" />
+              <PikaIcon
+                icon={RefreshIcon}
+                className="text-muted-foreground size-6 animate-spin"
+              />
             </div>
           ) : !cliDetails ? (
             <p className="text-muted-foreground text-xs">
@@ -1275,9 +1309,9 @@ export const UnifiedSettingsView = ({
                   className="h-9 shrink-0 gap-1 text-xs"
                 >
                   {showSecret ? (
-                    <RiEyeOffLine className="h-4 w-4" />
+                    <PikaIcon icon={EyeOffIcon} className="size-4" />
                   ) : (
-                    <RiEyeLine className="h-4 w-4" />
+                    <PikaIcon icon={EyeOnIcon} className="size-4" />
                   )}
                   {showSecret ? "Hide" : "Reveal"}
                 </Button>
@@ -1290,9 +1324,12 @@ export const UnifiedSettingsView = ({
                   className="h-9 shrink-0 gap-1 text-xs"
                 >
                   {copiedKey ? (
-                    <RiCheckLine className="text-success h-4 w-4" />
+                    <PikaIcon
+                      icon={CheckTickCircleIcon}
+                      className="text-success size-4"
+                    />
                   ) : (
-                    <RiFileCopyLine className="h-4 w-4" />
+                    <PikaIcon icon={CopyIcon} className="size-4" />
                   )}
                   {copiedKey ? "Copied" : "Copy"}
                 </Button>
@@ -1335,9 +1372,12 @@ export const UnifiedSettingsView = ({
                 className="h-9 shrink-0 gap-1 text-xs"
               >
                 {copiedDev ? (
-                  <RiCheckLine className="text-success h-4 w-4" />
+                  <PikaIcon
+                    icon={CheckTickCircleIcon}
+                    className="text-success size-4"
+                  />
                 ) : (
-                  <RiFileCopyLine className="h-4 w-4" />
+                  <PikaIcon icon={CopyIcon} className="size-4" />
                 )}
                 {copiedDev ? "Copied" : "Copy"}
               </Button>
@@ -1373,9 +1413,12 @@ export const UnifiedSettingsView = ({
                 className="h-9 shrink-0 gap-1 text-xs"
               >
                 {copiedCurl ? (
-                  <RiCheckLine className="text-success h-4 w-4" />
+                  <PikaIcon
+                    icon={CheckTickCircleIcon}
+                    className="text-success size-4"
+                  />
                 ) : (
-                  <RiFileCopyLine className="h-4 w-4" />
+                  <PikaIcon icon={CopyIcon} className="size-4" />
                 )}
                 {copiedCurl ? "Copied" : "Copy"}
               </Button>
@@ -1394,7 +1437,7 @@ export const UnifiedSettingsView = ({
       <Card className="border-destructive/30 bg-destructive/5 shadow-xs">
         <CardHeader>
           <div className="text-destructive flex items-center gap-2">
-            <RiAlertLine className="h-5 w-5" />
+            <PikaIcon icon={AlertTriangleIcon} className="size-5" />
             <CardTitle className="text-base font-semibold">
               Delete Project
             </CardTitle>
@@ -1431,7 +1474,7 @@ export const UnifiedSettingsView = ({
             onClick={() => setDeleteOpen(true)}
             className="h-8 gap-1.5 text-xs font-medium"
           >
-            <RiDeleteBin6Line className="h-4 w-4" />
+            <PikaIcon icon={DeleteDustbin01Icon} className="size-4" />
             Delete {activeProject?.name ?? "Project"}
           </Button>
         </CardFooter>
@@ -1500,7 +1543,7 @@ export const UnifiedSettingsView = ({
             )}
             title="Two-Pane Vertical Sidebar Navigation"
           >
-            <RiSideBarLine className="h-3.5 w-3.5" />
+            <PikaIcon icon={SidebarMenuIcon} className="size-3.5" />
             <span>Two-Pane Rail (Default)</span>
           </button>
           <button
@@ -1514,7 +1557,7 @@ export const UnifiedSettingsView = ({
             )}
             title="Horizontal Scoped Tab-Strip"
           >
-            <RiLayoutTopLine className="h-3.5 w-3.5" />
+            <PikaIcon icon={LayoutGridStackUpIcon} className="size-3.5" />
             <span>Horizontal Tabs</span>
           </button>
           <button
@@ -1528,7 +1571,7 @@ export const UnifiedSettingsView = ({
             )}
             title="System Health Banner & Quick-Jump Rail"
           >
-            <RiPulseLine className="h-3.5 w-3.5" />
+            <PikaIcon icon={TroubleshootIcon} className="size-3.5" />
             <span>Command Rail</span>
           </button>
         </div>
@@ -1543,7 +1586,10 @@ export const UnifiedSettingsView = ({
           <div className="bg-card sticky top-20 space-y-6 rounded-xl border p-4 shadow-xs">
             {/* Search Filter Box */}
             <div className="relative">
-              <RiSearchLine className="text-muted-foreground pointer-events-none absolute top-2.5 left-2.5 h-3.5 w-3.5" />
+              <PikaIcon
+                icon={SearchIcon}
+                className="text-muted-foreground pointer-events-none absolute top-2.5 left-2.5 size-3.5"
+              />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -1616,7 +1662,6 @@ export const UnifiedSettingsView = ({
                     {filteredCategories
                       .filter((c) => c.scope === "workspace")
                       .map((cat) => {
-                        const Icon = cat.icon;
                         const isSelected = sidebarItemDirectionB === cat.key;
                         return (
                           <button
@@ -1631,9 +1676,10 @@ export const UnifiedSettingsView = ({
                             )}
                           >
                             <span className="flex items-center gap-2">
-                              <Icon
+                              <PikaIcon
+                                icon={cat.icon}
                                 className={cn(
-                                  "h-3.5 w-3.5",
+                                  "size-3.5",
                                   isSelected
                                     ? "text-primary"
                                     : "text-muted-foreground group-hover:text-foreground",
@@ -1641,9 +1687,10 @@ export const UnifiedSettingsView = ({
                               />
                               <span>{cat.label}</span>
                             </span>
-                            <RiArrowRightSLine
+                            <PikaIcon
+                              icon={ChevronRightIcon}
                               className={cn(
-                                "h-3.5 w-3.5 transition-transform",
+                                "size-3.5 transition-transform",
                                 isSelected
                                   ? "opacity-100 translate-x-0.5 text-primary"
                                   : "opacity-30 group-hover:opacity-70",
@@ -1664,7 +1711,6 @@ export const UnifiedSettingsView = ({
                     {filteredCategories
                       .filter((c) => c.scope === "project")
                       .map((cat) => {
-                        const Icon = cat.icon;
                         const isSelected = sidebarItemDirectionB === cat.key;
                         const isDanger = cat.key === "danger-zone";
                         return (
@@ -1684,9 +1730,10 @@ export const UnifiedSettingsView = ({
                             )}
                           >
                             <span className="flex items-center gap-2">
-                              <Icon
+                              <PikaIcon
+                                icon={cat.icon}
                                 className={cn(
-                                  "h-3.5 w-3.5",
+                                  "size-3.5",
                                   isSelected
                                     ? isDanger
                                       ? "text-destructive"
@@ -1696,9 +1743,10 @@ export const UnifiedSettingsView = ({
                               />
                               <span>{cat.label}</span>
                             </span>
-                            <RiArrowRightSLine
+                            <PikaIcon
+                              icon={ChevronRightIcon}
                               className={cn(
-                                "h-3.5 w-3.5 transition-transform",
+                                "size-3.5 transition-transform",
                                 isSelected
                                   ? isDanger
                                     ? "opacity-100 text-destructive"
@@ -1745,34 +1793,30 @@ export const UnifiedSettingsView = ({
                 DIRECTION A: HORIZONTAL SCOPED TABS (VERCEL / SUPABASE STYLE)
                 ================================================================= */}
       {direction === "A" && (
-        <div className="space-y-6">
+        <Tabs
+          value={activeTabDirectionA}
+          onValueChange={(val) => {
+            if (val === "workspace" || val === "project") {
+              setActiveTabDirectionA(val);
+            }
+          }}
+          className="space-y-6"
+        >
           <div className="flex items-center justify-between border-b pb-1">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveTabDirectionA("workspace")}
-                className={cn(
-                  "px-4 py-2 text-sm font-semibold border-b-2 -mb-1 transition-colors focus-visible:outline-none",
-                  activeTabDirectionA === "workspace"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground",
-                )}
+            <TabsList variant="line" className="h-auto gap-2 p-0">
+              <TabsTrigger
+                value="workspace"
+                className="px-4 py-2 text-sm font-semibold"
               >
                 Workspace Settings
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTabDirectionA("project")}
-                className={cn(
-                  "px-4 py-2 text-sm font-semibold border-b-2 -mb-1 transition-colors focus-visible:outline-none",
-                  activeTabDirectionA === "project"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground",
-                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="project"
+                className="px-4 py-2 text-sm font-semibold"
               >
                 Project Settings: {activeProject?.name ?? "None"}
-              </button>
-            </div>
+              </TabsTrigger>
+            </TabsList>
 
             {activeTabDirectionA === "project" && projects.length > 1 && (
               <Select
@@ -1797,23 +1841,19 @@ export const UnifiedSettingsView = ({
             )}
           </div>
 
-          {activeTabDirectionA === "workspace" && (
-            <div className="space-y-6">
-              {renderWorkspaceIdentity()}
-              {renderStorageSection()}
-              {renderTelemetrySection()}
-            </div>
-          )}
+          <TabsContent value="workspace" className="space-y-6">
+            {renderWorkspaceIdentity()}
+            {renderStorageSection()}
+            {renderTelemetrySection()}
+          </TabsContent>
 
-          {activeTabDirectionA === "project" && (
-            <div className="space-y-6">
-              {renderProjectMetaForm()}
-              {renderProjectChaosSection()}
-              {renderCliCredentials()}
-              {renderDangerZone()}
-            </div>
-          )}
-        </div>
+          <TabsContent value="project" className="space-y-6">
+            {renderProjectMetaForm()}
+            {renderProjectChaosSection()}
+            {renderCliCredentials()}
+            {renderDangerZone()}
+          </TabsContent>
+        </Tabs>
       )}
 
       {/* =================================================================
@@ -1851,7 +1891,7 @@ export const UnifiedSettingsView = ({
                   "h-8 gap-1.5 text-xs font-medium",
                 )}
               >
-                <RiDownload2Line className="h-3.5 w-3.5" />
+                <PikaIcon icon={DownloadBarDownIcon} className="size-3.5" />
                 Quick Backup
               </a>
               <Button
@@ -1866,7 +1906,7 @@ export const UnifiedSettingsView = ({
                 }
                 className="h-8 gap-1.5 text-xs font-medium"
               >
-                <RiTerminalBoxLine className="h-3.5 w-3.5" />
+                <PikaIcon icon={CodeIcon} className="size-3.5" />
                 {copiedDev ? "Copied" : "Copy CLI Dev"}
               </Button>
             </div>
@@ -1950,7 +1990,7 @@ export const UnifiedSettingsView = ({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-destructive flex items-center gap-2">
-              <RiAlertLine className="h-5 w-5" />
+              <PikaIcon icon={AlertTriangleIcon} className="size-5" />
               <span>Delete Project Permanently</span>
             </DialogTitle>
             <DialogDescription>
@@ -1987,9 +2027,9 @@ export const UnifiedSettingsView = ({
               className="gap-1.5"
             >
               {deleteLoading ? (
-                <RiLoader2Line className="h-4 w-4 animate-spin" />
+                <PikaIcon icon={RefreshIcon} className="size-4 animate-spin" />
               ) : (
-                <RiDeleteBin6Line className="h-4 w-4" />
+                <PikaIcon icon={DeleteDustbin01Icon} className="size-4" />
               )}
               Permanently Delete
             </Button>

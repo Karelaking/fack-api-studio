@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { RiShuffleLine } from "@remixicon/react";
+import { RefreshIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { cn } from "@/lib/utils";
 import type { RouteParamConfig } from "@/lib/schema-synthesizer";
 import { FakerProviderSelect } from "@/components/edit-bar/FakerProviderSelect";
@@ -52,7 +53,7 @@ export const InspectorTryParamsForm = ({
             className="text-primary hover:text-primary/80 flex cursor-pointer items-center gap-1 font-mono text-xs font-medium transition-colors"
             title="Reroll all FAPI runtime random values"
           >
-            <RiShuffleLine className="size-3" />
+            <PikaIcon icon={RefreshIcon} className="size-3" />
             <span>Reroll FAPI</span>
           </button>
         )}
@@ -148,7 +149,7 @@ export const InspectorTryParamsForm = ({
                       className="h-8 shrink-0 px-2 text-xs"
                       title="Generate new random value now"
                     >
-                      <RiShuffleLine className="size-3.5" />
+                      <PikaIcon icon={RefreshIcon} className="size-3.5" />
                       <span className="sr-only">Reroll</span>
                     </Button>
                   </div>

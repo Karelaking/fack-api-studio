@@ -1,7 +1,26 @@
 "use client";
 
 import * as React from "react";
-import { RiAddLine, RiQuestionLine, RiFileCodeLine } from "@remixicon/react";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { PikaIcon } from "@pikaicons/react";
+import {
+  File02Icon,
+  PlusIcon,
+  QuestionMarkCircleIcon,
+} from "@pikaicons/core-free";
 import { useSchemaStore } from "@/stores/store-provider";
 import { FieldEditor } from "./FieldEditor";
 import { FieldSettingsModal } from "./FieldSettingsModal";
@@ -94,8 +113,24 @@ export function FieldTree(): React.JSX.Element {
   const fields = useSchemaStore((state) => state.fields);
   const addField = useSchemaStore((state) => state.addField);
   const setSchema = useSchemaStore((state) => state.setSchema);
+  const reorderField = useSchemaStore((state) => state.reorderField);
 
   const [modalOpen, setModalOpen] = React.useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    reorderField(String(active.id), String(over.id));
+  };
 
   const handleLoadStarter = (starter: SchemaField[], label: string) => {
     // Generate fresh IDs for starter fields
@@ -115,7 +150,7 @@ export function FieldTree(): React.JSX.Element {
       <div className="border-border flex items-start justify-between gap-4 border-b pb-3">
         <div className="flex-1 space-y-1">
           <h3 className="flex items-center gap-1.5 text-sm font-semibold">
-            <RiFileCodeLine className="text-primary h-4 w-4" />
+            <PikaIcon icon={File02Icon} className="text-primary size-4" />
             <span>Response Schema Fields</span>
           </h3>
           <p className="text-muted-foreground max-w-[90%] text-xs leading-relaxed">
@@ -131,7 +166,7 @@ export function FieldTree(): React.JSX.Element {
           aria-label="Add Root Field"
           onClick={() => setModalOpen(true)}
         >
-          <RiAddLine className="mr-1 h-4 w-4" />
+          <PikaIcon icon={PlusIcon} className="mr-1 size-4" />
           <span>Add Field</span>
         </Button>
       </div>
@@ -139,7 +174,10 @@ export function FieldTree(): React.JSX.Element {
       {/* Fields List */}
       {fields.length === 0 ? (
         <div className="bg-muted/20 border-border/80 flex flex-col items-center justify-center space-y-2 border border-dashed p-6 text-center">
-          <RiQuestionLine className="text-muted-foreground/60 h-6 w-6 stroke-1" />
+          <PikaIcon
+            icon={QuestionMarkCircleIcon}
+            className="text-muted-foreground/60 size-6 stroke-1"
+          />
           <div className="text-xs font-semibold">
             No schema fields configured
           </div>
@@ -175,11 +213,23 @@ export function FieldTree(): React.JSX.Element {
           </div>
         </div>
       ) : (
-        <div className="space-y-1.5 pr-1">
-          {fields.map((field) => (
-            <FieldEditor key={field.id} field={field} depth={0} />
-          ))}
-        </div>
+        <DndContext
+          id="field-tree-dnd"
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={fields.map((field) => field.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-1.5 pr-1">
+              {fields.map((field) => (
+                <FieldEditor key={field.id} field={field} depth={0} />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       <FieldSettingsModal

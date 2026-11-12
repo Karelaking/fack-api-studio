@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import * as PikaCore from "@pikaicons/core-free";
+import { GitBranchIcon, SparkleAi01Icon } from "@pikaicons/core-free";
 import { PikaIcon } from "@pikaicons/react";
 
 interface IdleInspectorProps {
@@ -24,7 +24,7 @@ export const IdleInspector = ({
       <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
         <div className="bg-muted/40 border-border/60 mb-3 flex size-12 items-center justify-center rounded-xl border">
           <PikaIcon
-            icon={PikaCore.GitBranchIcon}
+            icon={GitBranchIcon}
             size={24}
             className="text-muted-foreground"
             aria-hidden="true"
@@ -48,7 +48,7 @@ export const IdleInspector = ({
           </div>
           <div className="text-muted-foreground mt-2 flex items-center gap-1.5 text-xs">
             <PikaIcon
-              icon={PikaCore.SparkleAi01Icon}
+              icon={SparkleAi01Icon}
               size={12}
               className="text-primary shrink-0"
               aria-hidden="true"

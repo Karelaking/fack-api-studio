@@ -5,23 +5,23 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryState, parseAsString, parseAsStringEnum } from "nuqs";
 import {
-  RiTerminalBoxLine,
-  RiSearchLine,
-  RiLoader2Line,
-  RiDeleteBin6Line,
-  RiSettings3Line,
-  RiAddLine,
-  RiCloseLine,
-  RiLayoutGridLine,
-  RiListUnordered,
-  RiArrowUpDownLine,
-  RiArrowRightSLine,
-  RiPulseLine,
-  RiRouteLine,
-  RiTimeLine,
-  RiFileList3Line,
-  RiCommandLine,
-} from "@remixicon/react";
+  BurgerMenuThreeIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  ClockIcon,
+  CodeIcon,
+  DeleteDustbin01Icon,
+  File02Icon,
+  GitBranchIcon,
+  GridDashboard02Icon,
+  MultipleCrossCancelIcon,
+  PlusIcon,
+  RefreshIcon,
+  SearchIcon,
+  Settings01Icon,
+  TroubleshootIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
 import { deleteProject, updateProject } from "@/lib/actions/projects";
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -356,9 +356,10 @@ export function ProjectGrid({
       {/* Search and view controls */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-sm">
-          <RiSearchLine
+          <PikaIcon
+            icon={SearchIcon}
             aria-hidden="true"
-            className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+            className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
           />
           <Input
             ref={searchRef}
@@ -381,7 +382,11 @@ export function ProjectGrid({
                 }}
                 className="text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring focus-visible:ring-offset-background inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:h-7 sm:w-7"
               >
-                <RiCloseLine aria-hidden="true" className="h-4 w-4" />
+                <PikaIcon
+                  icon={MultipleCrossCancelIcon}
+                  aria-hidden="true"
+                  className="size-4"
+                />
               </button>
             ) : (
               <kbd
@@ -396,23 +401,25 @@ export function ProjectGrid({
 
         <div className="flex items-center gap-2 sm:ml-auto">
           <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  aria-label={`Sort projects by ${
-                    sortBy === "name" ? "name" : "last updated"
-                  }`}
-                  className="h-11 min-w-11 justify-center px-0 sm:h-10 sm:min-w-0 sm:px-3"
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                aria-label={`Sort projects by ${
+                  sortBy === "name" ? "name" : "last updated"
+                }`}
+                className="h-11 min-w-11 justify-center px-0 sm:h-10 sm:min-w-0 sm:px-3"
+              >
+                <PikaIcon
+                  icon={ChevronDownIcon}
+                  aria-hidden="true"
+                  className="size-4"
                 />
-              }
-            >
-              <RiArrowUpDownLine aria-hidden="true" className="h-4 w-4" />
-              <span className="hidden sm:inline">
-                {sortBy === "name" ? "Name" : "Last updated"}
-              </span>
+                <span className="hidden sm:inline">
+                  {sortBy === "name" ? "Name" : "Last updated"}
+                </span>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
               <DropdownMenuRadioGroup
@@ -445,7 +452,11 @@ export function ProjectGrid({
                   : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
               )}
             >
-              <RiLayoutGridLine aria-hidden="true" className="h-4 w-4" />
+              <PikaIcon
+                icon={GridDashboard02Icon}
+                aria-hidden="true"
+                className="size-4"
+              />
             </button>
             <button
               type="button"
@@ -459,7 +470,11 @@ export function ProjectGrid({
                   : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
               )}
             >
-              <RiListUnordered aria-hidden="true" className="h-4 w-4" />
+              <PikaIcon
+                icon={BurgerMenuThreeIcon}
+                aria-hidden="true"
+                className="size-4"
+              />
             </button>
           </fieldset>
         </div>
@@ -642,9 +657,10 @@ export function ProjectGrid({
                             {formatRelativeTime(project.updatedAt)}
                           </span>
                         </span>
-                        <RiArrowRightSLine
+                        <PikaIcon
+                          icon={ChevronRightIcon}
                           aria-hidden="true"
-                          className="text-muted-foreground group-hover:text-foreground h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5"
+                          className="text-muted-foreground group-hover:text-foreground size-4 shrink-0 transition-transform group-hover:translate-x-0.5"
                         />
                       </Link>
                     </li>
@@ -666,7 +682,11 @@ export function ProjectGrid({
                   onClick={triggerCreateProject}
                   className="w-full justify-start"
                 >
-                  <RiAddLine aria-hidden="true" className="h-4 w-4" />
+                  <PikaIcon
+                    icon={PlusIcon}
+                    aria-hidden="true"
+                    className="size-4"
+                  />
                   New project
                 </Button>
                 <Button
@@ -675,17 +695,26 @@ export function ProjectGrid({
                   onClick={openCommandMenu}
                   className="w-full justify-start"
                 >
-                  <RiCommandLine aria-hidden="true" className="h-4 w-4" />
+                  <PikaIcon
+                    icon={CodeIcon}
+                    aria-hidden="true"
+                    className="size-4"
+                  />
                   Search everything
                 </Button>
                 <Button
                   variant="outline"
-                  nativeButton={false}
+                  asChild
                   className="w-full justify-start"
-                  render={<Link href="/activity" />}
                 >
-                  <RiFileList3Line aria-hidden="true" className="h-4 w-4" />
-                  Activity logs
+                  <Link href="/activity">
+                    <PikaIcon
+                      icon={File02Icon}
+                      aria-hidden="true"
+                      className="size-4"
+                    />
+                    Activity logs
+                  </Link>
                 </Button>
               </div>
             </section>
@@ -705,9 +734,10 @@ export function ProjectGrid({
                 className="text-muted-foreground flex items-center gap-1.5 text-xs tabular-nums"
               >
                 {isPending ? (
-                  <RiLoader2Line
+                  <PikaIcon
+                    icon={RefreshIcon}
                     aria-hidden="true"
-                    className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
+                    className="size-3.5 animate-spin motion-reduce:animate-none"
                   />
                 ) : null}
                 {filteredProjects.length}{" "}
@@ -718,7 +748,11 @@ export function ProjectGrid({
             {filteredProjects.length === 0 ? (
               <div className="bg-card/30 border-border/50 flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-12 text-center shadow-sm sm:py-16">
                 <div className="bg-primary/10 text-primary mb-4 flex h-14 w-14 items-center justify-center rounded-full">
-                  <RiTerminalBoxLine aria-hidden="true" className="h-7 w-7" />
+                  <PikaIcon
+                    icon={CodeIcon}
+                    aria-hidden="true"
+                    className="size-7"
+                  />
                 </div>
                 <h3 className="text-foreground text-lg font-semibold">
                   No matching projects
@@ -783,9 +817,10 @@ export function ProjectGrid({
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 items-center gap-3">
                           <div className="from-primary/20 to-primary/5 text-primary ring-primary/20 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-linear-to-b ring-1">
-                            <RiTerminalBoxLine
+                            <PikaIcon
+                              icon={CodeIcon}
                               aria-hidden="true"
-                              className="h-5 w-5"
+                              className="size-5"
                             />
                           </div>
                           <div className="flex min-w-0 flex-col">
@@ -810,9 +845,10 @@ export function ProjectGrid({
                             }}
                             className="border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring focus-visible:ring-offset-background inline-flex h-11 w-11 items-center justify-center rounded-lg border shadow-sm transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 sm:h-8 sm:w-8"
                           >
-                            <RiSettings3Line
+                            <PikaIcon
+                              icon={Settings01Icon}
                               aria-hidden="true"
-                              className="h-4 w-4"
+                              className="size-4"
                             />
                           </button>
                           <button
@@ -826,9 +862,10 @@ export function ProjectGrid({
                             }}
                             className="border-border bg-card text-muted-foreground hover:text-destructive hover:bg-muted focus-visible:ring-ring focus-visible:ring-offset-background inline-flex h-11 w-11 items-center justify-center rounded-lg border shadow-sm transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 sm:h-8 sm:w-8"
                           >
-                            <RiDeleteBin6Line
+                            <PikaIcon
+                              icon={DeleteDustbin01Icon}
                               aria-hidden="true"
-                              className="h-4 w-4"
+                              className="size-4"
                             />
                           </button>
                         </div>
@@ -846,9 +883,10 @@ export function ProjectGrid({
 
                       <div className="text-muted-foreground border-border/50 mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 border-t pt-3 text-xs">
                         <span className="inline-flex items-center gap-1.5">
-                          <RiPulseLine
+                          <PikaIcon
+                            icon={TroubleshootIcon}
                             aria-hidden="true"
-                            className="h-3.5 w-3.5"
+                            className="size-3.5"
                           />
                           <span className="tabular-nums">
                             {endpoints.length}
@@ -856,17 +894,19 @@ export function ProjectGrid({
                           {endpoints.length === 1 ? "endpoint" : "endpoints"}
                         </span>
                         <span className="inline-flex items-center gap-1.5">
-                          <RiRouteLine
+                          <PikaIcon
+                            icon={GitBranchIcon}
                             aria-hidden="true"
-                            className="h-3.5 w-3.5"
+                            className="size-3.5"
                           />
                           <span className="tabular-nums">{routeCount}</span>
                           {routeCount === 1 ? "route" : "routes"}
                         </span>
                         <span className="ml-auto inline-flex items-center gap-1.5">
-                          <RiTimeLine
+                          <PikaIcon
+                            icon={ClockIcon}
                             aria-hidden="true"
-                            className="h-3.5 w-3.5"
+                            className="size-3.5"
                           />
                           {formatRelativeTime(project.updatedAt)}
                         </span>
@@ -881,7 +921,7 @@ export function ProjectGrid({
       ) : (
         <div className="bg-card/30 border-border/50 flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center shadow-sm">
           <div className="bg-primary/10 text-primary mb-5 flex h-16 w-16 items-center justify-center rounded-full">
-            <RiTerminalBoxLine aria-hidden="true" className="h-8 w-8" />
+            <PikaIcon icon={CodeIcon} aria-hidden="true" className="size-8" />
           </div>
           <h2 className="text-foreground text-xl font-semibold tracking-tight">
             Create your first project
@@ -891,7 +931,7 @@ export function ProjectGrid({
             routes on the canvas or add them by hand.
           </p>
           <Button type="button" onClick={triggerCreateProject} className="mt-6">
-            <RiAddLine aria-hidden="true" className="h-4 w-4" />
+            <PikaIcon icon={PlusIcon} aria-hidden="true" className="size-4" />
             New project
           </Button>
         </div>
@@ -984,8 +1024,9 @@ export function ProjectGrid({
               >
                 {editLoading || isPending ? (
                   <>
-                    <RiLoader2Line
-                      className="h-4 w-4 animate-spin motion-reduce:animate-none"
+                    <PikaIcon
+                      icon={RefreshIcon}
+                      className="size-4 animate-spin motion-reduce:animate-none"
                       aria-hidden="true"
                     />
                     <span>Saving...</span>
@@ -1061,8 +1102,9 @@ export function ProjectGrid({
               aria-disabled={deleteLoading || isPending}
             >
               {(deleteLoading || isPending) && (
-                <RiLoader2Line
-                  className="h-4 w-4 animate-spin motion-reduce:animate-none"
+                <PikaIcon
+                  icon={RefreshIcon}
+                  className="size-4 animate-spin motion-reduce:animate-none"
                   aria-hidden="true"
                 />
               )}

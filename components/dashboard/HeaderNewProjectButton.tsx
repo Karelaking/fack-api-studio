@@ -3,15 +3,15 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import {
-  RiAddLine,
-  RiSaveLine,
-  RiSave3Line,
-  RiLoader2Line,
-  RiSparkling2Fill,
-  RiDownloadLine,
-  RiUploadCloud2Line,
-  RiMoreLine,
-} from "@remixicon/react";
+  DownloadBarDownIcon,
+  FloppyIcon,
+  PlusIcon,
+  RefreshIcon,
+  SparkleAi01SolidIcon,
+  ThreeDotsMenuHorizontalIcon,
+  UploadBarUpIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,9 +108,15 @@ export function HeaderNewProjectButton(): React.JSX.Element | null {
               disabled={isSavingFack}
             >
               {isSavingFack ? (
-                <RiLoader2Line className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" />
+                <PikaIcon
+                  icon={RefreshIcon}
+                  className="size-3.5 animate-spin motion-reduce:animate-none"
+                />
               ) : (
-                <RiSave3Line className="text-muted-foreground h-3.5 w-3.5" />
+                <PikaIcon
+                  icon={FloppyIcon}
+                  className="text-muted-foreground size-3.5"
+                />
               )}
               <span>Save .fack</span>
             </Button>
@@ -123,7 +129,10 @@ export function HeaderNewProjectButton(): React.JSX.Element | null {
             aria-label="AI Architect"
             onClick={openAiArchitect}
           >
-            <RiSparkling2Fill className="text-primary h-3.5 w-3.5" />
+            <PikaIcon
+              icon={SparkleAi01SolidIcon}
+              className="text-primary size-3.5"
+            />
             <span>AI Architect</span>
           </Button>
           <Button
@@ -134,7 +143,7 @@ export function HeaderNewProjectButton(): React.JSX.Element | null {
             aria-label="Import OpenAPI"
             onClick={openImportOpenApi}
           >
-            <RiUploadCloud2Line className="text-info h-3.5 w-3.5" />
+            <PikaIcon icon={UploadBarUpIcon} className="text-info size-3.5" />
             <span>Import OpenAPI</span>
           </Button>
           <Button
@@ -145,45 +154,49 @@ export function HeaderNewProjectButton(): React.JSX.Element | null {
             aria-label="Export OpenAPI"
             onClick={exportOpenApi}
           >
-            <RiDownloadLine className="h-3.5 w-3.5" />
+            <PikaIcon icon={DownloadBarDownIcon} className="size-3.5" />
             <span>Export OpenAPI</span>
           </Button>
         </div>
 
         {/* Below xl the same secondary actions collapse into an overflow menu. */}
         <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                className="xl:hidden"
-                title="More canvas actions"
-                aria-label="More canvas actions"
-              />
-            }
-          >
-            <RiMoreLine className="h-4 w-4" />
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              className="xl:hidden"
+              title="More canvas actions"
+              aria-label="More canvas actions"
+            >
+              <PikaIcon icon={ThreeDotsMenuHorizontalIcon} className="size-4" />
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuGroup>
               {currentProject && (
                 <DropdownMenuItem onClick={handleSaveFack}>
-                  <RiSave3Line className="text-muted-foreground" />
+                  <PikaIcon
+                    icon={FloppyIcon}
+                    className="text-muted-foreground"
+                  />
                   <span>Save .fack</span>
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={openAiArchitect}>
-                <RiSparkling2Fill className="text-primary" />
+                <PikaIcon
+                  icon={SparkleAi01SolidIcon}
+                  className="text-primary"
+                />
                 <span>AI Architect</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={openImportOpenApi}>
-                <RiUploadCloud2Line className="text-info" />
+                <PikaIcon icon={UploadBarUpIcon} className="text-info" />
                 <span>Import OpenAPI</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={exportOpenApi}>
-                <RiDownloadLine />
+                <PikaIcon icon={DownloadBarDownIcon} />
                 <span>Export OpenAPI</span>
               </DropdownMenuItem>
             </DropdownMenuGroup>
@@ -200,12 +213,17 @@ export function HeaderNewProjectButton(): React.JSX.Element | null {
           disabled={isSaving}
         >
           {isSaving ? (
-            <RiLoader2Line
-              className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
+            <PikaIcon
+              icon={RefreshIcon}
+              className="size-3.5 animate-spin motion-reduce:animate-none"
               aria-hidden="true"
             />
           ) : (
-            <RiSaveLine className="h-3.5 w-3.5" aria-hidden="true" />
+            <PikaIcon
+              icon={FloppyIcon}
+              className="size-3.5"
+              aria-hidden="true"
+            />
           )}
           <span className="hidden sm:inline">
             {isSaving ? "Saving..." : "Save Layout"}
@@ -219,7 +237,7 @@ export function HeaderNewProjectButton(): React.JSX.Element | null {
           aria-label="Add Route"
           onClick={() => dispatchCanvasCommand("open-add-route-dialog")}
         >
-          <RiAddLine className="h-4 w-4" aria-hidden="true" />
+          <PikaIcon icon={PlusIcon} className="size-4" aria-hidden="true" />
           <span className="hidden sm:inline">Add Route</span>
         </Button>
       </div>
@@ -240,9 +258,15 @@ export function HeaderNewProjectButton(): React.JSX.Element | null {
         disabled={isSavingFack}
       >
         {isSavingFack ? (
-          <RiLoader2Line className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" />
+          <PikaIcon
+            icon={RefreshIcon}
+            className="size-3.5 animate-spin motion-reduce:animate-none"
+          />
         ) : (
-          <RiSave3Line className="text-muted-foreground h-3.5 w-3.5" />
+          <PikaIcon
+            icon={FloppyIcon}
+            className="text-muted-foreground size-3.5"
+          />
         )}
         <span>Save .fack</span>
       </Button>
@@ -262,7 +286,7 @@ export function HeaderNewProjectButton(): React.JSX.Element | null {
       aria-label="Create New Project"
       onClick={handleNewProjectClick}
     >
-      <RiAddLine className="h-4 w-4" />
+      <PikaIcon icon={PlusIcon} className="size-4" />
       <span className="hidden sm:inline">New Project</span>
     </Button>
   );

@@ -3,26 +3,26 @@
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  RiGitBranchLine,
-  RiPulseLine,
-  RiFileHistoryLine,
-  RiStickyNoteLine,
-  RiSettings2Line,
-  RiSaveLine,
-  RiSave3Line,
-  RiSparkling2Fill,
-  RiUploadCloud2Line,
-  RiDownloadLine,
-  RiAddLine,
-  RiMore2Fill,
-  RiLoader2Line,
-  RiPlayLine,
-  RiFileCodeLine,
-  RiCodeLine,
-  RiFileCopyLine,
-  RiCheckLine,
-  RiDeleteBin6Line,
-} from "@remixicon/react";
+  CheckTickCircleIcon,
+  ClockIcon,
+  CodeIcon,
+  CopyIcon,
+  DeleteDustbin01Icon,
+  DownloadBarDownIcon,
+  File02Icon,
+  FloppyIcon,
+  GitBranchIcon,
+  PencilEditIcon,
+  PlayCircleIcon,
+  PlusIcon,
+  RefreshIcon,
+  Settings01Icon,
+  SparkleAi01SolidIcon,
+  ThreeDotsMenuVerticalIcon,
+  TroubleshootIcon,
+  UploadBarUpIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getProjectUrl } from "@/lib/utils/project-slug";
@@ -256,27 +256,34 @@ export const SectionMenuBar = ({
           aria-label="Save project to .fack"
         >
           {isSavingFack ? (
-            <RiLoader2Line
+            <PikaIcon
+              icon={RefreshIcon}
               className="size-3.5 animate-spin"
               aria-hidden="true"
             />
           ) : (
-            <RiSave3Line className="size-3.5" aria-hidden="true" />
+            <PikaIcon
+              icon={FloppyIcon}
+              className="size-3.5"
+              aria-hidden="true"
+            />
           )}
         </Button>
 
         <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <button
-                type="button"
-                className="hover:bg-muted text-muted-foreground hover:text-foreground border-border/50 bg-background/50 focus-visible:ring-ring flex size-8 items-center justify-center rounded-md border transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-1"
-                aria-label="Quick actions menu"
-                title="Quick actions"
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="hover:bg-muted text-muted-foreground hover:text-foreground border-border/50 bg-background/50 focus-visible:ring-ring flex size-8 items-center justify-center rounded-md border transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-1"
+              aria-label="Quick actions menu"
+              title="Quick actions"
+            >
+              <PikaIcon
+                icon={ThreeDotsMenuVerticalIcon}
+                className="size-4"
+                aria-hidden="true"
               />
-            }
-          >
-            <RiMore2Fill className="size-4" aria-hidden="true" />
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-48">
             <DropdownMenuGroup>
@@ -285,8 +292,9 @@ export const SectionMenuBar = ({
                 disabled={isSavingFack || !currentProject}
                 className="cursor-pointer text-xs"
               >
-                <RiSave3Line
-                  className="h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={FloppyIcon}
+                  className="size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Save to .fack</span>
@@ -298,8 +306,9 @@ export const SectionMenuBar = ({
                   disabled={isSavingLayout}
                   className="cursor-pointer text-xs"
                 >
-                  <RiSaveLine
-                    className="h-3.5 w-3.5 shrink-0"
+                  <PikaIcon
+                    icon={FloppyIcon}
+                    className="size-3.5 shrink-0"
                     aria-hidden="true"
                   />
                   <span>Save Canvas Layout</span>
@@ -313,8 +322,9 @@ export const SectionMenuBar = ({
                 onClick={handleAddRoute}
                 className="cursor-pointer text-xs"
               >
-                <RiAddLine
-                  className="h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={PlusIcon}
+                  className="size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Add Route Node</span>
@@ -324,8 +334,9 @@ export const SectionMenuBar = ({
                 onClick={handleOpenAiArchitect}
                 className="cursor-pointer text-xs"
               >
-                <RiSparkling2Fill
-                  className="text-primary h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={SparkleAi01SolidIcon}
+                  className="text-primary size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>AI Architect</span>
@@ -338,8 +349,9 @@ export const SectionMenuBar = ({
                 onClick={handleOpenImportOpenApi}
                 className="cursor-pointer text-xs"
               >
-                <RiUploadCloud2Line
-                  className="text-info h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={UploadBarUpIcon}
+                  className="text-info size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Import OpenAPI</span>
@@ -348,8 +360,9 @@ export const SectionMenuBar = ({
                 onClick={handleExportOpenApi}
                 className="cursor-pointer text-xs"
               >
-                <RiDownloadLine
-                  className="h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={DownloadBarDownIcon}
+                  className="size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Export OpenAPI</span>
@@ -367,28 +380,37 @@ export const SectionMenuBar = ({
                     onClick={() => switchInspectorTab("route")}
                     className="cursor-pointer text-xs"
                   >
-                    <RiSettings2Line className="h-3.5 w-3.5 shrink-0" />
+                    <PikaIcon
+                      icon={Settings01Icon}
+                      className="size-3.5 shrink-0"
+                    />
                     <span>Route & Headers</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => switchInspectorTab("schema")}
                     className="cursor-pointer text-xs"
                   >
-                    <RiFileCodeLine className="h-3.5 w-3.5 shrink-0" />
+                    <PikaIcon icon={File02Icon} className="size-3.5 shrink-0" />
                     <span>Schema & Fields</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => switchInspectorTab("behavior")}
                     className="cursor-pointer text-xs"
                   >
-                    <RiPulseLine className="h-3.5 w-3.5 shrink-0" />
+                    <PikaIcon
+                      icon={TroubleshootIcon}
+                      className="size-3.5 shrink-0"
+                    />
                     <span>Behavior & Chaos</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => switchInspectorTab("try")}
                     className="cursor-pointer text-xs"
                   >
-                    <RiPlayLine className="h-3.5 w-3.5 shrink-0" />
+                    <PikaIcon
+                      icon={PlayCircleIcon}
+                      className="size-3.5 shrink-0"
+                    />
                     <span>Try Request</span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
@@ -400,14 +422,14 @@ export const SectionMenuBar = ({
                     }
                     className="cursor-pointer text-xs"
                   >
-                    <RiCodeLine className="h-3.5 w-3.5 shrink-0" />
+                    <PikaIcon icon={CodeIcon} className="size-3.5 shrink-0" />
                     <span>Generate TypeScript Types</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => dispatchCanvasCommand("route-copy-schema")}
                     className="cursor-pointer text-xs"
                   >
-                    <RiFileCopyLine className="h-3.5 w-3.5 shrink-0" />
+                    <PikaIcon icon={CopyIcon} className="size-3.5 shrink-0" />
                     <span>Copy JSON Schema</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -416,14 +438,17 @@ export const SectionMenuBar = ({
                     }
                     className="cursor-pointer text-xs"
                   >
-                    <RiCheckLine className="h-3.5 w-3.5 shrink-0" />
+                    <PikaIcon
+                      icon={CheckTickCircleIcon}
+                      className="size-3.5 shrink-0"
+                    />
                     <span>Toggle Active/Disabled</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => dispatchCanvasCommand("route-save")}
                     className="cursor-pointer text-xs"
                   >
-                    <RiSaveLine className="h-3.5 w-3.5 shrink-0" />
+                    <PikaIcon icon={FloppyIcon} className="size-3.5 shrink-0" />
                     <span>Save Route</span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
@@ -447,8 +472,9 @@ export const SectionMenuBar = ({
                 disabled={isSavingFack || !currentProject}
                 className="cursor-pointer text-xs"
               >
-                <RiSave3Line
-                  className="h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={FloppyIcon}
+                  className="size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Save to .fack</span>
@@ -460,8 +486,9 @@ export const SectionMenuBar = ({
                   disabled={isSavingLayout}
                   className="cursor-pointer text-xs"
                 >
-                  <RiSaveLine
-                    className="h-3.5 w-3.5 shrink-0"
+                  <PikaIcon
+                    icon={FloppyIcon}
+                    className="size-3.5 shrink-0"
                     aria-hidden="true"
                   />
                   <span>Save Canvas Layout</span>
@@ -475,8 +502,9 @@ export const SectionMenuBar = ({
                 onClick={handleOpenImportOpenApi}
                 className="cursor-pointer text-xs"
               >
-                <RiUploadCloud2Line
-                  className="text-info h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={UploadBarUpIcon}
+                  className="text-info size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Import OpenAPI</span>
@@ -485,8 +513,9 @@ export const SectionMenuBar = ({
                 onClick={handleExportOpenApi}
                 className="cursor-pointer text-xs"
               >
-                <RiDownloadLine
-                  className="h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={DownloadBarDownIcon}
+                  className="size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Export OpenAPI</span>
@@ -504,7 +533,11 @@ export const SectionMenuBar = ({
                 "bg-secondary text-secondary-foreground font-semibold shadow-xs",
             )}
           >
-            <RiGitBranchLine className="size-3.5 shrink-0" aria-hidden="true" />
+            <PikaIcon
+              icon={GitBranchIcon}
+              className="size-3.5 shrink-0"
+              aria-hidden="true"
+            />
             <span>Canvas</span>
           </MenubarTrigger>
           <MenubarContent align="start" className="min-w-56">
@@ -515,8 +548,9 @@ export const SectionMenuBar = ({
                 }
                 className="cursor-pointer text-xs font-medium"
               >
-                <RiGitBranchLine
-                  className="h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={GitBranchIcon}
+                  className="size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Go to Canvas</span>
@@ -529,8 +563,9 @@ export const SectionMenuBar = ({
                 onClick={handleAddRoute}
                 className="cursor-pointer text-xs"
               >
-                <RiAddLine
-                  className="h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={PlusIcon}
+                  className="size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Add Route Node</span>
@@ -540,8 +575,9 @@ export const SectionMenuBar = ({
                 onClick={handleOpenAiArchitect}
                 className="cursor-pointer text-xs"
               >
-                <RiSparkling2Fill
-                  className="text-primary h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={SparkleAi01SolidIcon}
+                  className="text-primary size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>AI Architect</span>
@@ -552,8 +588,9 @@ export const SectionMenuBar = ({
                 disabled={isSavingLayout}
                 className="cursor-pointer text-xs"
               >
-                <RiSaveLine
-                  className="h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={FloppyIcon}
+                  className="size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Save Canvas Layout</span>
@@ -563,8 +600,9 @@ export const SectionMenuBar = ({
                 onClick={handleExportOpenApi}
                 className="cursor-pointer text-xs"
               >
-                <RiDownloadLine
-                  className="h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={DownloadBarDownIcon}
+                  className="size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Export OpenAPI Specs</span>
@@ -583,7 +621,8 @@ export const SectionMenuBar = ({
                   "bg-secondary text-secondary-foreground font-semibold shadow-xs",
               )}
             >
-              <RiSettings2Line
+              <PikaIcon
+                icon={Settings01Icon}
                 className="size-3.5 shrink-0"
                 aria-hidden="true"
               />
@@ -598,8 +637,9 @@ export const SectionMenuBar = ({
                   onClick={handleAddRoute}
                   className="cursor-pointer text-xs"
                 >
-                  <RiAddLine
-                    className="h-3.5 w-3.5 shrink-0"
+                  <PikaIcon
+                    icon={PlusIcon}
+                    className="size-3.5 shrink-0"
                     aria-hidden="true"
                   />
                   <span>Add Route Node</span>
@@ -618,8 +658,9 @@ export const SectionMenuBar = ({
                       onClick={() => switchInspectorTab("route")}
                       className="cursor-pointer text-xs"
                     >
-                      <RiSettings2Line
-                        className="h-3.5 w-3.5 shrink-0"
+                      <PikaIcon
+                        icon={Settings01Icon}
+                        className="size-3.5 shrink-0"
                         aria-hidden="true"
                       />
                       <span>Route & Headers</span>
@@ -629,8 +670,9 @@ export const SectionMenuBar = ({
                       onClick={() => switchInspectorTab("schema")}
                       className="cursor-pointer text-xs"
                     >
-                      <RiFileCodeLine
-                        className="h-3.5 w-3.5 shrink-0"
+                      <PikaIcon
+                        icon={File02Icon}
+                        className="size-3.5 shrink-0"
                         aria-hidden="true"
                       />
                       <span>Schema & Fields</span>
@@ -640,8 +682,9 @@ export const SectionMenuBar = ({
                       onClick={() => switchInspectorTab("behavior")}
                       className="cursor-pointer text-xs"
                     >
-                      <RiPulseLine
-                        className="h-3.5 w-3.5 shrink-0"
+                      <PikaIcon
+                        icon={TroubleshootIcon}
+                        className="size-3.5 shrink-0"
                         aria-hidden="true"
                       />
                       <span>Behavior & Chaos</span>
@@ -651,8 +694,9 @@ export const SectionMenuBar = ({
                       onClick={() => switchInspectorTab("try")}
                       className="cursor-pointer text-xs"
                     >
-                      <RiPlayLine
-                        className="h-3.5 w-3.5 shrink-0"
+                      <PikaIcon
+                        icon={PlayCircleIcon}
+                        className="size-3.5 shrink-0"
                         aria-hidden="true"
                       />
                       <span>Try Live Request</span>
@@ -671,8 +715,9 @@ export const SectionMenuBar = ({
                       }
                       className="cursor-pointer text-xs"
                     >
-                      <RiCodeLine
-                        className="h-3.5 w-3.5 shrink-0"
+                      <PikaIcon
+                        icon={CodeIcon}
+                        className="size-3.5 shrink-0"
                         aria-hidden="true"
                       />
                       <span>Generate TypeScript Types</span>
@@ -681,8 +726,9 @@ export const SectionMenuBar = ({
                       onClick={() => dispatchCanvasCommand("route-copy-schema")}
                       className="cursor-pointer text-xs"
                     >
-                      <RiFileCopyLine
-                        className="h-3.5 w-3.5 shrink-0"
+                      <PikaIcon
+                        icon={CopyIcon}
+                        className="size-3.5 shrink-0"
                         aria-hidden="true"
                       />
                       <span>Copy JSON Schema</span>
@@ -693,8 +739,9 @@ export const SectionMenuBar = ({
                       }
                       className="cursor-pointer text-xs"
                     >
-                      <RiCheckLine
-                        className="h-3.5 w-3.5 shrink-0"
+                      <PikaIcon
+                        icon={CheckTickCircleIcon}
+                        className="size-3.5 shrink-0"
                         aria-hidden="true"
                       />
                       <span>Toggle Active / Disabled</span>
@@ -703,8 +750,9 @@ export const SectionMenuBar = ({
                       onClick={() => dispatchCanvasCommand("route-save")}
                       className="cursor-pointer text-xs"
                     >
-                      <RiSaveLine
-                        className="h-3.5 w-3.5 shrink-0"
+                      <PikaIcon
+                        icon={FloppyIcon}
+                        className="size-3.5 shrink-0"
                         aria-hidden="true"
                       />
                       <span>Save Route</span>
@@ -714,8 +762,9 @@ export const SectionMenuBar = ({
                       onClick={() => dispatchCanvasCommand("route-delete")}
                       className="text-destructive focus:text-destructive cursor-pointer text-xs"
                     >
-                      <RiDeleteBin6Line
-                        className="h-3.5 w-3.5 shrink-0"
+                      <PikaIcon
+                        icon={DeleteDustbin01Icon}
+                        className="size-3.5 shrink-0"
                         aria-hidden="true"
                       />
                       <span>Delete Route</span>
@@ -741,7 +790,11 @@ export const SectionMenuBar = ({
                 "bg-secondary text-secondary-foreground font-semibold shadow-xs",
             )}
           >
-            <RiPulseLine className="size-3.5 shrink-0" aria-hidden="true" />
+            <PikaIcon
+              icon={TroubleshootIcon}
+              className="size-3.5 shrink-0"
+              aria-hidden="true"
+            />
             <span>Endpoints</span>
           </MenubarTrigger>
           <MenubarContent align="start" className="min-w-52">
@@ -752,8 +805,9 @@ export const SectionMenuBar = ({
                 }
                 className="cursor-pointer text-xs font-medium"
               >
-                <RiPulseLine
-                  className="h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={TroubleshootIcon}
+                  className="size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Go to Endpoints</span>
@@ -766,8 +820,9 @@ export const SectionMenuBar = ({
                 onClick={handleExportOpenApi}
                 className="cursor-pointer text-xs"
               >
-                <RiDownloadLine
-                  className="h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={DownloadBarDownIcon}
+                  className="size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Export OpenAPI Specs</span>
@@ -776,8 +831,9 @@ export const SectionMenuBar = ({
                 onClick={handleOpenImportOpenApi}
                 className="cursor-pointer text-xs"
               >
-                <RiUploadCloud2Line
-                  className="text-info h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={UploadBarUpIcon}
+                  className="text-info size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Import OpenAPI Specs</span>
@@ -795,7 +851,8 @@ export const SectionMenuBar = ({
                 "bg-secondary text-secondary-foreground font-semibold shadow-xs",
             )}
           >
-            <RiFileHistoryLine
+            <PikaIcon
+              icon={ClockIcon}
               className="size-3.5 shrink-0"
               aria-hidden="true"
             />
@@ -807,8 +864,9 @@ export const SectionMenuBar = ({
                 onClick={() => router.push(getProjectUrl(projectSlug, "logs"))}
                 className="cursor-pointer text-xs font-medium"
               >
-                <RiFileHistoryLine
-                  className="h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={ClockIcon}
+                  className="size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Go to Request Logs</span>
@@ -827,7 +885,8 @@ export const SectionMenuBar = ({
                 "bg-secondary text-secondary-foreground font-semibold shadow-xs",
             )}
           >
-            <RiStickyNoteLine
+            <PikaIcon
+              icon={PencilEditIcon}
               className="size-3.5 shrink-0"
               aria-hidden="true"
             />
@@ -839,8 +898,9 @@ export const SectionMenuBar = ({
                 onClick={() => router.push(getProjectUrl(projectSlug, "notes"))}
                 className="cursor-pointer text-xs font-medium"
               >
-                <RiStickyNoteLine
-                  className="h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={PencilEditIcon}
+                  className="size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Go to Project Notes</span>
@@ -859,7 +919,11 @@ export const SectionMenuBar = ({
                 "bg-secondary text-secondary-foreground font-semibold shadow-xs",
             )}
           >
-            <RiSettings2Line className="size-3.5 shrink-0" aria-hidden="true" />
+            <PikaIcon
+              icon={Settings01Icon}
+              className="size-3.5 shrink-0"
+              aria-hidden="true"
+            />
             <span>Settings</span>
           </MenubarTrigger>
           <MenubarContent align="start" className="min-w-48">
@@ -870,8 +934,9 @@ export const SectionMenuBar = ({
                 }
                 className="cursor-pointer text-xs font-medium"
               >
-                <RiSettings2Line
-                  className="h-3.5 w-3.5 shrink-0"
+                <PikaIcon
+                  icon={Settings01Icon}
+                  className="size-3.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>Go to Settings</span>

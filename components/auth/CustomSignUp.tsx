@@ -5,14 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useClerk, useSignUp } from "@clerk/nextjs";
 import {
-  AlertCircle,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  Loader2,
-  Mail,
-  ShieldCheck,
-} from "lucide-react";
+  AlertCircleIcon,
+  CheckTickCircleIcon,
+  EyeOnIcon,
+  EyeOffIcon,
+  RefreshIcon,
+  EnvelopeIcon,
+  ShieldCheckIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -253,7 +254,8 @@ export const CustomSignUp = (): React.JSX.Element => {
                 role="alert"
                 className="border-destructive/30 bg-destructive/10 text-destructive animate-in fade-in flex items-start gap-2.5 rounded-lg border p-3 text-xs"
               >
-                <AlertCircle
+                <PikaIcon
+                  icon={AlertCircleIcon}
                   className="mt-0.5 size-4 shrink-0"
                   aria-hidden="true"
                 />
@@ -320,7 +322,10 @@ export const CustomSignUp = (): React.JSX.Element => {
                     disabled={isBusy || !loaded}
                     className="bg-background/50 border-input text-foreground focus-visible:ring-primary h-10"
                   />
-                  <Mail className="text-muted-foreground/50 pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2" />
+                  <PikaIcon
+                    icon={EnvelopeIcon}
+                    className="text-muted-foreground/50 pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2"
+                  />
                 </div>
               </div>
 
@@ -353,9 +358,17 @@ export const CustomSignUp = (): React.JSX.Element => {
                     }
                   >
                     {showPassword ? (
-                      <EyeOff className="size-4" aria-hidden="true" />
+                      <PikaIcon
+                        icon={EyeOffIcon}
+                        className="size-4"
+                        aria-hidden="true"
+                      />
                     ) : (
-                      <Eye className="size-4" aria-hidden="true" />
+                      <PikaIcon
+                        icon={EyeOnIcon}
+                        className="size-4"
+                        aria-hidden="true"
+                      />
                     )}
                   </button>
                 </div>
@@ -371,7 +384,8 @@ export const CustomSignUp = (): React.JSX.Element => {
               >
                 {isBusy ? (
                   <>
-                    <Loader2
+                    <PikaIcon
+                      icon={RefreshIcon}
                       className="mr-2 size-4 animate-spin"
                       aria-hidden="true"
                     />
@@ -408,7 +422,11 @@ export const CustomSignUp = (): React.JSX.Element => {
         <>
           <CardHeader className="space-y-1.5 pb-4">
             <CardTitle className="font-heading text-foreground flex items-center gap-2 text-xl font-bold tracking-tight">
-              <ShieldCheck className="text-primary size-5" aria-hidden="true" />
+              <PikaIcon
+                icon={ShieldCheckIcon}
+                className="text-primary size-5"
+                aria-hidden="true"
+              />
               Verify your email
             </CardTitle>
             <CardDescription className="text-muted-foreground text-sm">
@@ -423,7 +441,8 @@ export const CustomSignUp = (): React.JSX.Element => {
                 role="alert"
                 className="border-destructive/30 bg-destructive/10 text-destructive animate-in fade-in flex items-start gap-2.5 rounded-lg border p-3 text-xs"
               >
-                <AlertCircle
+                <PikaIcon
+                  icon={AlertCircleIcon}
                   className="mt-0.5 size-4 shrink-0"
                   aria-hidden="true"
                 />
@@ -433,7 +452,8 @@ export const CustomSignUp = (): React.JSX.Element => {
 
             {resendSuccess && (
               <output className="animate-in fade-in border-success/30 bg-success/10 text-success flex items-start gap-2.5 rounded-lg border p-3 text-xs">
-                <CheckCircle2
+                <PikaIcon
+                  icon={CheckTickCircleIcon}
                   className="mt-0.5 size-4 shrink-0"
                   aria-hidden="true"
                 />
@@ -471,7 +491,8 @@ export const CustomSignUp = (): React.JSX.Element => {
               >
                 {isBusy ? (
                   <>
-                    <Loader2
+                    <PikaIcon
+                      icon={RefreshIcon}
                       className="mr-2 size-4 animate-spin"
                       aria-hidden="true"
                     />

@@ -3,11 +3,8 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {
-  RiLoader4Line,
-  RiComputerLine,
-  RiShieldCheckLine,
-} from "@remixicon/react";
+import { RefreshIcon, LaptopIcon, ShieldCheckIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 
 import { revokeCliDeviceAction } from "@/app/(dashboard)/keys/actions";
 import { Badge } from "@/components/ui/badge";
@@ -83,9 +80,17 @@ export function CliDevicesList({
                 }
               >
                 {device.platform === "unknown" ? (
-                  <RiComputerLine className="size-4" aria-hidden="true" />
+                  <PikaIcon
+                    icon={LaptopIcon}
+                    className="size-4"
+                    aria-hidden="true"
+                  />
                 ) : (
-                  <RiShieldCheckLine className="size-4" aria-hidden="true" />
+                  <PikaIcon
+                    icon={ShieldCheckIcon}
+                    className="size-4"
+                    aria-hidden="true"
+                  />
                 )}
               </span>
 
@@ -131,8 +136,9 @@ export function CliDevicesList({
                     disabled={revoking}
                   >
                     {revoking ? (
-                      <RiLoader4Line
-                        className="animate-spin"
+                      <PikaIcon
+                        icon={RefreshIcon}
+                        className="size-4 animate-spin"
                         aria-hidden="true"
                       />
                     ) : null}

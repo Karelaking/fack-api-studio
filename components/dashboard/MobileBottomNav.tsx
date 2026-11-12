@@ -4,12 +4,13 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  RiGitBranchLine,
-  RiPulseLine,
-  RiSettings2Line,
-  RiFileHistoryLine,
-  RiStickyNoteLine,
-} from "@remixicon/react";
+  GitBranchIcon,
+  GraphTrendLineIcon,
+  FilterHorizontalIcon,
+  ClockIcon,
+  PencilEditIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import type { Route } from "next";
 import { cn } from "@/lib/utils";
 import { getProjectUrl } from "@/lib/utils/project-slug";
@@ -42,27 +43,27 @@ export function MobileBottomNav(): React.JSX.Element | null {
     {
       name: "Canvas",
       href: getProjectUrl(projectSlug, "canvas") as Route,
-      icon: RiGitBranchLine,
+      icon: GitBranchIcon,
     },
     {
       name: "Endpoints",
       href: getProjectUrl(projectSlug, "endpoints") as Route,
-      icon: RiPulseLine,
+      icon: GraphTrendLineIcon,
     },
     {
       name: "Logs",
       href: getProjectUrl(projectSlug, "logs") as Route,
-      icon: RiFileHistoryLine,
+      icon: ClockIcon,
     },
     {
       name: "Notes",
       href: getProjectUrl(projectSlug, "notes") as Route,
-      icon: RiStickyNoteLine,
+      icon: PencilEditIcon,
     },
     {
       name: "Settings",
       href: getProjectUrl(projectSlug, "settings") as Route,
-      icon: RiSettings2Line,
+      icon: FilterHorizontalIcon,
     },
   ];
 
@@ -72,7 +73,6 @@ export function MobileBottomNav(): React.JSX.Element | null {
       className="bg-card/85 border-border fixed right-0 bottom-0 left-0 z-40 flex h-16 items-center justify-around border-t pt-0 pr-[max(1rem,env(safe-area-inset-right))] pb-[env(safe-area-inset-bottom)] pl-[max(1rem,env(safe-area-inset-left))] backdrop-blur-md select-none md:hidden"
     >
       {tabs.map((tab) => {
-        const Icon = tab.icon;
         const isActive = activeTab === tab.name.toLowerCase();
 
         return (
@@ -94,7 +94,11 @@ export function MobileBottomNav(): React.JSX.Element | null {
                 isActive ? "opacity-100" : "opacity-0",
               )}
             />
-            <Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
+            <PikaIcon
+              icon={tab.icon}
+              className="size-6 shrink-0"
+              aria-hidden="true"
+            />
             <span>{tab.name}</span>
           </Link>
         );

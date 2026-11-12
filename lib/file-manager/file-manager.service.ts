@@ -39,6 +39,11 @@ export async function openProjectFile(
   filePath: string,
 ): Promise<{ project: schema.Project; fackFile: FackProjectFile }> {
   const resolvedPath = path.resolve(filePath);
+  if (!resolvedPath.endsWith(".fack")) {
+    throw new Error(
+      "Invalid file format: Only .fack project files can be opened.",
+    );
+  }
   const fackFile = await readFackFile(resolvedPath);
 
   const { project } = await deserializeProject(fackFile);
@@ -67,6 +72,11 @@ export async function saveProjectToFile(
     path.join(getDefaultProjectsDirectory(), `${projectId}.fack`);
 
   const fullPath = path.resolve(resolvedPath);
+  if (!fullPath.endsWith(".fack")) {
+    throw new Error(
+      "Invalid file format: Projects must be saved with a .fack extension.",
+    );
+  }
   const serialized = await serializeProject(projectId, fullPath);
 
   await writeFackFile(fullPath, serialized);

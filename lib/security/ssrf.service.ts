@@ -6,6 +6,7 @@
  * Leverages `ipaddr.js` for battle-tested IP parsing and range validation.
  */
 
+import dns from "node:dns";
 import ipaddr from "ipaddr.js";
 
 export class SsrfSecurityError extends Error {
@@ -125,9 +126,16 @@ export function validateWebhookUrl(
     };
   }
 
-  // 4. IP Range validation if hostname is a direct IP address
-  if (ipaddr.isValid(hostname)) {
-    const { isRestricted, isLoopback } = inspectIpAddress(hostname);
+  // 4. IP Range validation if hostname is a direct IP address or embeds an IP (e.g. nip.io/sslip.io)
+  const directIp = ipaddr.isValid(hostname) ? hostname : null;
+  const embeddedIpv4Match = hostname.match(
+    /(?:^|\.)(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?:\.|$)/,
+  );
+  const candidateIp =
+    directIp || (embeddedIpv4Match ? embeddedIpv4Match[1] : null);
+
+  if (candidateIp && ipaddr.isValid(candidateIp)) {
+    const { isRestricted, isLoopback } = inspectIpAddress(candidateIp);
     if (isRestricted) {
       if (isLocalTier && isLoopback) {
         return { safe: true };
@@ -144,6 +152,52 @@ export function validateWebhookUrl(
 }
 
 /**
+ * Validates an outbound URL to prevent SSRF attacks, including asynchronous DNS resolution
+ * to guard against DNS rebinding and wildcard DNS mapping to internal/cloud metadata.
+ */
+export async function validateWebhookUrlAsync(
+  candidateUrl: string,
+  isLocalTier = false,
+): Promise<{ safe: boolean; reason?: string }> {
+  const syncCheck = validateWebhookUrl(candidateUrl, isLocalTier);
+  if (!syncCheck.safe) {
+    return syncCheck;
+  }
+
+  try {
+    const parsed = new URL(candidateUrl);
+    const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+
+    if (ipaddr.isValid(hostname)) {
+      return { safe: true };
+    }
+
+    const lookupResults = await dns.promises.lookup(hostname, { all: true });
+    for (const entry of lookupResults) {
+      if (ipaddr.isValid(entry.address)) {
+        const { isRestricted, isLoopback } = inspectIpAddress(entry.address);
+        if (isRestricted) {
+          if (isLocalTier && isLoopback) {
+            continue;
+          }
+          return {
+            safe: false,
+            reason: `Destination hostname resolved to restricted IP address (${entry.address}).`,
+          };
+        }
+      }
+    }
+  } catch {
+    return {
+      safe: false,
+      reason: "Destination hostname could not be resolved via DNS.",
+    };
+  }
+
+  return { safe: true };
+}
+
+/**
  * Asserts that an outbound URL is safe to dispatch.
  * Throws SsrfSecurityError if unsafe.
  */
@@ -152,6 +206,22 @@ export function assertSafeWebhookUrl(
   isLocalTier = false,
 ): void {
   const result = validateWebhookUrl(candidateUrl, isLocalTier);
+  if (!result.safe) {
+    throw new SsrfSecurityError(
+      result.reason || "Destination URL failed SSRF security verification.",
+    );
+  }
+}
+
+/**
+ * Asserts asynchronously that an outbound URL is safe to dispatch with full DNS validation.
+ * Throws SsrfSecurityError if unsafe.
+ */
+export async function assertSafeWebhookUrlAsync(
+  candidateUrl: string,
+  isLocalTier = false,
+): Promise<void> {
+  const result = await validateWebhookUrlAsync(candidateUrl, isLocalTier);
   if (!result.safe) {
     throw new SsrfSecurityError(
       result.reason || "Destination URL failed SSRF security verification.",

@@ -99,18 +99,65 @@ function isArrayItemType(value: string): value is ArrayItemType {
 }
 
 /**
+ * Resolves local $ref pointers (e.g., "#/components/schemas/User" or "#/definitions/User")
+ * with cycle detection to prevent infinite recursion on circular models.
+ */
+function resolveSchemaRef(
+  schema: OpenApiSchemaObject | undefined,
+  doc?: OpenApiDocument,
+  visited = new Set<string>(),
+): OpenApiSchemaObject | undefined {
+  if (!schema || typeof schema !== "object") return schema;
+
+  if (typeof schema.$ref === "string" && doc) {
+    const refPath = schema.$ref;
+    if (visited.has(refPath)) {
+      return undefined;
+    }
+    visited.add(refPath);
+
+    if (refPath.startsWith("#/")) {
+      const parts = refPath.slice(2).split("/");
+      let current: unknown = doc;
+      for (const part of parts) {
+        if (current && typeof current === "object" && part in current) {
+          current = (current as Record<string, unknown>)[part];
+        } else {
+          current = undefined;
+          break;
+        }
+      }
+      if (current && typeof current === "object") {
+        return resolveSchemaRef(
+          current as OpenApiSchemaObject,
+          doc,
+          new Set(visited),
+        );
+      }
+    }
+  }
+
+  return schema;
+}
+
+/**
  * Maps OpenAPI schema properties to our recursive GeneratedProperty format.
  */
 function parseOpenApiSchemaProperties(
-  schema: OpenApiSchemaObject | undefined,
+  rawSchema: OpenApiSchemaObject | undefined,
+  doc?: OpenApiDocument,
+  visited = new Set<string>(),
 ): GeneratedProperty[] {
+  const schema = resolveSchemaRef(rawSchema, doc, visited);
   if (!schema || typeof schema !== "object") return [];
 
   const properties: GeneratedProperty[] = [];
 
   // Handle direct properties
   if (schema.properties) {
-    for (const [key, propSchema] of Object.entries(schema.properties)) {
+    for (const [key, rawPropSchema] of Object.entries(schema.properties)) {
+      if (!rawPropSchema || typeof rawPropSchema !== "object") continue;
+      const propSchema = resolveSchemaRef(rawPropSchema, doc, visited);
       if (!propSchema || typeof propSchema !== "object") continue;
 
       const rawType =
@@ -182,18 +229,25 @@ function parseOpenApiSchemaProperties(
       }
 
       if (mappedType === "object" && propSchema.properties) {
-        prop.children = parseOpenApiSchemaProperties(propSchema);
+        prop.children = parseOpenApiSchemaProperties(
+          propSchema,
+          doc,
+          new Set(visited),
+        );
       } else if (mappedType === "array" && propSchema.items) {
+        const itemObj = doc
+          ? resolveSchemaRef(propSchema.items, doc, visited)
+          : propSchema.items;
         const itemType = (
-          typeof propSchema.items.type === "string"
-            ? propSchema.items.type
-            : "string"
+          itemObj && typeof itemObj.type === "string" ? itemObj.type : "string"
         ).toLowerCase();
         if (isArrayItemType(itemType)) {
           prop.arrayItemType = itemType;
-          if (itemType === "object" && propSchema.items.properties) {
+          if (itemObj && itemType === "object" && itemObj.properties) {
             prop.arrayItemChildren = parseOpenApiSchemaProperties(
-              propSchema.items,
+              itemObj,
+              doc,
+              new Set(visited),
             );
           } else {
             prop.arrayItemFakerProvider = "lorem.word";
@@ -207,8 +261,13 @@ function parseOpenApiSchemaProperties(
 
   // Handle arrays at the root of the schema
   if (schema.type === "array" && schema.items) {
+    const rootItemObj = doc
+      ? resolveSchemaRef(schema.items, doc, visited)
+      : schema.items;
     const itemType = (
-      typeof schema.items.type === "string" ? schema.items.type : "string"
+      rootItemObj && typeof rootItemObj.type === "string"
+        ? rootItemObj.type
+        : "string"
     ).toLowerCase();
     const prop: GeneratedProperty = {
       name: "items",
@@ -217,8 +276,12 @@ function parseOpenApiSchemaProperties(
     };
     if (isArrayItemType(itemType)) {
       prop.arrayItemType = itemType;
-      if (itemType === "object" && schema.items.properties) {
-        prop.arrayItemChildren = parseOpenApiSchemaProperties(schema.items);
+      if (rootItemObj && itemType === "object" && rootItemObj.properties) {
+        prop.arrayItemChildren = parseOpenApiSchemaProperties(
+          rootItemObj,
+          doc,
+          new Set(visited),
+        );
       }
     }
     properties.push(prop);
@@ -297,8 +360,7 @@ export function parseOpenApiDocument(doc: OpenApiDocument): GeneratedApi {
             successResponse.content["application/json"]
           ) {
             const schema = successResponse.content["application/json"].schema;
-            // Note: Does not resolve $ref. In a real-world scenario we'd need to resolve refs first.
-            properties = parseOpenApiSchemaProperties(schema);
+            properties = parseOpenApiSchemaProperties(schema, doc);
           }
         }
 

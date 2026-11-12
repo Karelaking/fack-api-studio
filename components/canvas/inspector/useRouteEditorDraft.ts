@@ -14,9 +14,10 @@ import {
   type RouteParamConfig,
 } from "@/lib/schema-synthesizer";
 import {
-  generateRandomFapiValue,
   getDefaultProviderForParam,
-} from "@/lib/services/fapi-random.service";
+  getFapiFallbackValue,
+  generateRandomFapiValueAsync,
+} from "@/lib/services/fapi-preview.service";
 import {
   getEffectiveRoutePath,
   extractRoutePathParameters,
@@ -261,7 +262,7 @@ export const useRouteEditorDraft = ({
     for (const p of detectedParams) {
       const cfg = savedParamConfigs[p.name];
       if (cfg?.mode === "fapi") {
-        initial[p.name] = generateRandomFapiValue(
+        initial[p.name] = getFapiFallbackValue(
           cfg.provider || getDefaultProviderForParam(p.name),
         );
       } else {
@@ -271,6 +272,8 @@ export const useRouteEditorDraft = ({
     }
     return initial;
   });
+
+  const paramGenTokenRef = React.useRef<Record<string, number>>({});
 
   const synchronizeParameterRenames = React.useCallback(
     (targetEffectivePath: string): void => {
@@ -463,12 +466,23 @@ export const useRouteEditorDraft = ({
       const provider =
         paramConfigs[paramName]?.provider ||
         getDefaultProviderForParam(paramName);
-      const randomVal = generateRandomFapiValue(provider);
+      const token = (paramGenTokenRef.current[paramName] ?? 0) + 1;
+      paramGenTokenRef.current[paramName] = token;
       setTestParamValues((prev) => ({
         ...prev,
-        [paramName]: randomVal,
+        [paramName]: getFapiFallbackValue(provider),
       }));
+      void generateRandomFapiValueAsync(provider).then((randomVal) => {
+        if (paramGenTokenRef.current[paramName] === token) {
+          setTestParamValues((prev) => ({
+            ...prev,
+            [paramName]: randomVal,
+          }));
+        }
+      });
     } else {
+      paramGenTokenRef.current[paramName] =
+        (paramGenTokenRef.current[paramName] ?? 0) + 1;
       const staticVal =
         paramConfigs[paramName]?.staticValue ??
         (paramName === "id" ? "295" : `sample_${paramName}`);
@@ -483,6 +497,8 @@ export const useRouteEditorDraft = ({
     paramName: string,
     value: string,
   ): void => {
+    paramGenTokenRef.current[paramName] =
+      (paramGenTokenRef.current[paramName] ?? 0) + 1;
     setParamConfigs((prev) => ({
       ...prev,
       [paramName]: {
@@ -515,41 +531,78 @@ export const useRouteEditorDraft = ({
         provider,
       },
     }));
-    const freshVal = generateRandomFapiValue(provider);
+    const token = (paramGenTokenRef.current[paramName] ?? 0) + 1;
+    paramGenTokenRef.current[paramName] = token;
     setTestParamValues((prev) => ({
       ...prev,
-      [paramName]: freshVal,
+      [paramName]: getFapiFallbackValue(provider),
     }));
+    void generateRandomFapiValueAsync(provider).then((freshVal) => {
+      if (paramGenTokenRef.current[paramName] === token) {
+        setTestParamValues((prev) => ({
+          ...prev,
+          [paramName]: freshVal,
+        }));
+      }
+    });
   };
 
   const handleRerollParam = (paramName: string): void => {
     const provider =
       paramConfigs[paramName]?.provider ||
       getDefaultProviderForParam(paramName);
-    const freshVal = generateRandomFapiValue(provider);
-    setTestParamValues((prev) => ({
-      ...prev,
-      [paramName]: freshVal,
-    }));
-    toast.success(
-      `Generated fresh random value for :${paramName}: "${freshVal}"`,
-    );
+    const token = (paramGenTokenRef.current[paramName] ?? 0) + 1;
+    paramGenTokenRef.current[paramName] = token;
+    void generateRandomFapiValueAsync(provider).then((freshVal) => {
+      if (paramGenTokenRef.current[paramName] === token) {
+        setTestParamValues((prev) => ({
+          ...prev,
+          [paramName]: freshVal,
+        }));
+        toast.success(
+          `Generated fresh random value for :${paramName}: "${freshVal}"`,
+        );
+      }
+    });
   };
 
   const handleRerollAllFapi = (): void => {
-    const nextVals: Record<string, string> = {};
-    for (const p of detectedParams) {
-      if (paramConfigs[p.name]?.mode === "fapi") {
+    const fapiParams = detectedParams.filter(
+      (p) => paramConfigs[p.name]?.mode === "fapi",
+    );
+    if (fapiParams.length === 0) {
+      toast.success("Rerolled all FAPI parameter values");
+      return;
+    }
+
+    const requestTokens = new Map<string, number>();
+    for (const p of fapiParams) {
+      const token = (paramGenTokenRef.current[p.name] ?? 0) + 1;
+      paramGenTokenRef.current[p.name] = token;
+      requestTokens.set(p.name, token);
+    }
+
+    void Promise.all(
+      fapiParams.map(async (p) => {
         const provider =
           paramConfigs[p.name]?.provider || getDefaultProviderForParam(p.name);
-        nextVals[p.name] = generateRandomFapiValue(provider);
+        return [p.name, await generateRandomFapiValueAsync(provider)] as const;
+      }),
+    ).then((entries) => {
+      const nextVals: Record<string, string> = {};
+      for (const [paramName, val] of entries) {
+        if (
+          paramGenTokenRef.current[paramName] === requestTokens.get(paramName)
+        ) {
+          nextVals[paramName] = val;
+        }
       }
-    }
-    setTestParamValues((prev) => ({
-      ...prev,
-      ...nextVals,
-    }));
-    toast.success("Rerolled all FAPI parameter values");
+      setTestParamValues((prev) => ({
+        ...prev,
+        ...nextVals,
+      }));
+      toast.success("Rerolled all FAPI parameter values");
+    });
   };
 
   const handleAddParamField = async (paramName: string): Promise<void> => {
@@ -632,13 +685,23 @@ export const useRouteEditorDraft = ({
     const start = Date.now();
     try {
       const updatedRuntimeValues = { ...testParamValues };
-      for (const p of detectedParams) {
-        if (paramConfigs[p.name]?.mode === "fapi") {
-          const provider =
-            paramConfigs[p.name]?.provider ||
-            getDefaultProviderForParam(p.name);
-          const freshVal = generateRandomFapiValue(provider);
-          updatedRuntimeValues[p.name] = freshVal;
+      const fapiParams = detectedParams.filter(
+        (p) => paramConfigs[p.name]?.mode === "fapi",
+      );
+      if (fapiParams.length > 0) {
+        const generatedEntries = await Promise.all(
+          fapiParams.map(async (p) => {
+            const provider =
+              paramConfigs[p.name]?.provider ||
+              getDefaultProviderForParam(p.name);
+            return [
+              p.name,
+              await generateRandomFapiValueAsync(provider),
+            ] as const;
+          }),
+        );
+        for (const [paramName, freshVal] of generatedEntries) {
+          updatedRuntimeValues[paramName] = freshVal;
         }
       }
       setTestParamValues(updatedRuntimeValues);

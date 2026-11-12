@@ -2,9 +2,13 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { RiAlertLine, RiRefreshLine, RiArrowLeftLine } from "@remixicon/react";
-import { Button } from "@/components/ui/button";
-import { buttonVariants } from "@/components/ui/button";
+import {
+  AlertTriangleIcon,
+  ArrowLeftIcon,
+  RefreshIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 /**
  * Error boundary for the project page.
@@ -25,7 +29,10 @@ export default function ProjectError({
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-6 p-8">
       <div className="bg-destructive/10 flex h-16 w-16 items-center justify-center rounded-full">
-        <RiAlertLine className="text-destructive h-8 w-8" />
+        <PikaIcon
+          icon={AlertTriangleIcon}
+          className="text-destructive size-8"
+        />
       </div>
       <div className="text-center">
         <h2 className="text-foreground text-xl font-semibold">
@@ -43,14 +50,14 @@ export default function ProjectError({
       </div>
       <div className="flex items-center gap-3">
         <Button onClick={reset} variant="default" size="sm">
-          <RiRefreshLine className="mr-2 h-4 w-4" />
+          <PikaIcon icon={RefreshIcon} className="mr-2 size-4" />
           Try Again
         </Button>
         <Link
           href="/dashboard"
           className={buttonVariants({ variant: "outline", size: "sm" })}
         >
-          <RiArrowLeftLine className="mr-2 h-4 w-4" />
+          <PikaIcon icon={ArrowLeftIcon} className="mr-2 size-4" />
           Back to Projects
         </Link>
       </div>

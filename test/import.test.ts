@@ -57,4 +57,62 @@ describe("OpenAPI Import Service", () => {
     expect(getUsersRoute?.properties[0].arrayItemType).toBe("object");
     expect(getUsersRoute?.properties[0].arrayItemChildren?.length).toBe(2);
   });
+
+  it("should resolve $ref components schemas", () => {
+    const docWithRefs = {
+      openapi: "3.0.0",
+      info: { title: "Ref API", version: "1.0.0" },
+      paths: {
+        "/products": {
+          get: {
+            summary: "Get products",
+            responses: {
+              "200": {
+                content: {
+                  "application/json": {
+                    schema: {
+                      $ref: "#/components/schemas/ProductList",
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      components: {
+        schemas: {
+          Product: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              title: { type: "string" },
+              price: { type: "number" },
+            },
+          },
+          ProductList: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/Product",
+            },
+          },
+        },
+      },
+    };
+
+    const result = parseOpenApiDocument(docWithRefs);
+    expect(result.endpoints.length).toBe(1);
+    const route = result.endpoints[0].routes[0];
+    expect(route).toBeTruthy();
+    expect(route.properties.length).toBe(1);
+    expect(route.properties[0].type).toBe("array");
+    expect(route.properties[0].arrayItemType).toBe("object");
+    expect(route.properties[0].arrayItemChildren?.length).toBe(3);
+    const fieldNames = route.properties[0].arrayItemChildren?.map(
+      (c) => c.name,
+    );
+    expect(fieldNames).toContain("id");
+    expect(fieldNames).toContain("title");
+    expect(fieldNames).toContain("price");
+  });
 });

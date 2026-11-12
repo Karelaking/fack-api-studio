@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { RiFileCopyLine, RiRouteLine } from "@remixicon/react";
+import { CopyIcon, GitBranchIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -24,7 +25,8 @@ export const SelectedRouteDetails = ({
   if (!selectedRoute) {
     return (
       <div className="bg-muted/20 border-border/40 mx-2 my-4 flex flex-col items-center justify-center rounded-lg border p-6 text-center">
-        <RiRouteLine
+        <PikaIcon
+          icon={GitBranchIcon}
           className="text-muted-foreground/60 mb-2 size-8"
           aria-hidden="true"
         />
@@ -93,7 +95,7 @@ export const SelectedRouteDetails = ({
               }
             }}
           >
-            <RiFileCopyLine className="h-3.5 w-3.5" aria-hidden="true" />
+            <PikaIcon icon={CopyIcon} className="size-3.5" aria-hidden="true" />
           </Button>
         </div>
       </div>
@@ -144,7 +146,11 @@ export const SelectedRouteDetails = ({
                     }
                   }}
                 >
-                  <RiFileCopyLine className="h-3.5 w-3.5" aria-hidden="true" />
+                  <PikaIcon
+                    icon={CopyIcon}
+                    className="size-3.5"
+                    aria-hidden="true"
+                  />
                 </Button>
               </div>
             );

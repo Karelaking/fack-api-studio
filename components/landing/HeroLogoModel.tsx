@@ -28,63 +28,53 @@ export const HeroLogoModel = ({
   className,
 }: HeroLogoModelProps): React.JSX.Element => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isAssembled, setIsAssembled] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    }
-    return false;
-  });
-  const [starLit, setStarLit] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    }
-    return false;
-  });
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(
-    () => {
-      if (typeof window !== "undefined") {
-        return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      }
-      return false;
-    },
-  );
-
-  // 3D rotation angles: resting state is 0, 0 for exact match with public/logo.png
-  const [rotX, setRotX] = useState<number>(0);
-  const [rotY, setRotY] = useState<number>(0);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [isAssembled, setIsAssembled] = useState<boolean>(false);
+  const [starLit, setStarLit] = useState<boolean>(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] =
+    useState<boolean>(false);
 
   const targetRotRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const currentRotRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const rafIdRef = useRef<number | undefined>(undefined);
-  const loopRef = useRef<() => void>(undefined);
+  const stepTiltRef = useRef<() => void>(() => {});
 
-  // Physics loop for smooth 3D tilt and spring-back
+  // Physics loop writing 3D tilt directly to the stage DOM node (zero React re-renders)
   useEffect(() => {
-    loopRef.current = () => {
+    const stepTilt = (): void => {
       const factor = 0.12;
       currentRotRef.current.x +=
         (targetRotRef.current.x - currentRotRef.current.x) * factor;
       currentRotRef.current.y +=
         (targetRotRef.current.y - currentRotRef.current.y) * factor;
 
-      setRotX(Number(currentRotRef.current.x.toFixed(2)));
-      setRotY(Number(currentRotRef.current.y.toFixed(2)));
+      if (stageRef.current) {
+        const nextX = Number(currentRotRef.current.x.toFixed(2));
+        const nextY = Number(currentRotRef.current.y.toFixed(2));
+        stageRef.current.style.transform = `rotateX(${nextX}deg) rotateY(${nextY}deg)`;
+      }
 
       const diff =
         Math.abs(targetRotRef.current.x - currentRotRef.current.x) +
         Math.abs(targetRotRef.current.y - currentRotRef.current.y);
 
       if (diff > 0.04) {
-        rafIdRef.current = requestAnimationFrame(() => {
-          loopRef.current?.();
-        });
+        rafIdRef.current = requestAnimationFrame(stepTilt);
       } else {
         rafIdRef.current = undefined;
       }
     };
-  });
 
-  // Entrance assembly sequence
+    stepTiltRef.current = stepTilt;
+    return () => {
+      if (rafIdRef.current !== undefined) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = undefined;
+      }
+    };
+  }, []);
+
+  // Entrance assembly sequence & reduced-motion listener
   useEffect((): (() => void) => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const handleChange = (e: MediaQueryListEvent): void => {
@@ -92,12 +82,23 @@ export const HeroLogoModel = ({
       if (e.matches) {
         setIsAssembled(true);
         setStarLit(true);
+        if (stageRef.current) {
+          stageRef.current.style.transform = "rotateX(0deg) rotateY(0deg)";
+        }
       }
     };
     mediaQuery.addEventListener("change", handleChange);
 
     if (mediaQuery.matches) {
-      return (): void => mediaQuery.removeEventListener("change", handleChange);
+      const reducedTimer = setTimeout((): void => {
+        setPrefersReducedMotion(true);
+        setIsAssembled(true);
+        setStarLit(true);
+      }, 0);
+      return (): void => {
+        clearTimeout(reducedTimer);
+        mediaQuery.removeEventListener("change", handleChange);
+      };
     }
 
     // Step 1: Trigger 3 plates assembly sequence
@@ -138,9 +139,7 @@ export const HeroLogoModel = ({
       };
 
       if (rafIdRef.current === undefined) {
-        rafIdRef.current = requestAnimationFrame(() => {
-          loopRef.current?.();
-        });
+        rafIdRef.current = requestAnimationFrame(stepTiltRef.current);
       }
     },
     [prefersReducedMotion],
@@ -150,9 +149,7 @@ export const HeroLogoModel = ({
     // Smoothly settle back to 0, 0: the exact resting pose of the logo icon
     targetRotRef.current = { x: 0, y: 0 };
     if (rafIdRef.current === undefined) {
-      rafIdRef.current = requestAnimationFrame(() => {
-        loopRef.current?.();
-      });
+      rafIdRef.current = requestAnimationFrame(stepTiltRef.current);
     }
   }, []);
 
@@ -184,9 +181,10 @@ export const HeroLogoModel = ({
 
       {/* 3D Isometric Stage Container */}
       <div
+        ref={stageRef}
         className="group relative flex size-full items-center justify-center transition-transform duration-150 ease-out"
         style={{
-          transform: `rotateX(${rotX}deg) rotateY(${rotY}deg)`,
+          transform: "rotateX(0deg) rotateY(0deg)",
           transformStyle: "preserve-3d",
         }}
       >

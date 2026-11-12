@@ -1,7 +1,11 @@
 "use client";
 
 import * as React from "react";
-import * as PikaCore from "@pikaicons/core-free";
+import {
+  DeleteDustbin01Icon,
+  FloppyIcon,
+  RefreshIcon,
+} from "@pikaicons/core-free";
 import { PikaIcon } from "@pikaicons/react";
 import { Button } from "@/components/ui/button";
 
@@ -36,17 +40,13 @@ export const FieldPropertyEditorFooter = ({
       >
         {loading ? (
           <PikaIcon
-            icon={PikaCore.RefreshIcon}
+            icon={RefreshIcon}
             size={14}
             className="animate-spin motion-reduce:animate-none"
             aria-hidden="true"
           />
         ) : (
-          <PikaIcon
-            icon={PikaCore.DeleteDustbin01Icon}
-            size={14}
-            aria-hidden="true"
-          />
+          <PikaIcon icon={DeleteDustbin01Icon} size={14} aria-hidden="true" />
         )}
         <span>Remove</span>
       </Button>
@@ -61,13 +61,13 @@ export const FieldPropertyEditorFooter = ({
       >
         {loading ? (
           <PikaIcon
-            icon={PikaCore.RefreshIcon}
+            icon={RefreshIcon}
             size={14}
             className="animate-spin motion-reduce:animate-none"
             aria-hidden="true"
           />
         ) : (
-          <PikaIcon icon={PikaCore.FloppyIcon} size={14} aria-hidden="true" />
+          <PikaIcon icon={FloppyIcon} size={14} aria-hidden="true" />
         )}
         <span>Save</span>
       </Button>

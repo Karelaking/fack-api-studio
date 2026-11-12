@@ -2,7 +2,8 @@
 
 import React from "react";
 import { AuthenticateWithRedirectCallback } from "@clerk/nextjs";
-import { Loader2 } from "lucide-react";
+import { RefreshIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 
 /**
@@ -22,7 +23,8 @@ export const SsoCallbackClient = (): React.JSX.Element => {
             Completing secure authentication handshake, please wait...
           </p>
         </div>
-        <Loader2
+        <PikaIcon
+          icon={RefreshIcon}
           className="text-primary mt-2 size-6 animate-spin"
           aria-hidden="true"
         />

@@ -7,23 +7,24 @@ import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
-  RiLoader2Line,
-  RiDownloadCloud2Line,
-  RiDeleteBin6Line,
-  RiSaveLine,
-  RiAlertLine,
-  RiTerminalBoxLine,
-  RiFileCopyLine,
-  RiEyeLine,
-  RiEyeOffLine,
-  RiCheckLine,
-  RiArrowRightSLine,
-  RiFolderSettingsLine,
-  RiFlashlightLine,
-  RiGitBranchLine,
-  RiPulseLine,
-  RiExternalLinkLine,
-} from "@remixicon/react";
+  AlertTriangleIcon,
+  CheckTickCircleIcon,
+  ChevronRightIcon,
+  CloudArrowDownloadIcon,
+  CodeIcon,
+  CopyIcon,
+  DeleteDustbin01Icon,
+  ExternalLinkSquareIcon,
+  EyeOffIcon,
+  EyeOnIcon,
+  FloppyIcon,
+  GitBranchIcon,
+  LightningThunderElectricOnIcon,
+  RefreshIcon,
+  Settings01Icon,
+  TroubleshootIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 
 import { updateProjectSchema, type UpdateProjectInput } from "@/lib/validators";
 import { getProjectUrl } from "@/lib/utils/project-slug";
@@ -236,9 +237,12 @@ export function ProjectSettings({
             "gap-1.5 h-8 text-xs font-medium self-start sm:self-center",
           )}
         >
-          <RiFolderSettingsLine className="h-3.5 w-3.5" />
+          <PikaIcon icon={Settings01Icon} className="size-3.5" />
           <span>All Workspace Settings</span>
-          <RiExternalLinkLine className="h-3 w-3 opacity-60" />
+          <PikaIcon
+            icon={ExternalLinkSquareIcon}
+            className="size-3 opacity-60"
+          />
         </Link>
       </div>
 
@@ -264,9 +268,12 @@ export function ProjectSettings({
                 className="text-muted-foreground hover:text-foreground text-caption h-6 gap-1 px-1.5"
               >
                 {copiedEndpoint ? (
-                  <RiCheckLine className="text-success h-3 w-3" />
+                  <PikaIcon
+                    icon={CheckTickCircleIcon}
+                    className="text-success size-3"
+                  />
                 ) : (
-                  <RiFileCopyLine className="h-3 w-3" />
+                  <PikaIcon icon={CopyIcon} className="size-3" />
                 )}
                 <span>{copiedEndpoint ? "Copied" : "Copy"}</span>
               </Button>
@@ -288,10 +295,13 @@ export function ProjectSettings({
               )}
             >
               <span className="flex items-center gap-2">
-                <RiGitBranchLine className="h-3.5 w-3.5" />
+                <PikaIcon icon={GitBranchIcon} className="size-3.5" />
                 <span>Metadata &amp; Routing</span>
               </span>
-              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100" />
+              <PikaIcon
+                icon={ChevronRightIcon}
+                className="size-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100"
+              />
             </button>
 
             <button
@@ -305,10 +315,16 @@ export function ProjectSettings({
               )}
             >
               <span className="flex items-center gap-2">
-                <RiFlashlightLine className="h-3.5 w-3.5" />
+                <PikaIcon
+                  icon={LightningThunderElectricOnIcon}
+                  className="size-3.5"
+                />
                 <span>Chaos &amp; Resilience</span>
               </span>
-              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100" />
+              <PikaIcon
+                icon={ChevronRightIcon}
+                className="size-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100"
+              />
             </button>
 
             <button
@@ -322,10 +338,13 @@ export function ProjectSettings({
               )}
             >
               <span className="flex items-center gap-2">
-                <RiTerminalBoxLine className="h-3.5 w-3.5" />
+                <PikaIcon icon={CodeIcon} className="size-3.5" />
                 <span>Developer CLI &amp; Keys</span>
               </span>
-              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100" />
+              <PikaIcon
+                icon={ChevronRightIcon}
+                className="size-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100"
+              />
             </button>
 
             <button
@@ -339,10 +358,13 @@ export function ProjectSettings({
               )}
             >
               <span className="flex items-center gap-2">
-                <RiDownloadCloud2Line className="h-3.5 w-3.5" />
+                <PikaIcon icon={CloudArrowDownloadIcon} className="size-3.5" />
                 <span>Codebase &amp; Export</span>
               </span>
-              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100" />
+              <PikaIcon
+                icon={ChevronRightIcon}
+                className="size-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100"
+              />
             </button>
 
             <button
@@ -356,10 +378,13 @@ export function ProjectSettings({
               )}
             >
               <span className="flex items-center gap-2">
-                <RiAlertLine className="h-3.5 w-3.5" />
+                <PikaIcon icon={AlertTriangleIcon} className="size-3.5" />
                 <span>Danger Zone</span>
               </span>
-              <RiArrowRightSLine className="h-3.5 w-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100" />
+              <PikaIcon
+                icon={ChevronRightIcon}
+                className="size-3.5 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100"
+              />
             </button>
           </div>
         </div>
@@ -373,7 +398,10 @@ export function ProjectSettings({
                 <Card className="border-border/60 bg-card shadow-xs">
                   <CardHeader>
                     <div className="flex items-center gap-2">
-                      <RiGitBranchLine className="text-primary h-5 w-5" />
+                      <PikaIcon
+                        icon={GitBranchIcon}
+                        className="text-primary size-5"
+                      />
                       <CardTitle className="text-base font-semibold">
                         Project Identity &amp; Routing
                       </CardTitle>
@@ -453,7 +481,10 @@ export function ProjectSettings({
                 <Card className="border-border/60 bg-card shadow-xs">
                   <CardHeader>
                     <div className="flex items-center gap-2">
-                      <RiPulseLine className="text-primary h-5 w-5" />
+                      <PikaIcon
+                        icon={TroubleshootIcon}
+                        className="text-primary size-5"
+                      />
                       <CardTitle className="text-base font-semibold">
                         Execution Engine Rules
                       </CardTitle>
@@ -524,9 +555,12 @@ export function ProjectSettings({
                   className="h-9 gap-1.5 text-xs font-semibold"
                 >
                   {isSubmitting ? (
-                    <RiLoader2Line className="h-4 w-4 animate-spin" />
+                    <PikaIcon
+                      icon={RefreshIcon}
+                      className="size-4 animate-spin"
+                    />
                   ) : (
-                    <RiSaveLine className="h-4 w-4" />
+                    <PikaIcon icon={FloppyIcon} className="size-4" />
                   )}
                   Save Changes
                 </Button>
@@ -541,7 +575,10 @@ export function ProjectSettings({
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <RiFlashlightLine className="text-warning h-5 w-5" />
+                      <PikaIcon
+                        icon={LightningThunderElectricOnIcon}
+                        className="text-warning size-5"
+                      />
                       <CardTitle className="text-base font-semibold">
                         Chaos Monkey Simulation
                       </CardTitle>
@@ -671,7 +708,10 @@ export function ProjectSettings({
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <RiTerminalBoxLine className="text-primary h-5 w-5" />
+                      <PikaIcon
+                        icon={CodeIcon}
+                        className="text-primary size-5"
+                      />
                       <CardTitle className="text-base font-semibold">
                         Developer CLI &amp; AES-256 Credentials
                       </CardTitle>
@@ -688,7 +728,10 @@ export function ProjectSettings({
                 <CardContent>
                   {loadingCli ? (
                     <div className="flex items-center justify-center p-8">
-                      <RiLoader2Line className="text-muted-foreground h-6 w-6 animate-spin" />
+                      <PikaIcon
+                        icon={RefreshIcon}
+                        className="text-muted-foreground size-6 animate-spin"
+                      />
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -713,9 +756,9 @@ export function ProjectSettings({
                           className="h-9 shrink-0 gap-1 text-xs"
                         >
                           {showSecretKey ? (
-                            <RiEyeOffLine className="h-4 w-4" />
+                            <PikaIcon icon={EyeOffIcon} className="size-4" />
                           ) : (
-                            <RiEyeLine className="h-4 w-4" />
+                            <PikaIcon icon={EyeOnIcon} className="size-4" />
                           )}
                           {showSecretKey ? "Hide" : "Reveal"}
                         </Button>
@@ -733,9 +776,12 @@ export function ProjectSettings({
                           className="h-9 shrink-0 gap-1 text-xs"
                         >
                           {copiedKey ? (
-                            <RiCheckLine className="text-success h-4 w-4" />
+                            <PikaIcon
+                              icon={CheckTickCircleIcon}
+                              className="text-success size-4"
+                            />
                           ) : (
-                            <RiFileCopyLine className="h-4 w-4" />
+                            <PikaIcon icon={CopyIcon} className="size-4" />
                           )}
                           {copiedKey ? "Copied" : "Copy Key"}
                         </Button>
@@ -779,9 +825,12 @@ export function ProjectSettings({
                         className="h-9 shrink-0 gap-1 text-xs"
                       >
                         {copiedPull ? (
-                          <RiCheckLine className="text-success h-4 w-4" />
+                          <PikaIcon
+                            icon={CheckTickCircleIcon}
+                            className="text-success size-4"
+                          />
                         ) : (
-                          <RiFileCopyLine className="h-4 w-4" />
+                          <PikaIcon icon={CopyIcon} className="size-4" />
                         )}
                         {copiedPull ? "Copied" : "Copy"}
                       </Button>
@@ -818,9 +867,12 @@ export function ProjectSettings({
                         className="h-9 shrink-0 gap-1 text-xs"
                       >
                         {copiedDev ? (
-                          <RiCheckLine className="text-success h-4 w-4" />
+                          <PikaIcon
+                            icon={CheckTickCircleIcon}
+                            className="text-success size-4"
+                          />
                         ) : (
-                          <RiFileCopyLine className="h-4 w-4" />
+                          <PikaIcon icon={CopyIcon} className="size-4" />
                         )}
                         {copiedDev ? "Copied" : "Copy"}
                       </Button>
@@ -837,7 +889,10 @@ export function ProjectSettings({
               <Card className="border-border/60 bg-card shadow-xs">
                 <CardHeader>
                   <div className="flex items-center gap-2">
-                    <RiDownloadCloud2Line className="text-primary h-5 w-5" />
+                    <PikaIcon
+                      icon={CloudArrowDownloadIcon}
+                      className="text-primary size-5"
+                    />
                     <CardTitle className="text-base font-semibold">
                       Encrypted Mock Bundle
                     </CardTitle>
@@ -865,7 +920,10 @@ export function ProjectSettings({
                     }}
                     className="h-8 gap-1.5 text-xs font-medium"
                   >
-                    <RiDownloadCloud2Line className="h-4 w-4" />
+                    <PikaIcon
+                      icon={CloudArrowDownloadIcon}
+                      className="size-4"
+                    />
                     Download fack.enc
                   </Button>
                 </CardFooter>
@@ -874,7 +932,10 @@ export function ProjectSettings({
               <Card className="border-border/60 bg-card shadow-xs">
                 <CardHeader>
                   <div className="flex items-center gap-2">
-                    <RiGitBranchLine className="text-primary h-5 w-5" />
+                    <PikaIcon
+                      icon={GitBranchIcon}
+                      className="text-primary size-5"
+                    />
                     <CardTitle className="text-base font-semibold">
                       Express.js + TypeScript ZIP
                     </CardTitle>
@@ -903,7 +964,10 @@ export function ProjectSettings({
                     }}
                     className="h-8 gap-1.5 text-xs font-medium"
                   >
-                    <RiDownloadCloud2Line className="h-4 w-4" />
+                    <PikaIcon
+                      icon={CloudArrowDownloadIcon}
+                      className="size-4"
+                    />
                     Download ZIP
                   </Button>
                 </CardFooter>
@@ -917,7 +981,7 @@ export function ProjectSettings({
               <Card className="border-destructive/30 bg-destructive/5 shadow-xs">
                 <CardHeader>
                   <div className="text-destructive flex items-center gap-2">
-                    <RiAlertLine className="h-5 w-5" />
+                    <PikaIcon icon={AlertTriangleIcon} className="size-5" />
                     <CardTitle className="text-base font-semibold">
                       Delete Project
                     </CardTitle>
@@ -939,7 +1003,7 @@ export function ProjectSettings({
                     onClick={() => setDeleteOpen(true)}
                     className="h-8 gap-1.5 text-xs font-medium"
                   >
-                    <RiDeleteBin6Line className="h-4 w-4" />
+                    <PikaIcon icon={DeleteDustbin01Icon} className="size-4" />
                     <span>Delete Project</span>
                   </Button>
 
@@ -955,7 +1019,10 @@ export function ProjectSettings({
                     <DialogContent>
                       <DialogHeader>
                         <DialogTitle className="text-destructive flex items-center gap-2">
-                          <RiAlertLine className="h-5 w-5" />
+                          <PikaIcon
+                            icon={AlertTriangleIcon}
+                            className="size-5"
+                          />
                           <span>Confirm Deletion</span>
                         </DialogTitle>
                         <DialogDescription>
@@ -1011,7 +1078,10 @@ export function ProjectSettings({
                           className="gap-1.5"
                         >
                           {(deleteLoading || isPending) && (
-                            <RiLoader2Line className="h-4 w-4 animate-spin" />
+                            <PikaIcon
+                              icon={RefreshIcon}
+                              className="size-4 animate-spin"
+                            />
                           )}
                           <span>Permanently Delete</span>
                         </Button>

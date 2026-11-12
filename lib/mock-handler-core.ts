@@ -5,7 +5,7 @@ import { sqlClient } from "@/db/postgres";
 import { scenarios, type Project } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { after } from "next/server";
-import { validateWebhookUrl } from "@/lib/security/ssrf.service";
+import { validateWebhookUrlAsync } from "@/lib/security/ssrf.service";
 import {
   getCachedMockData,
   setCachedMockData,
@@ -183,12 +183,20 @@ function triggerWebhooks(route: CachedRoute, projectId: string) {
   const webhooks = route.webhooks;
   if (!webhooks || webhooks.length === 0) return;
 
-  after(() => {
-    for (const webhook of webhooks) {
-      setTimeout(async () => {
+  after(async () => {
+    await Promise.allSettled(
+      webhooks.map(async (webhook) => {
         try {
+          const delay = Math.min(Math.max(0, webhook.delayMs || 0), 10_000);
+          if (delay > 0) {
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          }
+
           const isLocal = storageConnection.mode === "local";
-          const validation = validateWebhookUrl(webhook.url, isLocal);
+          const validation = await validateWebhookUrlAsync(
+            webhook.url,
+            isLocal,
+          );
           if (!validation.safe) {
             mockLogger.warn(
               `[SSRF Block] Skipping webhook ${webhook.url}: ${validation.reason}`,
@@ -218,8 +226,8 @@ function triggerWebhooks(route: CachedRoute, projectId: string) {
         } catch (error) {
           mockLogger.error(`Failed to trigger webhook ${webhook.url}`, error);
         }
-      }, webhook.delayMs || 0);
-    }
+      }),
+    );
   });
 }
 
@@ -307,7 +315,9 @@ export async function processMockRequest({
       const token = authHeader.split(" ")[1];
       try {
         const secret = getMockJwtSecret(project.id);
-        await jwtVerify(token, secret);
+        await jwtVerify(token, secret, {
+          issuer: `fack-api:${project.slug}`,
+        });
       } catch {
         const errorBody = {
           error: true,

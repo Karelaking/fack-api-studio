@@ -4,17 +4,17 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  RiSparkling2Fill,
-  RiCloseLine,
-  RiArrowUpLine,
-  RiLoader2Line,
-  RiCheckboxCircleFill,
-  RiErrorWarningFill,
-  RiTimeLine,
-  RiStopCircleLine,
-  RiArrowGoBackLine,
-  RiFileTextLine,
-} from "@remixicon/react";
+  SparkleAi01SolidIcon,
+  MultipleCrossCancelIcon,
+  ArrowUpIcon,
+  RefreshIcon,
+  CheckTickCircleSolidIcon,
+  AlertCircleSolidIcon,
+  ClockIcon,
+  PauseCircleIcon,
+  File02Icon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -51,19 +51,31 @@ function stepIcon(status: GenerationProgressStep["status"]): React.ReactNode {
   switch (status) {
     case "completed":
       return (
-        <RiCheckboxCircleFill className="text-success size-3.5 shrink-0" />
+        <PikaIcon
+          icon={CheckTickCircleSolidIcon}
+          className="text-success size-3.5 shrink-0"
+        />
       );
     case "active":
       return (
-        <RiLoader2Line className="text-primary size-3.5 shrink-0 animate-spin motion-reduce:animate-none" />
+        <PikaIcon
+          icon={RefreshIcon}
+          className="text-primary size-3.5 shrink-0 animate-spin motion-reduce:animate-none"
+        />
       );
     case "failed":
       return (
-        <RiErrorWarningFill className="text-destructive size-3.5 shrink-0" />
+        <PikaIcon
+          icon={AlertCircleSolidIcon}
+          className="text-destructive size-3.5 shrink-0"
+        />
       );
     default:
       return (
-        <RiTimeLine className="text-muted-foreground/60 size-3.5 shrink-0" />
+        <PikaIcon
+          icon={ClockIcon}
+          className="text-muted-foreground/60 size-3.5 shrink-0"
+        />
       );
   }
 }
@@ -179,7 +191,10 @@ export function AgentComposer(): React.JSX.Element {
             "hover:border-primary/40 hover:text-primary",
           )}
         >
-          <RiSparkling2Fill className="text-primary size-4 shrink-0" />
+          <PikaIcon
+            icon={SparkleAi01SolidIcon}
+            className="text-primary size-4 shrink-0"
+          />
           <span className="font-medium">
             {isRunning
               ? "Agent is working…"
@@ -195,7 +210,10 @@ export function AgentComposer(): React.JSX.Element {
       <div className="bg-card/95 border-border/60 scrollbar-subtle pointer-events-auto flex max-h-[70%] w-full max-w-3xl flex-col gap-3 overflow-y-auto rounded-2xl border p-3 shadow-2xl backdrop-blur">
         <header className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
-            <RiSparkling2Fill className="text-primary size-4 shrink-0" />
+            <PikaIcon
+              icon={SparkleAi01SolidIcon}
+              className="text-primary size-4 shrink-0"
+            />
             <span className="truncate text-sm font-semibold">
               API Architect
             </span>
@@ -213,7 +231,7 @@ export function AgentComposer(): React.JSX.Element {
                 size="sm"
                 onClick={() => actions.cancel()}
               >
-                <RiStopCircleLine className="size-3.5" />
+                <PikaIcon icon={PauseCircleIcon} className="size-3.5" />
                 Stop
               </Button>
             ) : null}
@@ -224,7 +242,7 @@ export function AgentComposer(): React.JSX.Element {
               aria-label="Collapse agent composer"
               onClick={handleCollapse}
             >
-              <RiCloseLine className="size-4" />
+              <PikaIcon icon={MultipleCrossCancelIcon} className="size-4" />
             </Button>
           </div>
         </header>
@@ -263,7 +281,10 @@ export function AgentComposer(): React.JSX.Element {
         {error ? (
           <div className="border-destructive/30 bg-destructive/5 flex flex-col gap-2 rounded-xl border p-3">
             <div className="text-destructive flex items-center gap-2">
-              <RiErrorWarningFill className="size-4 shrink-0" />
+              <PikaIcon
+                icon={AlertCircleSolidIcon}
+                className="size-4 shrink-0"
+              />
               <span className="text-xs font-semibold tracking-wider uppercase">
                 {errorPhase === "apply"
                   ? "Could not apply the changes"
@@ -277,7 +298,7 @@ export function AgentComposer(): React.JSX.Element {
                 size="sm"
                 onClick={() => void actions.retry()}
               >
-                <RiArrowGoBackLine className="size-3.5" />
+                <PikaIcon icon={RefreshIcon} className="size-3.5" />
                 Retry
               </Button>
               <Button
@@ -334,7 +355,10 @@ export function AgentComposer(): React.JSX.Element {
                 onClick={() => void actions.applyChanges()}
               >
                 {isApplying ? (
-                  <RiLoader2Line className="size-3.5 animate-spin motion-reduce:animate-none" />
+                  <PikaIcon
+                    icon={RefreshIcon}
+                    className="size-3.5 animate-spin motion-reduce:animate-none"
+                  />
                 ) : null}
                 Apply {changeCount} changes
               </Button>
@@ -344,7 +368,7 @@ export function AgentComposer(): React.JSX.Element {
                 size="sm"
                 onClick={() => setShowSpec((previous) => !previous)}
               >
-                <RiFileTextLine className="size-3.5" />
+                <PikaIcon icon={File02Icon} className="size-3.5" />
                 {showSpec ? "Hide" : "View"} specification
               </Button>
               <Button
@@ -391,9 +415,12 @@ export function AgentComposer(): React.JSX.Element {
                 disabled={isRunning || !prompt.trim()}
               >
                 {isRunning ? (
-                  <RiLoader2Line className="size-3.5 animate-spin motion-reduce:animate-none" />
+                  <PikaIcon
+                    icon={RefreshIcon}
+                    className="size-3.5 animate-spin motion-reduce:animate-none"
+                  />
                 ) : (
-                  <RiArrowUpLine className="size-3.5" />
+                  <PikaIcon icon={ArrowUpIcon} className="size-3.5" />
                 )}
                 Generate
               </Button>

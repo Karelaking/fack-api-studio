@@ -2,7 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ExternalLinkSquareIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { cn } from "@/lib/utils";
 
 export type CollaborateButtonProps = {
@@ -64,7 +65,11 @@ export const CollaborateButton = ({
           scale.badge,
         )}
       >
-        <ArrowUpRight size={scale.glyph} aria-hidden="true" />
+        <PikaIcon
+          icon={ExternalLinkSquareIcon}
+          size={scale.glyph}
+          aria-hidden="true"
+        />
       </div>
     </>
   );

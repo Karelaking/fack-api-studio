@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { RiAlertLine, RiCodeSSlashLine, RiTimeLine } from "@remixicon/react";
+import { AlertTriangleIcon, CodeIcon, ClockIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { Badge } from "@/components/ui/badge";
 import type { GeneratedRoute } from "@/lib/ai/types";
 import { convertPropertiesToJsonSchema } from "@/lib/services/schema.service";
@@ -46,7 +47,7 @@ export const ApiRoutePreviewRow = ({
 
         <div className="flex items-center gap-2 text-xs">
           <div className="text-muted-foreground text-caption flex items-center gap-1">
-            <RiTimeLine className="size-3" />
+            <PikaIcon icon={ClockIcon} className="size-3" />
             <span>
               {route.latency.min}–{route.latency.max}ms
             </span>
@@ -54,7 +55,7 @@ export const ApiRoutePreviewRow = ({
 
           {route.errorRate > 0 && (
             <div className="text-caption text-warning flex items-center gap-1">
-              <RiAlertLine className="size-3" />
+              <PikaIcon icon={AlertTriangleIcon} className="size-3" />
               <span>{route.errorRate}% error</span>
             </div>
           )}
@@ -64,7 +65,7 @@ export const ApiRoutePreviewRow = ({
             onClick={() => setShowSchema(!showSchema)}
             className="border-border hover:bg-card text-muted-foreground hover:text-foreground text-caption flex cursor-pointer items-center gap-1 rounded border px-2 py-0.5 transition-colors"
           >
-            <RiCodeSSlashLine className="size-3" />
+            <PikaIcon icon={CodeIcon} className="size-3" />
             <span>{showSchema ? "Hide Schema" : "Schema"}</span>
           </button>
         </div>

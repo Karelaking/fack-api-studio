@@ -1,6 +1,7 @@
 import React from "react";
 import { desc, eq } from "drizzle-orm";
-import { RiComputerLine, RiTerminalBoxLine } from "@remixicon/react";
+import { LaptopIcon, CodeIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 
 import { db } from "@/db";
 import { cliDevices } from "@/db/schema";
@@ -93,8 +94,9 @@ export default async function CliAccessPage(): Promise<React.JSX.Element> {
       <Card>
         <CardHeader>
           <CardTitle>
-            <RiTerminalBoxLine
-              className="text-primary h-5 w-5"
+            <PikaIcon
+              icon={CodeIcon}
+              className="text-primary size-5"
               aria-hidden="true"
             />
             <span>Connect a terminal</span>
@@ -143,8 +145,9 @@ export default async function CliAccessPage(): Promise<React.JSX.Element> {
       <Card>
         <CardHeader>
           <CardTitle>
-            <RiComputerLine
-              className="text-primary h-5 w-5"
+            <PikaIcon
+              icon={LaptopIcon}
+              className="text-primary size-5"
               aria-hidden="true"
             />
             <span>Authorized terminals</span>
@@ -159,7 +162,7 @@ export default async function CliAccessPage(): Promise<React.JSX.Element> {
             <CliDevicesList devices={rows} />
           ) : (
             <EmptyState
-              icon={<RiTerminalBoxLine />}
+              icon={<PikaIcon icon={CodeIcon} />}
               title="No terminals yet"
               description="Run `fack login` in a repository to authorize this machine. It will appear here with its platform and last-used time."
               className="border-0 bg-transparent px-0 py-8 shadow-none"

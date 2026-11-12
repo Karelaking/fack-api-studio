@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { RiCheckLine, RiFileCopyLine, RiCodeLine } from "@remixicon/react";
+import { CheckTickCircleIcon, CopyIcon, CodeIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import type { SchemaField } from "@/lib/schema-synthesizer";
 import { FieldTree } from "@/components/edit-bar/FieldTree";
 import { Button } from "@/components/ui/button";
@@ -50,9 +51,12 @@ export const InspectorSchemaTab = ({
               className="h-7 gap-1 text-xs font-medium"
             >
               {copiedJson ? (
-                <RiCheckLine className="text-success size-3.5" />
+                <PikaIcon
+                  icon={CheckTickCircleIcon}
+                  className="text-success size-3.5"
+                />
               ) : (
-                <RiFileCopyLine className="size-3.5" />
+                <PikaIcon icon={CopyIcon} className="size-3.5" />
               )}
               <span>{copiedJson ? "Copied" : "Copy JSON"}</span>
             </Button>
@@ -63,24 +67,22 @@ export const InspectorSchemaTab = ({
               onClick={onOpenTypes}
               className="h-7 gap-1 text-xs font-medium"
             >
-              <RiCodeLine className="size-3.5" />
+              <PikaIcon icon={CodeIcon} className="size-3.5" />
               <span>Types</span>
             </Button>
             {fields.length > 0 && (
               <Popover open={clearAllOpen} onOpenChange={setClearAllOpen}>
-                <PopoverTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="xs"
-                      disabled={loading}
-                      className="text-muted-foreground hover:text-destructive h-7 text-xs font-medium"
-                    >
-                      Clear all
-                    </Button>
-                  }
-                />
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    disabled={loading}
+                    className="text-muted-foreground hover:text-destructive h-7 text-xs font-medium"
+                  >
+                    Clear all
+                  </Button>
+                </PopoverTrigger>
                 <PopoverContent
                   align="end"
                   side="bottom"

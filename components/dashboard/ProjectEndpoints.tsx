@@ -4,13 +4,14 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  RiPulseLine,
-  RiAddLine,
-  RiEdit2Line,
-  RiDeleteBin6Line,
-  RiLoader2Line,
-  RiArrowRightLine,
-} from "@remixicon/react";
+  ArrowRightIcon,
+  DeleteDustbin01Icon,
+  PencilEditIcon,
+  PlusIcon,
+  RefreshIcon,
+  TroubleshootIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import {
   createEndpoint,
   updateEndpoint,
@@ -194,19 +195,17 @@ export const ProjectEndpoints = ({
 
           {/* Create Dialog */}
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-            <DialogTrigger
-              render={
-                <Button
-                  type="button"
-                  size="sm"
-                  title="Add Endpoint Group"
-                  aria-label="Add Endpoint Group"
-                  className="shrink-0"
-                />
-              }
-            >
-              <RiAddLine className="h-4 w-4" />
-              <span>Add Endpoint Group</span>
+            <DialogTrigger asChild>
+              <Button
+                type="button"
+                size="sm"
+                title="Add Endpoint Group"
+                aria-label="Add Endpoint Group"
+                className="shrink-0"
+              >
+                <PikaIcon icon={PlusIcon} className="size-4" />
+                <span>Add Endpoint Group</span>
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <form onSubmit={handleCreate}>
@@ -286,8 +285,9 @@ export const ProjectEndpoints = ({
                   >
                     {loading ? (
                       <>
-                        <RiLoader2Line
-                          className="h-4 w-4 animate-spin"
+                        <PikaIcon
+                          icon={RefreshIcon}
+                          className="size-4 animate-spin"
                           aria-hidden="true"
                         />
                         <span>Creating...</span>
@@ -307,7 +307,11 @@ export const ProjectEndpoints = ({
       {endpointsList.length === 0 ? (
         <Card variant="dashed">
           <div className="flex flex-col items-center justify-center p-12 text-center">
-            <RiPulseLine className="text-muted-foreground mb-4 h-10 w-10 animate-pulse stroke-1 motion-reduce:animate-none" />
+            <PikaIcon
+              icon={TroubleshootIcon}
+              strokeWidth={1}
+              className="text-muted-foreground mb-4 size-10 animate-pulse motion-reduce:animate-none"
+            />
             <CardTitle>
               <span className="text-lg">No Endpoint Groups</span>
             </CardTitle>
@@ -322,7 +326,7 @@ export const ProjectEndpoints = ({
               onClick={() => setCreateOpen(true)}
               className="mt-6"
             >
-              <RiAddLine className="h-4 w-4" />
+              <PikaIcon icon={PlusIcon} className="size-4" />
               <span>Create Group</span>
             </Button>
           </div>
@@ -353,7 +357,10 @@ export const ProjectEndpoints = ({
                       aria-label="Edit Endpoint Group"
                       onClick={() => handleOpenEditDialog(ep)}
                     >
-                      <RiEdit2Line className="text-muted-foreground hover:text-foreground h-4 w-4" />
+                      <PikaIcon
+                        icon={PencilEditIcon}
+                        className="text-muted-foreground hover:text-foreground size-4"
+                      />
                     </Button>
                     <Button
                       size="icon-sm"
@@ -362,7 +369,7 @@ export const ProjectEndpoints = ({
                       aria-label="Delete Endpoint Group"
                       onClick={() => handleOpenDeleteDialog(ep)}
                     >
-                      <RiDeleteBin6Line className="h-4 w-4" />
+                      <PikaIcon icon={DeleteDustbin01Icon} className="size-4" />
                     </Button>
                   </div>
                 </div>
@@ -390,7 +397,10 @@ export const ProjectEndpoints = ({
                   }
                 >
                   <span>Open Route Canvas</span>
-                  <RiArrowRightLine className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
+                  <PikaIcon
+                    icon={ArrowRightIcon}
+                    className="size-4 transition-transform group-hover/btn:translate-x-1"
+                  />
                 </Button>
               </CardFooter>
             </Card>
@@ -471,8 +481,9 @@ export const ProjectEndpoints = ({
               >
                 {loading ? (
                   <>
-                    <RiLoader2Line
-                      className="h-4 w-4 animate-spin"
+                    <PikaIcon
+                      icon={RefreshIcon}
+                      className="size-4 animate-spin"
                       aria-hidden="true"
                     />
                     <span>Saving...</span>
@@ -521,8 +532,9 @@ export const ProjectEndpoints = ({
             >
               {loading ? (
                 <>
-                  <RiLoader2Line
-                    className="h-4 w-4 animate-spin"
+                  <PikaIcon
+                    icon={RefreshIcon}
+                    className="size-4 animate-spin"
                     aria-hidden="true"
                   />
                   <span>Deleting...</span>

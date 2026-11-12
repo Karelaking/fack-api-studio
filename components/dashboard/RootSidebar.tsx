@@ -11,17 +11,18 @@ import { usePathname } from "next/navigation";
 import { ProfileDialog } from "@/components/dashboard/ProfileDialog";
 import { useSafeUser } from "@/hooks/use-safe-user";
 import {
-  RiLayoutGridLine,
-  RiFileList3Line,
-  RiBarChartBoxLine,
-  RiEarthLine,
-  RiTerminalBoxLine,
-  RiSettings3Line,
-  RiSearchLine,
-  RiArrowUpDownLine,
-  RiMoreFill,
-  RiNotification3Line,
-} from "@remixicon/react";
+  ChevronDownIcon,
+  CodeIcon,
+  File02Icon,
+  GlobeIcon,
+  GraphBarLineIcon,
+  GridDashboard02Icon,
+  NotificationBellOnIcon,
+  SearchIcon,
+  Settings01Icon,
+  ThreeDotsMenuHorizontalIcon,
+} from "@pikaicons/core-free";
+import { type IconSvgElement, PikaIcon } from "@pikaicons/react";
 import {
   Sidebar,
   SidebarContent,
@@ -36,39 +37,45 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 
-const mainNavItems = [
+interface NavItem {
+  title: string;
+  href: string;
+  icon: IconSvgElement;
+}
+
+const mainNavItems: NavItem[] = [
   {
     title: "Projects",
     href: "/dashboard",
-    icon: RiLayoutGridLine,
+    icon: GridDashboard02Icon,
   },
   {
     title: "Activity Logs",
     href: "/activity",
-    icon: RiFileList3Line,
+    icon: File02Icon,
   },
   {
     title: "Analytics",
     href: "/analytics",
-    icon: RiBarChartBoxLine,
+    icon: GraphBarLineIcon,
   },
 ];
 
-const configNavItems = [
+const configNavItems: NavItem[] = [
   {
     title: "Custom Domains",
     href: "/domains",
-    icon: RiEarthLine,
+    icon: GlobeIcon,
   },
   {
     title: "CLI Access",
     href: "/keys",
-    icon: RiTerminalBoxLine,
+    icon: CodeIcon,
   },
   {
     title: "Settings",
     href: "/settings",
-    icon: RiSettings3Line,
+    icon: Settings01Icon,
   },
 ];
 
@@ -102,7 +109,10 @@ export function RootSidebar({
                     Self-hosted
                   </span>
                 </div>
-                <RiArrowUpDownLine className="ml-auto h-4 w-4 shrink-0 group-data-[collapsible=icon]:hidden" />
+                <PikaIcon
+                  icon={ChevronDownIcon}
+                  className="ml-auto size-4 shrink-0 group-data-[collapsible=icon]:hidden"
+                />
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -123,9 +133,10 @@ export function RootSidebar({
               }
             }}
           >
-            <RiSearchLine
+            <PikaIcon
+              icon={SearchIcon}
               aria-hidden="true"
-              className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2"
+              className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2"
             />
             <input
               type="text"
@@ -156,13 +167,13 @@ export function RootSidebar({
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
                         isActive={isActive}
-                        render={
-                          <Link href={item.href} aria-label={item.title} />
-                        }
+                        asChild
                         className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary hover:bg-muted/50 transition-colors duration-200 data-[active=true]:font-medium max-md:h-11"
                       >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
+                        <Link href={item.href} aria-label={item.title}>
+                          <PikaIcon icon={item.icon} className="size-4" />
+                          <span>{item.title}</span>
+                        </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
@@ -186,13 +197,13 @@ export function RootSidebar({
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
                         isActive={isActive}
-                        render={
-                          <Link href={item.href} aria-label={item.title} />
-                        }
+                        asChild
                         className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary hover:bg-muted/50 transition-colors duration-200 data-[active=true]:font-medium max-md:h-11"
                       >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
+                        <Link href={item.href} aria-label={item.title}>
+                          <PikaIcon icon={item.icon} className="size-4" />
+                          <span>{item.title}</span>
+                        </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
@@ -231,14 +242,22 @@ export function RootSidebar({
               aria-label="More profile actions"
               className="hover:bg-muted hover:text-foreground focus-visible:ring-ring focus-visible:ring-offset-background flex h-11 w-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none md:h-8 md:w-8"
             >
-              <RiMoreFill aria-hidden="true" className="h-4 w-4" />
+              <PikaIcon
+                icon={ThreeDotsMenuHorizontalIcon}
+                aria-hidden="true"
+                className="size-4"
+              />
             </button>
             <button
               type="button"
               aria-label="Notifications"
               className="hover:bg-muted hover:text-foreground focus-visible:ring-ring focus-visible:ring-offset-background relative flex h-11 w-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none md:h-8 md:w-8"
             >
-              <RiNotification3Line aria-hidden="true" className="h-4 w-4" />
+              <PikaIcon
+                icon={NotificationBellOnIcon}
+                aria-hidden="true"
+                className="size-4"
+              />
               <span
                 aria-hidden="true"
                 className="absolute top-1.5 right-1.5 flex h-1.5 w-1.5"

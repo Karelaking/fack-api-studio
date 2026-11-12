@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { RiDatabase2Line } from "@remixicon/react";
+import { DatabaseIcon } from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { getGroupedProviders, type FakerCategory } from "@/lib/faker-registry";
 import { ProviderChip } from "@/components/canvas/ProviderChip";
 import {
@@ -166,7 +167,11 @@ export function SidebarProvidersSection({
       </span>
       <SidebarGroupLabel className="flex items-center justify-between px-2">
         <div className="flex items-center gap-1.5">
-          <RiDatabase2Line className="text-primary size-4" aria-hidden="true" />
+          <PikaIcon
+            icon={DatabaseIcon}
+            className="text-primary size-4"
+            aria-hidden="true"
+          />
           <h2 className="text-foreground text-xs font-semibold">
             Mock Providers
           </h2>
@@ -235,7 +240,7 @@ export function SidebarProvidersSection({
         />
 
         {/* 2-Column Grid of Providers */}
-        <TooltipProvider delay={400}>
+        <TooltipProvider delayDuration={400}>
           <div className="min-h-0 flex-1 space-y-4 pr-1 pb-4">
             {visibleCategories.length === 0 ? (
               <div className="bg-muted/20 border-border/40 flex flex-col items-center justify-center rounded-lg border px-4 py-8 text-center">

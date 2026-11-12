@@ -9,11 +9,7 @@ import { getEndpoints } from "@/lib/actions/endpoints";
 import { getCanvasState } from "@/lib/actions/canvas";
 import { getRequestLogs } from "@/lib/actions/logs";
 import { getNotes } from "@/lib/actions/notes";
-import { CanvasContainer } from "@/components/canvas/CanvasContainer";
-import { ProjectEndpoints } from "@/components/dashboard/ProjectEndpoints";
-import { ProjectLogs } from "@/components/dashboard/ProjectLogs";
-import { ProjectNotes } from "@/components/dashboard/ProjectNotes";
-import { ProjectSettings } from "@/components/dashboard/ProjectSettings";
+import { ProjectSubpageView } from "@/components/dashboard/ProjectSubpageView";
 import { SubpageLoading } from "./_components/SubpageLoading";
 import type { Project } from "@/db/schema";
 
@@ -77,20 +73,21 @@ async function SubpageContent({
       ]);
       const routesList = endpointsList.flatMap((ep) => ep.routes);
       return (
-        <CanvasContainer
-          projectId={project.id}
-          projectSlug={project.slug}
-          endpoints={endpointsList}
-          routes={routesList}
-          initialState={
-            canvasState
+        <ProjectSubpageView
+          subpage="canvas"
+          props={{
+            projectId: project.id,
+            projectSlug: project.slug,
+            endpoints: endpointsList,
+            routes: routesList,
+            initialState: canvasState
               ? {
                   nodes: canvasState.nodes,
                   edges: canvasState.edges,
                   viewport: canvasState.viewport,
                 }
-              : undefined
-          }
+              : undefined,
+          }}
         />
       );
     }
@@ -98,26 +95,40 @@ async function SubpageContent({
     case "endpoints": {
       const endpointsList = await getEndpoints(project.id);
       return (
-        <ProjectEndpoints
-          projectId={project.id}
-          projectSlug={project.slug}
-          initialEndpoints={endpointsList}
+        <ProjectSubpageView
+          subpage="endpoints"
+          props={{
+            projectId: project.id,
+            projectSlug: project.slug,
+            initialEndpoints: endpointsList,
+          }}
         />
       );
     }
 
     case "logs": {
       const logs = await getRequestLogs(project.id);
-      return <ProjectLogs projectId={project.id} initialLogs={logs} />;
+      return (
+        <ProjectSubpageView
+          subpage="logs"
+          props={{
+            projectId: project.id,
+            initialLogs: logs,
+          }}
+        />
+      );
     }
 
     case "notes": {
       const projectNotes = await getNotes(project.id);
       return (
-        <ProjectNotes
-          projectId={project.id}
-          projectSlug={project.slug}
-          initialNotes={projectNotes}
+        <ProjectSubpageView
+          subpage="notes"
+          props={{
+            projectId: project.id,
+            projectSlug: project.slug,
+            initialNotes: projectNotes,
+          }}
         />
       );
     }
@@ -134,10 +145,13 @@ async function SubpageContent({
       }
 
       return (
-        <ProjectSettings
-          project={project}
-          isLogsDbConfigured={isLogsDbConfigured}
-          scenarios={scenariosList}
+        <ProjectSubpageView
+          subpage="settings"
+          props={{
+            project,
+            isLogsDbConfigured,
+            scenarios: scenariosList,
+          }}
         />
       );
     }

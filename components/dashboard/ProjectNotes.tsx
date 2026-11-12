@@ -3,12 +3,13 @@
 import * as React from "react";
 import { toast } from "sonner";
 import {
-  RiAddLine,
-  RiDeleteBin6Line,
-  RiLoader2Line,
-  RiPushpinLine,
-  RiStickyNoteLine,
-} from "@remixicon/react";
+  DeleteDustbin01Icon,
+  PencilEditIcon,
+  PinIcon,
+  PlusIcon,
+  RefreshIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
 import { createNote, deleteNote, updateNote } from "@/lib/actions/notes";
 import type { Note } from "@/db/schema";
 import { cn } from "@/lib/utils";
@@ -183,9 +184,13 @@ export function ProjectNotes({
             disabled={creating}
           >
             {creating ? (
-              <RiLoader2Line className="animate-spin" aria-hidden="true" />
+              <PikaIcon
+                icon={RefreshIcon}
+                className="size-4 animate-spin"
+                aria-hidden="true"
+              />
             ) : (
-              <RiAddLine aria-hidden="true" />
+              <PikaIcon icon={PlusIcon} aria-hidden="true" />
             )}
             New note
           </Button>
@@ -194,7 +199,11 @@ export function ProjectNotes({
         <div className="scrollbar-subtle flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
           {notes.length === 0 && (
             <div className="border-border/50 text-muted-foreground flex flex-col items-center gap-3 rounded-xl border border-dashed p-6 text-center">
-              <RiStickyNoteLine className="h-6 w-6" aria-hidden="true" />
+              <PikaIcon
+                icon={PencilEditIcon}
+                className="size-6"
+                aria-hidden="true"
+              />
               <p className="text-sm">
                 Capture decisions, todos, and API reminders here. Notes are
                 stored with the rest of your project data.
@@ -226,8 +235,9 @@ export function ProjectNotes({
             >
               <span className="flex items-center gap-1.5">
                 {note.pinned && (
-                  <RiPushpinLine
-                    className="text-primary h-3.5 w-3.5 shrink-0"
+                  <PikaIcon
+                    icon={PinIcon}
+                    className="text-primary size-3.5 shrink-0"
                     aria-hidden="true"
                   />
                 )}
@@ -259,9 +269,10 @@ export function ProjectNotes({
                   className="h-9 border-none px-1 text-base font-semibold shadow-none focus-visible:ring-0 md:text-base"
                 />
                 <div className="flex shrink-0 items-center gap-1.5">
-                  <RiPushpinLine
+                  <PikaIcon
+                    icon={PinIcon}
                     className={cn(
-                      "h-4 w-4",
+                      "size-4",
                       selected.pinned
                         ? "text-primary"
                         : "text-muted-foreground",
@@ -311,7 +322,7 @@ export function ProjectNotes({
                     size="sm"
                     onClick={() => void handleDelete(selected.id)}
                   >
-                    <RiDeleteBin6Line aria-hidden="true" />
+                    <PikaIcon icon={DeleteDustbin01Icon} aria-hidden="true" />
                     {confirmId === selected.id ? "Confirm delete" : "Delete"}
                   </Button>
                 </div>
@@ -321,7 +332,11 @@ export function ProjectNotes({
         ) : (
           <Card className="flex h-full items-center justify-center">
             <CardContent className="text-muted-foreground flex flex-col items-center gap-3 p-10 text-center">
-              <RiStickyNoteLine className="h-7 w-7" aria-hidden="true" />
+              <PikaIcon
+                icon={PencilEditIcon}
+                className="size-7"
+                aria-hidden="true"
+              />
               <p className="text-sm">
                 Select a note from the list or create a new one.
               </p>
@@ -330,7 +345,7 @@ export function ProjectNotes({
                 size="sm"
                 onClick={() => void handleCreate()}
               >
-                <RiAddLine aria-hidden="true" />
+                <PikaIcon icon={PlusIcon} aria-hidden="true" />
                 New note
               </Button>
             </CardContent>

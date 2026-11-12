@@ -1,7 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { Check, Code2, Copy, Cpu, FileCode, Layers, Zap } from "lucide-react";
+import {
+  CheckTickCircleIcon,
+  CodeIcon,
+  CopyIcon,
+  TroubleshootIcon,
+  File02Icon,
+  LayerThreeIcon,
+  LightningThunderElectricOnIcon,
+} from "@pikaicons/core-free";
+import { PikaIcon } from "@pikaicons/react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 /**
  * Visual canvas and schema pipeline workbench for new developers on the Sign-Up flow.
@@ -22,7 +32,13 @@ export const SignUpWorkbench = (): React.JSX.Element => {
   };
 
   return (
-    <div className="border-border/80 bg-card/95 text-card-foreground ring-border/50 relative overflow-hidden rounded-xl border shadow-lg ring-1 backdrop-blur-xs transition-all duration-300">
+    <Tabs
+      value={activeTab}
+      onValueChange={(value): void =>
+        setActiveTab(value as "canvas" | "typescript")
+      }
+      className="border-border/80 bg-card/95 text-card-foreground ring-border/50 relative gap-0 overflow-hidden rounded-xl border shadow-lg ring-1 backdrop-blur-xs transition-all duration-300"
+    >
       {/* Titlebar with window controls and interactive tab switcher */}
       <div className="border-border/70 bg-muted/40 flex flex-wrap items-center justify-between gap-2 border-b px-3.5 py-2">
         <div className="flex items-center gap-1.5">
@@ -38,44 +54,44 @@ export const SignUpWorkbench = (): React.JSX.Element => {
             aria-hidden="true"
             className="bg-success/60 size-2.5 rounded-full"
           />
-          <div className="bg-muted/70 ml-2 inline-flex rounded-lg p-0.5">
-            <button
-              type="button"
-              onClick={(): void => setActiveTab("canvas")}
-              className={`text-mini rounded-md px-2 py-0.5 font-mono font-medium transition-all ${
-                activeTab === "canvas"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+          <TabsList className="bg-muted/70 ml-2 h-auto rounded-lg p-0.5">
+            <TabsTrigger
+              value="canvas"
+              size="compact"
+              className="text-mini h-auto rounded-md px-2 py-0.5 font-mono font-medium"
             >
               Visual Canvas
-            </button>
-            <button
-              type="button"
-              onClick={(): void => setActiveTab("typescript")}
-              className={`text-mini rounded-md px-2 py-0.5 font-mono font-medium transition-all ${
-                activeTab === "typescript"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+            </TabsTrigger>
+            <TabsTrigger
+              value="typescript"
+              size="compact"
+              className="text-mini h-auto rounded-md px-2 py-0.5 font-mono font-medium"
             >
               TypeScript DTO
-            </button>
-          </div>
+            </TabsTrigger>
+          </TabsList>
         </div>
 
         <div className="border-primary/20 bg-primary/10 text-primary text-mini inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono font-semibold">
-          <Zap className="size-3" aria-hidden="true" />
+          <PikaIcon
+            icon={LightningThunderElectricOnIcon}
+            className="size-3"
+            aria-hidden="true"
+          />
           <span>Faker Synthesizer</span>
         </div>
       </div>
 
       {/* Tab 1: Visual Schema Pipeline */}
-      {activeTab === "canvas" && (
+      <TabsContent value="canvas">
         <div className="space-y-2 p-3.5">
           <div className="border-border/60 bg-muted/30 flex items-center justify-between rounded-lg border px-3 py-2">
             <div className="flex items-center gap-2">
-              <Layers className="text-primary size-3.5" aria-hidden="true" />
+              <PikaIcon
+                icon={LayerThreeIcon}
+                className="text-primary size-3.5"
+                aria-hidden="true"
+              />
               <span className="text-foreground text-xs font-medium">
                 Route: /api/v2/users
               </span>
@@ -112,15 +128,15 @@ export const SignUpWorkbench = (): React.JSX.Element => {
             </code>
           </pre>
         </div>
-      )}
+      </TabsContent>
 
       {/* Tab 2: TypeScript DTO Export */}
-      {activeTab === "typescript" && (
+      <TabsContent value="typescript">
         <div className="text-caption p-3.5 font-mono leading-relaxed">
           <div className="border-border/50 bg-muted/20 relative rounded-lg border p-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-muted-foreground text-mini flex items-center gap-1.5">
-                <FileCode className="text-primary size-3" />
+                <PikaIcon icon={File02Icon} className="text-primary size-3" />
                 types/user.dto.ts
               </span>
               <button
@@ -130,9 +146,12 @@ export const SignUpWorkbench = (): React.JSX.Element => {
                 aria-label="Copy TypeScript code"
               >
                 {hasCopied ? (
-                  <Check className="text-success size-3.5" />
+                  <PikaIcon
+                    icon={CheckTickCircleIcon}
+                    className="text-success size-3.5"
+                  />
                 ) : (
-                  <Copy className="size-3.5" />
+                  <PikaIcon icon={CopyIcon} className="size-3.5" />
                 )}
               </button>
             </div>
@@ -141,19 +160,23 @@ export const SignUpWorkbench = (): React.JSX.Element => {
             </pre>
           </div>
         </div>
-      )}
+      </TabsContent>
 
       {/* Footer bar */}
       <div className="border-border/60 bg-muted/20 text-muted-foreground text-mini flex items-center justify-between border-t px-3.5 py-1.5 font-mono">
         <span className="flex items-center gap-1.5">
-          <Cpu className="text-primary size-3" aria-hidden="true" />
+          <PikaIcon
+            icon={TroubleshootIcon}
+            className="text-primary size-3"
+            aria-hidden="true"
+          />
           TypeScript &amp; OpenAPI 3.1
         </span>
         <span className="flex items-center gap-1">
-          <Code2 className="text-primary size-3" />
+          <PikaIcon icon={CodeIcon} className="text-primary size-3" />
           Deterministic Seed 1337
         </span>
       </div>
-    </div>
+    </Tabs>
   );
 };

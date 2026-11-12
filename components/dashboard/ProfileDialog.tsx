@@ -149,10 +149,8 @@ export function ProfileDialog({ children }: { children: React.ReactNode }) {
 
   return (
     <Dialog>
-      <DialogTrigger
-        render={React.isValidElement(children) ? children : undefined}
-      >
-        {!React.isValidElement(children) ? children : null}
+      <DialogTrigger asChild={React.isValidElement(children)}>
+        {children}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-150">
         <DialogHeader>

@@ -781,6 +781,33 @@
   }
 }
 
+@keyframes logo-cloud-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-33.333333%, 0, 0);
+  }
+}
+
+.animate-marquee {
+  width: max-content;
+  animation: logo-cloud-marquee 35s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee:hover,
+.animate-marquee:focus-within {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+    will-change: auto;
+  }
+}
+
 /* ── Theme Switch View Transitions ("Light Bulb" Flow) ────────── */
 ::view-transition-old(root),
 ::view-transition-new(root) {
