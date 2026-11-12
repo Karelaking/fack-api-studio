@@ -1,3 +1,9 @@
+# [1.27.0](https://github.com/Karelaking/fack-api-studio/compare/v1.26.0...v1.27.0) (2026-11-12)
+
+### Features
+
+- **core:** audit fixes, security hardening, SEO corrections, and UI modularization ([084b514](https://github.com/Karelaking/fack-api-studio/commit/084b5143c9b9365e41408a45799d05222e6779e0))
+
 # [1.26.0](https://github.com/Karelaking/fack-api-studio/compare/v1.25.0...v1.26.0) (2026-11-10)
 
 ### Bug Fixes
