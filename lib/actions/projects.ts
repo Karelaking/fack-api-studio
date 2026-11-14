@@ -105,7 +105,7 @@ export const getProjects = cache(async function getProjects(): Promise<
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     if (message.includes("no such table: projects")) {
-      console.warn(
+      LoggerRegistry.get("db-projects").warn(
         '[fack-api] Database schema is not initialized. Run "pnpm db:push" to create the required tables.',
       );
       projectsTrace.traceSuccess("getProjects (not initialized)", []);

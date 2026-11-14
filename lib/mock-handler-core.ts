@@ -78,26 +78,53 @@ interface LogEntry {
  */
 const MAX_LOG_QUEUE = 10_000;
 
+/**
+ * Retention settings: prune request logs older than 14 days.
+ * Prune operation runs at most once every hour during flush.
+ */
+const MAX_LOG_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
+const PRUNE_THROTTLE_MS = 60 * 60 * 1000;
+let lastPruneTime = 0;
+
+async function pruneStaleLogs(): Promise<void> {
+  const cutoff = Date.now() - MAX_LOG_RETENTION_MS;
+  try {
+    if (sqlClient) {
+      await sqlClient`DELETE FROM request_logs WHERE timestamp < ${cutoff}`;
+    } else {
+      await db.$client.execute({
+        sql: "DELETE FROM request_logs WHERE timestamp < ?",
+        args: [cutoff],
+      });
+    }
+  } catch (err) {
+    mockLogger.warn("Failed to prune stale request logs:", err);
+  }
+}
+
 const logQueue: LogEntry[] = [];
 let isFlushing = false;
+let consecutiveFlushErrors = 0;
+const MAX_CONSECUTIVE_FLUSH_ERRORS = 3;
 
 async function flushLogQueue(): Promise<void> {
   if (isFlushing || logQueue.length === 0) return;
   isFlushing = true;
 
+  let currentBatch: LogEntry[] = [];
   try {
     while (logQueue.length > 0) {
-      const batch = logQueue.splice(0, 100);
-      if (batch.length === 0) break;
+      currentBatch = logQueue.splice(0, 100);
+      if (currentBatch.length === 0) break;
 
       if (sqlClient) {
         // postgres.js supports array insertion
         await sqlClient`
-          INSERT INTO request_logs ${sqlClient(batch)}
+          INSERT INTO request_logs ${sqlClient(currentBatch)}
         `;
       } else {
         // @libsql/client supports batching
-        const statements = batch.map((entry) => ({
+        const statements = currentBatch.map((entry) => ({
           sql: `INSERT INTO request_logs (id, project_id, timestamp, method, path, query_params, headers, status_code, latency, is_error, response_payload) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           args: [
             entry.id,
@@ -115,12 +142,54 @@ async function flushLogQueue(): Promise<void> {
         }));
         await db.$client.batch(statements);
       }
+      currentBatch = [];
+      consecutiveFlushErrors = 0;
+    }
+
+    // Trigger background auto-pruning if throttle interval elapsed
+    const now = Date.now();
+    if (now - lastPruneTime > PRUNE_THROTTLE_MS) {
+      lastPruneTime = now;
+      void pruneStaleLogs();
     }
   } catch (error) {
     mockLogger.error("Failed to batch insert request logs:", error);
+    consecutiveFlushErrors++;
+    // Recover unsaved entries back into the front of the queue
+    if (currentBatch.length > 0) {
+      logQueue.unshift(...currentBatch);
+      if (logQueue.length > MAX_LOG_QUEUE) {
+        logQueue.length = MAX_LOG_QUEUE;
+      }
+    }
   } finally {
     isFlushing = false;
+    // If entries arrived during flush or recovered after transient error, re-flush
+    if (
+      logQueue.length > 0 &&
+      consecutiveFlushErrors < MAX_CONSECUTIVE_FLUSH_ERRORS
+    ) {
+      void flushLogQueue();
+    }
   }
+}
+
+const SENSITIVE_HEADERS = new Set([
+  "authorization",
+  "cookie",
+  "set-cookie",
+  "x-api-key",
+  "apikey",
+  "proxy-authorization",
+]);
+
+function sanitizeRequestHeaders(headers: Headers): Record<string, string> {
+  const result: Record<string, string> = {};
+  headers.forEach((value, key) => {
+    const lowerKey = key.toLowerCase();
+    result[key] = SENSITIVE_HEADERS.has(lowerKey) ? "[redacted]" : value;
+  });
+  return result;
 }
 
 /**
@@ -142,7 +211,7 @@ async function recordRequestLog(
   const queryParams = JSON.stringify(
     Object.fromEntries(request.nextUrl.searchParams),
   );
-  const reqHeaders = JSON.stringify(Object.fromEntries(request.headers));
+  const reqHeaders = JSON.stringify(sanitizeRequestHeaders(request.headers));
   // Bound both object and string payloads. Templates/conditional rules can
   // return large strings, and an unbounded row bloats `request_logs`, the
   // dashboard query, and the flush batch.
@@ -176,6 +245,7 @@ async function recordRequestLog(
 
   // Next.js after() context keeps the function alive. We can flush immediately.
   // Because it's async and we have a lock (isFlushing), concurrent requests will batch together!
+  consecutiveFlushErrors = 0;
   await flushLogQueue();
 }
 
@@ -220,8 +290,8 @@ function triggerWebhooks(route: CachedRoute, projectId: string) {
               ? parsedBody
               : undefined,
           });
-          mockLogger.info(
-            `Webhook triggered successfully: ${webhook.method} ${webhook.url}`,
+          mockLogger.debug(
+            `Webhook triggered: ${webhook.method} ${webhook.url}`,
           );
         } catch (error) {
           mockLogger.error(`Failed to trigger webhook ${webhook.url}`, error);
@@ -298,6 +368,9 @@ export async function processMockRequest({
     if (route.isAuthRequired) {
       const authHeader = request.headers.get("Authorization");
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        mockLogger.warn(
+          `Unauthorized mock request: missing Bearer token on "${method} ${matchedPath}" for project "${project.slug}"`,
+        );
         const errorBody = {
           error: true,
           message: "Unauthorized",
@@ -319,6 +392,9 @@ export async function processMockRequest({
           issuer: `fack-api:${project.slug}`,
         });
       } catch {
+        mockLogger.warn(
+          `Unauthorized mock request: invalid or expired Bearer token on "${method} ${matchedPath}" for project "${project.slug}"`,
+        );
         const errorBody = {
           error: true,
           message: "Unauthorized",
@@ -515,7 +591,7 @@ export async function processMockRequest({
                 effectiveLimit,
               );
               if (!hasNextCached) {
-                mockLogger.info(
+                mockLogger.debug(
                   `Proactively prefetching next page: ${nextPage}`,
                 );
                 const nextPageData = (await generatePayload(
@@ -768,6 +844,10 @@ export async function processMockRequest({
 
     return response;
   } catch (error) {
+    mockLogger.error(
+      `Unhandled error processing mock request [${matchedMethod} ${matchedPath}] for project "${project.slug}":`,
+      error,
+    );
     mockCoreTrace.traceError("processMockRequest", error);
     const errorBody = { error: true, message: "Internal mock server error" };
     const response = buildErrorResponse(500, errorBody.message);

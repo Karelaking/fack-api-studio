@@ -96,20 +96,40 @@ export class ScopedLogger implements Logger {
  * Registers the standard Consola provider with the LoggerRegistry.
  */
 export function registerConsolaProvider(): void {
+  const isTest = process.env.NODE_ENV === "test";
   const logLevel = process.env.LOG_LEVEL
     ? parseInt(process.env.LOG_LEVEL, 10)
-    : 3;
+    : isTest
+      ? 1
+      : 3;
   const transport = new ConsolaTransport(logLevel);
   LoggerRegistry.setProvider(
     (tag: string): Logger => new ScopedLogger(transport, tag),
   );
 }
 
-// Default transports and loggers
-const defaultLogLevel = process.env.LOG_LEVEL
-  ? parseInt(process.env.LOG_LEVEL, 10)
-  : 3;
-const defaultTransport = new ConsolaTransport(defaultLogLevel);
+// Initialize LoggerRegistry with Consola provider upon module import
+registerConsolaProvider();
 
-export const dbLogger = new ScopedLogger(defaultTransport, "db");
-export const mockLogger = new ScopedLogger(defaultTransport, "mock");
+/**
+ * Standard scoped loggers delegating directly through the central LoggerRegistry.
+ */
+export const dbLogger: Logger = {
+  info: (message, ...args) => LoggerRegistry.get("db").info(message, ...args),
+  success: (message, ...args) =>
+    LoggerRegistry.get("db").success(message, ...args),
+  warn: (message, ...args) => LoggerRegistry.get("db").warn(message, ...args),
+  error: (message, ...args) => LoggerRegistry.get("db").error(message, ...args),
+  debug: (message, ...args) => LoggerRegistry.get("db").debug(message, ...args),
+};
+
+export const mockLogger: Logger = {
+  info: (message, ...args) => LoggerRegistry.get("mock").info(message, ...args),
+  success: (message, ...args) =>
+    LoggerRegistry.get("mock").success(message, ...args),
+  warn: (message, ...args) => LoggerRegistry.get("mock").warn(message, ...args),
+  error: (message, ...args) =>
+    LoggerRegistry.get("mock").error(message, ...args),
+  debug: (message, ...args) =>
+    LoggerRegistry.get("mock").debug(message, ...args),
+};

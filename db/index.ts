@@ -21,7 +21,7 @@ const modeDescriptions = {
   saas: `Storage mode: SAAS (Tier 3) — Managed cloud database (${connection.display})`,
 };
 
-dbLogger.info(modeDescriptions[connection.mode]);
+dbLogger.debug(modeDescriptions[connection.mode]);
 
 const DATABASE_URL = connection.url;
 const DATABASE_AUTH_TOKEN = connection.authToken;
@@ -45,7 +45,7 @@ async function configureSqlitePragmas(
     await client.execute("PRAGMA busy_timeout = 5000;");
     await client.execute("PRAGMA cache_size = -64000;");
     await client.execute("PRAGMA temp_store = MEMORY;");
-    dbLogger.info(
+    dbLogger.debug(
       "Applied SQLite performance PRAGMAs (WAL mode, foreign keys, 64MB cache).",
     );
   } catch (err) {
@@ -98,6 +98,34 @@ if (process.env.NODE_ENV !== "production") {
 let requestLogsPromise: Promise<void> | undefined;
 
 /**
+ * Helper to execute schema DDL with exponential backoff on SQLITE_BUSY concurrency locks.
+ */
+async function executeWithBusyRetry(
+  fn: () => Promise<void>,
+  maxRetries = 5,
+): Promise<void> {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      await fn();
+      return;
+    } catch (err) {
+      attempt++;
+      const message = String(err);
+      if (
+        (message.includes("SQLITE_BUSY") ||
+          message.includes("database is locked")) &&
+        attempt < maxRetries
+      ) {
+        await new Promise((r) => setTimeout(r, 50 * Math.pow(2, attempt)));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
+/**
  * Bootstraps request_logs table and indexes in SQLite/Turso if they do not exist.
  */
 export async function ensureRequestLogsTable(): Promise<void> {
@@ -105,8 +133,9 @@ export async function ensureRequestLogsTable(): Promise<void> {
     return requestLogsPromise;
   }
 
-  requestLogsPromise = (async (): Promise<void> => {
+  requestLogsPromise = executeWithBusyRetry(async (): Promise<void> => {
     try {
+      await rawDbClient.execute("PRAGMA busy_timeout = 5000;");
       await rawDbClient.execute(`
                 CREATE TABLE IF NOT EXISTS request_logs (
                     id TEXT PRIMARY KEY,
@@ -130,6 +159,10 @@ export async function ensureRequestLogsTable(): Promise<void> {
                 CREATE INDEX IF NOT EXISTS idx_request_logs_project_error 
                 ON request_logs(project_id, is_error);
             `);
+      await rawDbClient.execute(`
+                CREATE INDEX IF NOT EXISTS idx_request_logs_timestamp 
+                ON request_logs(timestamp DESC);
+            `);
     } catch (err) {
       requestLogsPromise = undefined;
       dbLogger.error(
@@ -138,7 +171,7 @@ export async function ensureRequestLogsTable(): Promise<void> {
       );
       throw err;
     }
-  })();
+  });
 
   return requestLogsPromise;
 }
@@ -154,8 +187,9 @@ export async function ensureCliTables(): Promise<void> {
     return cliTablesPromise;
   }
 
-  cliTablesPromise = (async (): Promise<void> => {
+  cliTablesPromise = executeWithBusyRetry(async (): Promise<void> => {
     try {
+      await rawDbClient.execute("PRAGMA busy_timeout = 5000;");
       await rawDbClient.execute(`
                 CREATE TABLE IF NOT EXISTS cli_auth_requests (
                     id TEXT PRIMARY KEY NOT NULL,
@@ -232,7 +266,7 @@ export async function ensureCliTables(): Promise<void> {
       dbLogger.error("Failed to bootstrap SQLite CLI tables/indexes:", err);
       throw err;
     }
-  })();
+  });
 
   return cliTablesPromise;
 }

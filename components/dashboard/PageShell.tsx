@@ -17,7 +17,7 @@ export const PageShell = ({
   return (
     <div
       className={cn(
-        "mx-auto w-full max-w-[1760px] space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-12 2xl:px-16 2xl:py-10",
+        "mx-auto w-full max-w-[1760px] space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-10 2xl:px-14 2xl:py-10",
         className,
       )}
       {...props}

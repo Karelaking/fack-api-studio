@@ -48,7 +48,7 @@ export async function runMigrations(): Promise<void> {
               1784660622086,
             ],
           });
-          dbLogger.info(
+          dbLogger.debug(
             "Synchronized __drizzle_migrations: registered is_caching_enabled migration as applied.",
           );
         }
@@ -68,7 +68,7 @@ export async function runMigrations(): Promise<void> {
             sql: `INSERT INTO __drizzle_migrations ("hash", "created_at") VALUES (?, ?)`,
             args: ["0017_late_phil_sheldon", 1794221098660],
           });
-          dbLogger.info(
+          dbLogger.debug(
             "Synchronized __drizzle_migrations: registered endpoints color/icon migration as applied.",
           );
         }
@@ -88,7 +88,7 @@ export async function runMigrations(): Promise<void> {
 
     try {
       await migrate(db, { migrationsFolder });
-      dbLogger.success("Database migrations checked and applied successfully.");
+      dbLogger.debug("Database migrations checked and applied successfully.");
     } catch (migrationError: unknown) {
       const message = String(migrationError);
       if (

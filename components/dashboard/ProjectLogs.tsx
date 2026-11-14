@@ -122,11 +122,26 @@ export const ProjectLogs = ({
 
   const formatTimestamp = (timestamp: number) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString([], {
+    const now = new Date();
+    const isToday =
+      date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear();
+
+    const timeStr = date.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
     });
+
+    if (isToday) {
+      return timeStr;
+    }
+    const dateStr = date.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+    });
+    return `${dateStr} ${timeStr}`;
   };
 
   return (
@@ -299,8 +314,8 @@ export const ProjectLogs = ({
                     }}
                     className="flex cursor-pointer items-center gap-4 px-4 py-3 text-xs font-medium select-none"
                   >
-                    <span className="text-muted-foreground/60 flex w-16 items-center gap-1 font-mono">
-                      <PikaIcon icon={ClockIcon} className="size-3" />
+                    <span className="text-muted-foreground/60 text-micro flex min-w-28 shrink-0 items-center gap-1 font-mono">
+                      <PikaIcon icon={ClockIcon} className="size-3 shrink-0" />
                       {formatTimestamp(log.timestamp)}
                     </span>
                     <span

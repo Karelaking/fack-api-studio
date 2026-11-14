@@ -15,6 +15,9 @@
  */
 
 import { compile } from "json-schema-to-typescript";
+import { LoggerRegistry } from "@/lib/logger-registry";
+
+const codegenLogger = LoggerRegistry.get("codegen");
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -89,7 +92,10 @@ export async function generateTypeScript(
 
     return result;
   } catch (error) {
-    console.error("[fack-api] TypeScript generation failed:", error);
+    codegenLogger.debug(
+      "TypeScript generation failed, returning fallback:",
+      error,
+    );
     // Return a fallback type with an error comment
     return [
       `// TypeScript generation failed: ${String(error)}`,

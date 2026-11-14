@@ -39,6 +39,7 @@ if (pgUrl) {
       );
       CREATE INDEX IF NOT EXISTS idx_request_logs_project_timestamp ON request_logs(project_id, timestamp DESC);
       CREATE INDEX IF NOT EXISTS idx_request_logs_project_error ON request_logs(project_id, is_error);
+      CREATE INDEX IF NOT EXISTS idx_request_logs_timestamp ON request_logs(timestamp DESC);
     `,
       )
       .catch((err) => {

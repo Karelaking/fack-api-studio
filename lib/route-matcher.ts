@@ -16,6 +16,7 @@
 
 import { createRouter } from "radix3";
 import type { Route } from "@/db/schema";
+import { LoggerRegistry } from "@/lib/logger-registry";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -112,7 +113,10 @@ function compileMatcher(
     try {
       router.insert(radixPath, { routeId: route.id, wildcardKeys });
     } catch (error) {
-      console.warn(`[fack-api] Invalid route pattern "${route.path}":`, error);
+      LoggerRegistry.get("route-matcher").warn(
+        `Invalid route pattern "${route.path}":`,
+        error,
+      );
     }
   }
 

@@ -8,6 +8,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   DatabaseIcon,
+  FolderIcon,
   GitBranchIcon,
   MinusIcon,
   MultipleCrossCancelIcon,
@@ -43,6 +44,7 @@ import {
 } from "@/components/ui/dialog";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { SidebarProvidersSection } from "./SidebarProvidersSection";
+import { SidebarProjectsSection } from "./SidebarProjectsSection";
 import { SelectedRouteDetails } from "./SelectedRouteDetails";
 
 interface DashboardSidebarProps {
@@ -59,12 +61,12 @@ export const DashboardSidebar = ({
   const pathname = usePathname();
   const { open, setOpen, toggleSidebar, isMobile, setOpenMobile } =
     useSidebar();
-  const [activeTab, setActiveTab] = React.useState<"providers" | "route">(
-    "providers",
-  );
+  const [activeTab, setActiveTab] = React.useState<
+    "providers" | "route" | "projects"
+  >("providers");
 
   const handleRailTabClick = React.useCallback(
-    (tab: "providers" | "route") => {
+    (tab: "providers" | "route" | "projects") => {
       if (isMobile) {
         setActiveTab(tab);
         setOpenMobile(true);
@@ -312,6 +314,37 @@ export const DashboardSidebar = ({
                     </TooltipContent>
                   </Tooltip>
 
+                  {/* Open Projects Tab */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => handleRailTabClick("projects")}
+                        aria-pressed={open && activeTab === "projects"}
+                        className={cn(
+                          "relative flex size-8 items-center justify-center rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                          open && activeTab === "projects"
+                            ? "bg-primary text-primary-foreground shadow-xs"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                        aria-label="Open Projects"
+                      >
+                        <PikaIcon icon={FolderIcon} className="size-4" />
+                        {projects.length > 0 && (
+                          <span
+                            className="bg-primary/20 text-primary border-sidebar text-micro absolute -top-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full border px-0.5 font-mono font-bold"
+                            aria-hidden="true"
+                          >
+                            {projects.length}
+                          </span>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      Open Projects ({projects.length})
+                    </TooltipContent>
+                  </Tooltip>
+
                   {/* Selected Route Inspector Tab */}
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -444,7 +477,9 @@ export const DashboardSidebar = ({
                   <span className="text-foreground text-xs font-semibold">
                     {activeTab === "providers"
                       ? "Mock Providers"
-                      : "Route Inspector"}
+                      : activeTab === "projects"
+                        ? "Open Projects"
+                        : "Route Inspector"}
                   </span>
                   {activeProject && (
                     <span className="bg-muted text-muted-foreground text-mini max-w-28 truncate rounded px-1.5 py-0.5 font-mono">
@@ -479,9 +514,17 @@ export const DashboardSidebar = ({
 
               {/* Drawer Scrollable Content */}
               <div className="scrollbar-subtle flex-1 overflow-y-auto px-1 py-1">
-                {activeTab === "providers" ? (
+                {activeTab === "providers" && (
                   <SidebarProvidersSection selectedRoute={selectedRoute} />
-                ) : (
+                )}
+                {activeTab === "projects" && (
+                  <SidebarProjectsSection
+                    projects={projects}
+                    activeProject={activeProject}
+                    onNewProjectClick={() => setDialogOpen(true)}
+                  />
+                )}
+                {activeTab === "route" && (
                   <SelectedRouteDetails selectedRoute={selectedRoute} />
                 )}
               </div>
@@ -537,7 +580,7 @@ export const DashboardSidebar = ({
             </div>
           ) : (
             /* Expanded Floating Dock Window */
-            <div className="bg-card/95 dark:bg-card/90 border-border/80 flex max-h-[calc(100vh-6rem)] w-92 flex-col overflow-hidden rounded-xl border shadow-2xl backdrop-blur-md">
+            <div className="bg-card/95 dark:bg-card/90 border-border/80 flex max-h-[calc(100vh-6rem)] w-96 max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border shadow-2xl backdrop-blur-md sm:w-104">
               {/* Floating Dock Header */}
               <div className="bg-muted/30 border-border/60 flex h-11 shrink-0 items-center justify-between border-b px-3">
                 {/* Tab Switcher */}
@@ -558,6 +601,23 @@ export const DashboardSidebar = ({
                       className="text-primary size-3.5"
                     />
                     <span>Providers</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("projects")}
+                    aria-pressed={activeTab === "projects"}
+                    className={cn(
+                      "flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold rounded transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                      activeTab === "projects"
+                        ? "bg-background text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <PikaIcon
+                      icon={FolderIcon}
+                      className="text-primary size-3.5"
+                    />
+                    <span>Projects</span>
                   </button>
                   <button
                     type="button"
@@ -606,9 +666,17 @@ export const DashboardSidebar = ({
 
               {/* Floating Dock Body */}
               <div className="scrollbar-subtle flex-1 overflow-y-auto p-2">
-                {activeTab === "providers" ? (
+                {activeTab === "providers" && (
                   <SidebarProvidersSection selectedRoute={selectedRoute} />
-                ) : (
+                )}
+                {activeTab === "projects" && (
+                  <SidebarProjectsSection
+                    projects={projects}
+                    activeProject={activeProject}
+                    onNewProjectClick={() => setDialogOpen(true)}
+                  />
+                )}
+                {activeTab === "route" && (
                   <SelectedRouteDetails selectedRoute={selectedRoute} />
                 )}
               </div>

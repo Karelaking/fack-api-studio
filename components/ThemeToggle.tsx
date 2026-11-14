@@ -69,7 +69,7 @@ export const ThemeToggle = ({
       aria-label={accessibleLabel}
       aria-pressed={isDark}
       className={cn(
-        "relative h-9 w-9 overflow-hidden rounded-md border-border/60 transition-transform duration-150 active:scale-90 motion-reduce:transition-none pointer-coarse:min-h-11 pointer-coarse:min-w-11",
+        "relative h-9 w-9 overflow-hidden rounded-full border-border/60 transition-transform duration-150 active:scale-90 motion-reduce:transition-none pointer-coarse:min-h-11 pointer-coarse:min-w-11",
         className,
       )}
     >

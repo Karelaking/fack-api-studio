@@ -24,8 +24,9 @@ const nextConfig: NextConfig = {
     "/*": ["./drizzle/**/*"],
   },
   outputFileTracingExcludes: {
-    "/*": [
+    "**/*": [
       "./v11/**/*",
+      "./v11",
       "./docs/**/*",
       "./coverage/**/*",
       "./data/**/*",

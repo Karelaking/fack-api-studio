@@ -18,6 +18,7 @@ interface RouteContext {
 }
 
 const mockTrace = LoggerRegistry.getTrace("mock");
+const mockLogger = LoggerRegistry.get("mock");
 
 function createHandler(method: string) {
   return async function (request: NextRequest, context: RouteContext) {
@@ -65,6 +66,9 @@ async function handleMockRequest(
     const resolution = await resolveProjectFromSlug(slug);
     if (!resolution) {
       const fullPath = slug.join("/");
+      mockLogger.warn(
+        `Mock request 404: project namespace matching path "/${fullPath}" not found`,
+      );
       mockTrace.traceSuccess("handleMockRequest (project not found)", "404");
       return buildResponse(
         {
@@ -86,6 +90,9 @@ async function handleMockRequest(
         60,
       );
       if (!authLimit.isAllowed) {
+        mockLogger.warn(
+          `Auth token rate limit exceeded for client IP ${clientIp}`,
+        );
         return buildResponse(
           {
             error: true,
@@ -140,6 +147,9 @@ async function handleMockRequest(
       60,
     );
     if (!requestLimit.isAllowed) {
+      mockLogger.warn(
+        `Mock request rate limit exceeded for client IP ${clientIp} on path "/${requestPath}"`,
+      );
       return buildResponse(
         {
           error: true,
@@ -170,6 +180,10 @@ async function handleMockRequest(
     );
     return response;
   } catch (error) {
+    mockLogger.error(
+      `Unhandled error in handleMockRequest for path "${request.nextUrl.pathname}":`,
+      error,
+    );
     mockTrace.traceError("handleMockRequest", error);
     return buildResponse(
       { error: true, message: "Internal mock server error" },

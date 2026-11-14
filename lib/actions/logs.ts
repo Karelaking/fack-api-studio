@@ -92,7 +92,8 @@ export async function clearRequestLogs(projectId: string): Promise<void> {
   if (sqlClient) {
     try {
       await sqlClient`DELETE FROM request_logs WHERE project_id = ${projectId}`;
-      revalidatePath(`/projects/[slug]/logs`, "layout");
+      revalidatePath("/projects", "layout");
+      revalidatePath("/activity", "page");
       logsTrace.traceSuccess("clearRequestLogs (PostgreSQL)", "void");
       return;
     } catch (err) {
@@ -112,5 +113,114 @@ export async function clearRequestLogs(projectId: string): Promise<void> {
   } catch (err) {
     logsTrace.traceError("clearRequestLogs (SQLite)", err);
   }
-  revalidatePath(`/projects/[slug]/logs`, "layout");
+  revalidatePath("/projects", "layout");
+  revalidatePath("/activity", "page");
 }
+
+export interface WorkspaceActivityLog extends RequestLog {
+  projectName?: string;
+  projectSlug?: string;
+}
+
+/**
+ * Retrieves the latest request logs across all projects accessible to the authenticated user.
+ */
+export const getWorkspaceActivityLogs = cache(
+  async function getWorkspaceActivityLogs(
+    limit = 50,
+  ): Promise<WorkspaceActivityLog[]> {
+    logsTrace.traceCall("getWorkspaceActivityLogs", limit);
+
+    // Lazy load getProjects to keep module boundary clean
+    const { getProjects } = await import("@/lib/actions/projects");
+    const userProjects = await getProjects();
+    if (!userProjects || userProjects.length === 0) {
+      return [];
+    }
+
+    const projectMap = new Map<string, { name: string; slug: string }>();
+    const projectIds: string[] = [];
+    for (const p of userProjects) {
+      projectMap.set(p.id, { name: p.name, slug: p.slug });
+      projectIds.push(p.id);
+    }
+
+    if (sqlClient) {
+      try {
+        const rows = await sqlClient`
+          SELECT id, project_id as "projectId", timestamp, method, path, query_params as "queryParams", headers, status_code as "statusCode", latency, is_error as "isError", LEFT(response_payload, ${MAX_LOG_PAYLOAD_CHARS}) as "responsePayload"
+          FROM request_logs
+          WHERE project_id IN ${sqlClient(projectIds)}
+          ORDER BY timestamp DESC
+          LIMIT ${limit}
+        `;
+        const result: WorkspaceActivityLog[] = rows.map((r) => {
+          const proj = projectMap.get(String(r.projectId));
+          return {
+            id: String(r.id),
+            projectId: String(r.projectId),
+            projectName: proj?.name,
+            projectSlug: proj?.slug,
+            timestamp: Number(r.timestamp),
+            method: String(r.method),
+            path: String(r.path),
+            queryParams: String(r.queryParams || "{}"),
+            headers: String(r.headers || "{}"),
+            statusCode: Number(r.statusCode),
+            latency: Number(r.latency),
+            isError: Boolean(r.isError),
+            responsePayload: String(r.responsePayload || ""),
+          };
+        });
+        logsTrace.traceSuccess(
+          "getWorkspaceActivityLogs (PostgreSQL)",
+          `${result.length} logs`,
+        );
+        return result;
+      } catch (err) {
+        logsTrace.traceError(
+          "getWorkspaceActivityLogs (PostgreSQL, falling back to SQLite)",
+          err,
+        );
+      }
+    }
+
+    // Fallback to SQLite raw execution
+    try {
+      const placeholders = projectIds.map(() => "?").join(",");
+      const res = await db.$client.execute({
+        sql: `SELECT id, project_id, timestamp, method, path, query_params, headers, status_code, latency, is_error, substr(response_payload, 1, ?) AS response_payload 
+              FROM request_logs WHERE project_id IN (${placeholders}) ORDER BY timestamp DESC LIMIT ?`,
+        args: [MAX_LOG_PAYLOAD_CHARS, ...projectIds, limit],
+      });
+
+      const result: WorkspaceActivityLog[] = res.rows.map((row) => {
+        const projId = toStr(row.project_id);
+        const proj = projectMap.get(projId);
+        return {
+          id: toStr(row.id),
+          projectId: projId,
+          projectName: proj?.name,
+          projectSlug: proj?.slug,
+          timestamp: Number(row.timestamp),
+          method: toStr(row.method),
+          path: toStr(row.path),
+          queryParams: toStr(row.query_params) || "{}",
+          headers: toStr(row.headers) || "{}",
+          statusCode: Number(row.status_code),
+          latency: Number(row.latency),
+          isError: Boolean(Number(row.is_error)),
+          responsePayload: toStr(row.response_payload),
+        };
+      });
+      logsTrace.traceSuccess(
+        "getWorkspaceActivityLogs (SQLite)",
+        `${result.length} logs`,
+      );
+      return result;
+    } catch (err) {
+      logsTrace.traceError("getWorkspaceActivityLogs (SQLite)", err);
+      return [];
+    }
+  },
+);

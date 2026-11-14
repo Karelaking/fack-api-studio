@@ -38,7 +38,7 @@ export default async function SettingsPage(): Promise<React.JSX.Element> {
   const isLogsDbConfigured = Boolean(process.env.LOGS_POSTGRES_URL);
 
   return (
-    <PageShell className="max-w-6xl">
+    <PageShell className="max-w-7xl">
       <UnifiedSettingsView
         initialStatus={status}
         initialConfig={config}

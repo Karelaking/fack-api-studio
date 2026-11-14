@@ -40,6 +40,7 @@ import type {
   OpenProjectSummary,
   RecentFileEntry,
 } from "@/lib/file-manager/types";
+import { cn } from "@/lib/utils";
 
 interface FileManagerSidebarProps {
   workspaceName: string;
@@ -286,17 +287,29 @@ export function FileManagerSidebar({
       <SidebarContent>
         {/* Open Projects Section */}
         <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center justify-between">
-            <span>Open Projects ({openProjects.length})</span>
+          <SidebarGroupLabel className="text-muted-foreground/80 text-micro flex items-center justify-between px-3 py-1 font-bold tracking-wider uppercase">
+            <span>Open Projects</span>
+            <span className="bg-muted text-muted-foreground py-0.2 text-micro rounded-full px-1.5 font-mono font-medium">
+              {openProjects.length}
+            </span>
           </SidebarGroupLabel>
           <SidebarGroupContent className="mt-1">
             {isLoading ? (
-              <div className="text-muted-foreground px-3 py-2 text-xs italic">
-                Loading files...
+              <div className="text-muted-foreground flex items-center gap-2 px-3 py-3 text-xs">
+                <PikaIcon
+                  icon={RefreshIcon}
+                  className="size-3.5 animate-spin"
+                />
+                <span>Loading open projects...</span>
               </div>
             ) : openProjects.length === 0 ? (
-              <div className="text-muted-foreground px-3 py-2 text-xs italic">
-                No active projects. Open or create a project above.
+              <div className="border-border/40 bg-muted/10 mx-2 my-1 rounded-md border border-dashed px-3 py-3 text-center">
+                <p className="text-muted-foreground text-xs font-medium">
+                  No active projects
+                </p>
+                <p className="text-muted-foreground/70 text-mini mt-0.5">
+                  Open a .fack file or create one above
+                </p>
               </div>
             ) : (
               <SidebarMenu>
@@ -308,33 +321,34 @@ export function FileManagerSidebar({
 
                   return (
                     <SidebarMenuItem key={project.projectId}>
-                      <div className="group/item relative flex items-center">
+                      <div className="group/item hover:bg-muted/40 relative flex items-center rounded-md transition-colors">
                         <SidebarMenuButton
                           isActive={isActive}
                           asChild
-                          className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary flex-1 pr-14 transition-colors"
+                          className="data-[active=true]:bg-primary/10 data-[active=true]:text-primary flex-1 pr-16 transition-colors"
                         >
                           <Link
                             href={getProjectUrl(project.slug, "canvas")}
                             aria-label={project.name}
                           >
-                            <div className="flex min-w-0 flex-1 items-center gap-2">
+                            <div className="flex min-w-0 flex-1 items-center gap-2.5">
                               {/* Saved / Unsaved Indicator */}
                               <span
                                 title={
                                   project.isDirty ? "Unsaved changes" : "Saved"
                                 }
-                                className={`size-2 shrink-0 rounded-full ${
+                                className={cn(
+                                  "size-2 shrink-0 rounded-full ring-2 ring-background transition-all",
                                   project.isDirty
-                                    ? "bg-warning animate-pulse motion-reduce:animate-none"
-                                    : "bg-success"
-                                }`}
+                                    ? "bg-warning ring-warning/20"
+                                    : "bg-success ring-success/20",
+                                )}
                               />
                               <div className="flex min-w-0 flex-col">
                                 <span className="truncate text-xs font-semibold">
                                   {project.name}
                                 </span>
-                                <span className="text-muted-foreground text-mini truncate">
+                                <span className="text-muted-foreground/80 text-micro truncate font-mono">
                                   {project.routeCount} routes ·{" "}
                                   {project.endpointCount} endpoints
                                 </span>
@@ -343,8 +357,8 @@ export function FileManagerSidebar({
                           </Link>
                         </SidebarMenuButton>
 
-                        {/* Save Action Button */}
-                        <div className="absolute right-1.5 flex items-center gap-0.5 group-data-[collapsible=icon]:hidden">
+                        {/* Quick Action Buttons (Revealed on hover/focus) */}
+                        <div className="absolute right-1.5 flex items-center gap-0.5 opacity-0 transition-opacity group-hover/item:opacity-100 group-data-[collapsible=icon]:hidden focus-within:opacity-100">
                           <button
                             type="button"
                             title="Save to file"
@@ -353,18 +367,15 @@ export function FileManagerSidebar({
                             onClick={(e) =>
                               void handleSave(project.projectId, e)
                             }
-                            className="text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded p-1 transition-colors"
+                            className="text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-ring hover:border-border/50 flex size-6 items-center justify-center rounded border border-transparent transition-colors focus-visible:ring-1"
                           >
                             {isSavingThis ? (
                               <PikaIcon
                                 icon={RefreshIcon}
-                                className="size-3.5 animate-spin"
+                                className="size-3 animate-spin"
                               />
                             ) : (
-                              <PikaIcon
-                                icon={FloppyIcon}
-                                className="size-3.5"
-                              />
+                              <PikaIcon icon={FloppyIcon} className="size-3" />
                             )}
                           </button>
                           <a
@@ -372,11 +383,12 @@ export function FileManagerSidebar({
                             download={`${project.slug}.fack`}
                             onClick={(e) => e.stopPropagation()}
                             title="Download .fack file"
-                            className="text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded p-1 transition-colors"
+                            aria-label={`Download ${project.name} bundle`}
+                            className="text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-ring hover:border-border/50 flex size-6 items-center justify-center rounded border border-transparent transition-colors focus-visible:ring-1"
                           >
                             <PikaIcon
                               icon={DownloadBarDownIcon}
-                              className="size-3.5"
+                              className="size-3"
                             />
                           </a>
                         </div>
