@@ -69,6 +69,8 @@ export interface UseRouteEditorDraftReturn {
   setHeaders: React.Dispatch<React.SetStateAction<HeaderRow[]>>;
   rules: ConditionalRule[];
   setRules: React.Dispatch<React.SetStateAction<ConditionalRule[]>>;
+  responseTemplate: string;
+  setResponseTemplate: (template: string) => void;
 
   // Schema & Parameters
   fields: SchemaField[];
@@ -186,6 +188,11 @@ export const useRouteEditorDraft = ({
       return [];
     }
   });
+
+  // Dynamic Response Template
+  const [responseTemplate, setResponseTemplate] = React.useState<string>(
+    route.responseTemplate || "",
+  );
 
   // Keep store fields synchronized when route updates externally
   React.useEffect(() => {
@@ -429,6 +436,9 @@ export const useRouteEditorDraft = ({
     if (JSON.stringify(paramConfigs) !== JSON.stringify(savedParamConfigs)) {
       return true;
     }
+    if (responseTemplate !== (route.responseTemplate || "")) {
+      return true;
+    }
     return false;
   }, [
     method,
@@ -439,6 +449,7 @@ export const useRouteEditorDraft = ({
     latencyMax,
     errorRate,
     paramConfigs,
+    responseTemplate,
     route,
     savedParamConfigs,
   ]);
@@ -879,6 +890,8 @@ export const useRouteEditorDraft = ({
         responseSchema: JSON.stringify(
           synthesizeSchema(currentFields, currentParamConfigs),
         ),
+        responseTemplate:
+          responseTemplate.trim() === "" ? null : responseTemplate,
         customHeaders: JSON.stringify(headerObj),
         conditionalRules: JSON.stringify(rules),
       });
@@ -908,6 +921,7 @@ export const useRouteEditorDraft = ({
     latencyMax,
     errorRate,
     rules,
+    responseTemplate,
     onRouteUpdated,
   ]);
 
@@ -999,6 +1013,8 @@ export const useRouteEditorDraft = ({
     setHeaders,
     rules,
     setRules,
+    responseTemplate,
+    setResponseTemplate,
     fields,
     effectiveBasePath,
     effectivePath,

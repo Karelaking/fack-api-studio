@@ -8,6 +8,7 @@ import { RouteInspectorHeader } from "./RouteInspectorHeader";
 import { InspectorTabsList } from "./InspectorTabsList";
 import { InspectorRouteTab } from "./InspectorRouteTab";
 import { InspectorSchemaTab } from "./InspectorSchemaTab";
+import { InspectorTemplateTab } from "./InspectorTemplateTab";
 import { InspectorBehaviorTab } from "./InspectorBehaviorTab";
 import { InspectorTryTab } from "./InspectorTryTab";
 import { RouteInspectorFooter } from "./RouteInspectorFooter";
@@ -52,6 +53,7 @@ export const RouteEditor = (props: RouteEditorProps): React.JSX.Element => {
             draft.latencyMin > 0 || draft.latencyMax > 0 || draft.errorRate > 0
           }
           rulesCount={draft.rules.length}
+          hasTemplate={draft.responseTemplate.trim().length > 0}
         />
 
         {/* Tab 1: Route */}
@@ -83,7 +85,18 @@ export const RouteEditor = (props: RouteEditorProps): React.JSX.Element => {
           onClearAllFields={draft.handleClearAllFields}
         />
 
-        {/* Tab 3: Behavior */}
+        {/* Tab 3: Template */}
+        <InspectorTemplateTab
+          template={draft.responseTemplate}
+          setTemplate={draft.setResponseTemplate}
+          method={draft.method}
+          path={draft.effectivePath}
+          statusCode={draft.statusCode}
+          detectedParams={draft.detectedParams}
+          onSelectTab={draft.handleTabChange}
+        />
+
+        {/* Tab 4: Behavior */}
         <InspectorBehaviorTab
           latencyMin={draft.latencyMin}
           latencyMax={draft.latencyMax}

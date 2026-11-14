@@ -84,6 +84,7 @@ export const normalizeTab = (t: string): InspectorTab => {
   if (t === "config" || t === "headers") return "route";
   if (t === "rules" || t === "chaos") return "behavior";
   if (t === "schema") return "schema";
+  if (t === "template") return "template";
   if (t === "try") return "try";
   return (t as InspectorTab) || "route";
 };

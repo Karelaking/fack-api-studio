@@ -15,19 +15,21 @@ export interface InspectorTabsListProps {
   fieldsCount: number;
   hasChaos: boolean;
   rulesCount: number;
+  hasTemplate?: boolean;
 }
 
 /**
- * Categorized Tab navigation triggers for Route Editor (Route, Schema, Behavior, Try).
+ * Categorized Tab navigation triggers for Route Editor (Route, Schema, Template, Behavior, Try).
  */
 export const InspectorTabsList = ({
   headersCount,
   fieldsCount,
   hasChaos,
   rulesCount,
+  hasTemplate,
 }: InspectorTabsListProps): React.JSX.Element => {
   return (
-    <TabsList className="bg-muted/30 border-border/60 grid shrink-0 grid-cols-4 border-b p-1">
+    <TabsList className="bg-muted/30 border-border/60 grid shrink-0 grid-cols-5 border-b p-1">
       <TabsTrigger
         value="route"
         size="compact"
@@ -61,6 +63,24 @@ export const InspectorTabsList = ({
         <span className="bg-muted-foreground/15 text-muted-foreground py-0.2 rounded px-1.5 font-mono text-xs">
           {fieldsCount}
         </span>
+      </TabsTrigger>
+      <TabsTrigger
+        value="template"
+        size="compact"
+        className="gap-1 px-1.5 py-1 text-xs font-medium transition-all"
+        title="Dynamic Response Template (⌥3)"
+      >
+        <PikaIcon
+          icon={File02Icon}
+          className="text-primary size-3.5 shrink-0"
+          aria-hidden="true"
+        />
+        <span className="truncate">Template</span>
+        {hasTemplate && (
+          <span className="bg-primary/15 text-primary py-0.2 rounded px-1.5 font-mono text-xs font-bold">
+            ON
+          </span>
+        )}
       </TabsTrigger>
       <TabsTrigger
         value="behavior"

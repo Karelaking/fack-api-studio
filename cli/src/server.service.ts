@@ -14,7 +14,10 @@ import type {
 import { RouteMatcher } from "./matcher.service";
 import { MockStore } from "./mock-store.service";
 import { generatePayload, processQueryParameters } from "../../lib/mock-engine";
-import { renderTemplate } from "../../lib/template-engine";
+import {
+  renderTemplate,
+  buildTemplateContext,
+} from "../../lib/template-engine";
 import { logger as rootLogger, RequestLogger, type Logger } from "./logger";
 
 interface ServerOptions {
@@ -229,6 +232,8 @@ export class MockServer {
             params,
             body,
             parsedUrl.searchParams,
+            pathname,
+            req.headers as Record<string, string>,
           );
 
           for (const [k, v] of Object.entries(headers)) {
@@ -371,6 +376,8 @@ export class MockServer {
     params: Record<string, string>,
     body: Record<string, unknown>,
     searchParams: URLSearchParams,
+    pathname = "/",
+    requestHeaders: Record<string, string> = {},
   ): Promise<{
     status: number;
     payload: unknown;
@@ -379,6 +386,32 @@ export class MockServer {
     const collection = route.collectionName;
     const method = route.method.toUpperCase();
     const customHeaders = { ...route.customHeaders };
+
+    const evaluateTemplate = (
+      stateCurrent?: Record<string, unknown>,
+    ): unknown => {
+      const templateContext = buildTemplateContext({
+        request: {
+          method,
+          path: pathname,
+          body,
+          query: Object.fromEntries(searchParams.entries()),
+          params,
+          headers: requestHeaders,
+        },
+        state: {
+          current: stateCurrent,
+          lookup: (col: string, id: string) => this.store.get(col, id),
+          count: (col: string) => this.store.list(col).length,
+        },
+        scenario: this.options.bundle.scenarios.find(
+          (s) => s.id === this.options.bundle.activeScenarioId,
+        )?.name,
+      });
+      return renderTemplate(route.responseTemplate as string, {
+        context: templateContext,
+      });
+    };
 
     // 1. Stateful Mock Store CRUD
     if (collection) {
@@ -410,11 +443,31 @@ export class MockServer {
 
           const item = this.store.get(collection, idParam);
           if (item) {
+            if (
+              route.responseTemplate &&
+              route.responseTemplate.trim() !== ""
+            ) {
+              return {
+                status: route.statusCode || 200,
+                payload: evaluateTemplate(item),
+                headers: customHeaders,
+              };
+            }
             return { status: 200, payload: item, headers: customHeaders };
           }
 
           // If the collection is initialized and item is not found, return 404
           if (this.store.list(collection).length > 0) {
+            if (
+              route.responseTemplate &&
+              route.responseTemplate.trim() !== ""
+            ) {
+              return {
+                status: route.statusCode || 404,
+                payload: evaluateTemplate(),
+                headers: customHeaders,
+              };
+            }
             return {
               status: 404,
               payload: {
@@ -445,26 +498,51 @@ export class MockServer {
           }
 
           if (list.length > 0) {
+            if (
+              route.responseTemplate &&
+              route.responseTemplate.trim() !== ""
+            ) {
+              return {
+                status: route.statusCode || 200,
+                payload: evaluateTemplate(),
+                headers: customHeaders,
+              };
+            }
             const processed = processQueryParameters(list, searchParams);
             return { status: 200, payload: processed, headers: customHeaders };
           }
         }
       } else if (method === "POST") {
         const created = this.store.create(collection, body);
+        if (route.responseTemplate && route.responseTemplate.trim() !== "") {
+          return {
+            status: route.statusCode || 201,
+            payload: evaluateTemplate(created),
+            headers: customHeaders,
+          };
+        }
         return { status: 201, payload: created, headers: customHeaders };
       } else if ((method === "PUT" || method === "PATCH") && idParam) {
-        const updated = this.store.update(collection, idParam, body);
-        if (updated) {
-          return { status: 200, payload: updated, headers: customHeaders };
+        const updated =
+          this.store.update(collection, idParam, body) ||
+          this.store.create(collection, { ...body, id: idParam });
+        if (route.responseTemplate && route.responseTemplate.trim() !== "") {
+          return {
+            status: route.statusCode || 200,
+            payload: evaluateTemplate(updated),
+            headers: customHeaders,
+          };
         }
-        // If not found in store, create/upsert it
-        const upserted = this.store.create(collection, {
-          ...body,
-          id: idParam,
-        });
-        return { status: 200, payload: upserted, headers: customHeaders };
+        return { status: 200, payload: updated, headers: customHeaders };
       } else if (method === "DELETE" && idParam) {
         const existed = this.store.delete(collection, idParam);
+        if (route.responseTemplate && route.responseTemplate.trim() !== "") {
+          return {
+            status: route.statusCode || (existed ? 200 : 404),
+            payload: evaluateTemplate({ id: idParam, deleted: existed }),
+            headers: customHeaders,
+          };
+        }
         if (!existed) {
           return {
             status: 404,
@@ -480,18 +558,11 @@ export class MockServer {
       }
     }
 
-    // 2. TypeScript-based fake data generation
+    // 2. TypeScript-based fake data generation or standalone response template
     let payload: unknown;
 
     if (route.responseTemplate && route.responseTemplate.trim() !== "") {
-      const templateContext = {
-        request: {
-          body,
-          query: Object.fromEntries(searchParams.entries()),
-          params,
-        },
-      };
-      payload = renderTemplate(route.responseTemplate, templateContext);
+      payload = evaluateTemplate();
     } else {
       payload = await generatePayload(route.responseSchema);
 

@@ -16,6 +16,8 @@ import {
   prunePageCache,
   getCachedScenario,
   setCachedScenario,
+  getCachedMockItem,
+  getCachedMockCollection,
   type CachedRoute,
 } from "@/lib/cache";
 import {
@@ -34,7 +36,7 @@ import {
   deleteMockItem,
 } from "@/lib/stateful-mock";
 import { matchProjectMockRoute } from "@/lib/services/mock-route.service";
-import { renderTemplate } from "@/lib/template-engine";
+import { renderTemplate, buildTemplateContext } from "@/lib/template-engine";
 import { LoggerRegistry } from "@/lib/logger-registry";
 import { MockResponseFormatterFactory } from "@/lib/mock-formatter";
 import {
@@ -488,24 +490,74 @@ export async function processMockRequest({
       (route.latencyMax ?? 0) * latencyMultiplier,
     );
 
-    // ── 5.5 Handlebars Templating Bypass ────────────────────────────────
+    // ── 5.5 Dynamic Response Templating ────────────────────────────────
     if (route.responseTemplate && route.responseTemplate.trim() !== "") {
       const queryRecord: Record<string, string> = {};
       for (const [k, v] of request.nextUrl.searchParams.entries()) {
         queryRecord[k] = v;
       }
 
+      const requestHeaders: Record<string, string> = {};
+      request.headers.forEach((v, k) => {
+        requestHeaders[k] = v;
+      });
+
       let requestBody: Record<string, unknown> = {};
       try {
         requestBody = await request.json();
       } catch {}
 
-      const rawPayload = renderTemplate(route.responseTemplate, {
+      const endpoint = (route as CachedRoute).endpoint;
+      const collection = endpoint ? endpoint.basePath : undefined;
+      const rawItemId = matchedParams.id;
+      const itemId = Array.isArray(rawItemId) ? rawItemId[0] : rawItemId;
+
+      let savedItem: Record<string, unknown> | undefined = undefined;
+      if (collection) {
+        if (method === "POST" || method === "PUT" || method === "PATCH") {
+          const mergedPayload = { ...requestBody };
+          savedItem = (await saveMockItem(
+            project.id,
+            collection,
+            mergedPayload,
+            itemId,
+          )) as Record<string, unknown>;
+        } else if (method === "DELETE" && itemId) {
+          await deleteMockItem(project.id, collection, itemId);
+          savedItem = { id: itemId, deleted: true };
+        } else if (method === "GET" && itemId) {
+          const existing = await getMockItem(project.id, collection, itemId);
+          if (existing) {
+            savedItem = existing as Record<string, unknown>;
+          }
+        }
+      }
+
+      const templateContext = buildTemplateContext({
         request: {
+          method,
+          path: requestPath,
           body: requestBody,
           query: queryRecord,
           params: matchedParams,
+          headers: requestHeaders,
         },
+        state: {
+          current: savedItem,
+          lookup: (col: string, id: string) => {
+            const item = getCachedMockItem(project.id, col, id);
+            return item as Record<string, unknown> | undefined;
+          },
+          count: (col: string) => {
+            const list = getCachedMockCollection(project.id, col);
+            return list ? list.length : 0;
+          },
+        },
+        scenario: activeScenario?.name,
+      });
+
+      const rawPayload = renderTemplate(route.responseTemplate, {
+        context: templateContext,
       });
 
       const customHeaders = parseRouteHeaders(route);

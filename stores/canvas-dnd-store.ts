@@ -6,6 +6,7 @@ import { immer } from "zustand/middleware/immer";
 export type InspectorTab =
   | "route"
   | "schema"
+  | "template"
   | "behavior"
   | "try"
   | "config"
@@ -17,6 +18,7 @@ const normalizeInspectorTab = (tab: InspectorTab): InspectorTab => {
   if (tab === "config" || tab === "headers") return "route";
   if (tab === "rules" || tab === "chaos") return "behavior";
   if (tab === "schema") return "schema";
+  if (tab === "template") return "template";
   if (tab === "try") return "try";
   return tab;
 };
