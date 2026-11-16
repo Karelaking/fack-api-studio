@@ -66,7 +66,7 @@
     "next": "16.4.5",
     "next-themes": "^0.4.6",
     "nuqs": "^2.10.2",
-    "path-to-regexp": "^8.4.2",
+    "path-to-regexp": "^9.0.0",
     "picocolors": "^1.1.1",
     "postgres": "^3.4.9",
     "radix-ui": "^1.8.1",
