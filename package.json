@@ -37,7 +37,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@faker-js/faker": "^10.5.0",
-    "@hookform/resolvers": "^5.9.1",
+    "@hookform/resolvers": "^7.0.6",
     "@libsql/client": "^0.18.0",
     "@openrouter/ai-sdk-provider": "^3.1.0",
     "@pikaicons/core-free": "^0.1.0",
