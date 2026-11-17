@@ -65,7 +65,9 @@ export default async function ProjectLayout({
   // Resource-based auth check (replaces path matching in the proxy): redirect
   // unauthenticated visitors to sign-in in cloud mode; bypass in local mode.
   if (storageConnection.authRequired && process.env.CLERK_SECRET_KEY) {
-    await auth.protect();
+    // Clerk's default notFound() fallback turns RSC/prefetch requests into a
+    // fake 404; always send unauthenticated visitors to the in-app sign-in.
+    await auth.protect({ unauthenticatedUrl: "/sign-in" });
   }
 
   const { slug: slugParam } = await params;

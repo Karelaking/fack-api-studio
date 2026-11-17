@@ -37,7 +37,11 @@ export default async function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
   if (storageConnection.authRequired && process.env.CLERK_SECRET_KEY) {
-    await auth.protect();
+    // Without an explicit target, Clerk falls back to notFound() for requests
+    // it doesn't classify as page navigations (RSC prefetches, route tree
+    // refreshes, plain fetches), which surfaces as a misleading 404 for a
+    // route that does exist. Always redirect to the in-app sign-in screen.
+    await auth.protect({ unauthenticatedUrl: "/sign-in" });
   }
 
   // Same fallback the Settings → Workspace Name form seeds, so the sidebar and

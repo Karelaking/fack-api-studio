@@ -25,7 +25,9 @@ export default async function CliAuthorizePage({
   searchParams: Promise<{ code?: string | string[] }>;
 }): Promise<React.JSX.Element> {
   if (storageConnection.authRequired && process.env.CLERK_SECRET_KEY) {
-    await auth.protect();
+    // Avoid Clerk's notFound() fallback for RSC/prefetch requests — a signed
+    // out CLI authorization attempt should land on sign-in, not a fake 404.
+    await auth.protect({ unauthenticatedUrl: "/sign-in" });
   }
 
   const params = await searchParams;
