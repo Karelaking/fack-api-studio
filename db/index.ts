@@ -27,6 +27,13 @@ const DATABASE_URL = connection.url;
 const DATABASE_AUTH_TOKEN = connection.authToken;
 
 /**
+ * Embedded SQLite accepts PRAGMA statements; remote libSQL/Turso over HTTP
+ * rejects them with `SQL not allowed statement`. Runtime PRAGMAs must only be
+ * issued for local file databases.
+ */
+const isLocalFileDatabase = DATABASE_URL.startsWith("file:");
+
+/**
  * Applies SQLite performance and concurrency PRAGMAs for local file-based databases.
  * - WAL mode: Enables concurrent readers and writers without blocking.
  * - synchronous = NORMAL: Balances maximum throughput with ACID crash safety in WAL.
@@ -54,10 +61,8 @@ async function configureSqlitePragmas(
 }
 
 function configureDatabaseClient(): ReturnType<typeof createClient> {
-  const isLocalFile = DATABASE_URL.startsWith("file:");
-
   // Ensure the local data directory exists if using a local file URL
-  if (isLocalFile) {
+  if (isLocalFileDatabase) {
     const dbPath = path.resolve(DATABASE_URL.replace("file:", ""));
     const dbDir = path.dirname(dbPath);
 
@@ -72,7 +77,7 @@ function configureDatabaseClient(): ReturnType<typeof createClient> {
   });
 
   // Apply SQLite runtime optimizations for local file databases
-  if (isLocalFile) {
+  if (isLocalFileDatabase) {
     void configureSqlitePragmas(client);
   }
 
@@ -135,7 +140,9 @@ export async function ensureRequestLogsTable(): Promise<void> {
 
   requestLogsPromise = executeWithBusyRetry(async (): Promise<void> => {
     try {
-      await rawDbClient.execute("PRAGMA busy_timeout = 5000;");
+      if (isLocalFileDatabase) {
+        await rawDbClient.execute("PRAGMA busy_timeout = 5000;");
+      }
       await rawDbClient.execute(`
                 CREATE TABLE IF NOT EXISTS request_logs (
                     id TEXT PRIMARY KEY,
@@ -189,7 +196,9 @@ export async function ensureCliTables(): Promise<void> {
 
   cliTablesPromise = executeWithBusyRetry(async (): Promise<void> => {
     try {
-      await rawDbClient.execute("PRAGMA busy_timeout = 5000;");
+      if (isLocalFileDatabase) {
+        await rawDbClient.execute("PRAGMA busy_timeout = 5000;");
+      }
       await rawDbClient.execute(`
                 CREATE TABLE IF NOT EXISTS cli_auth_requests (
                     id TEXT PRIMARY KEY NOT NULL,
