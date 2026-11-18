@@ -33,11 +33,15 @@ export const InspectorTryUrlBar = ({
             type="button"
             variant="ghost"
             size="xs"
-            onClick={() => {
-              void navigator.clipboard.writeText(
-                window.location.origin + constructedTryUrl,
-              );
-              toast.success("URL copied to clipboard");
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(
+                  window.location.origin + constructedTryUrl,
+                );
+                toast.success("URL copied to clipboard");
+              } catch {
+                toast.error("Failed to copy to clipboard");
+              }
             }}
             className="h-6 shrink-0 gap-1 px-1.5 text-xs"
             title="Copy full mock URL"

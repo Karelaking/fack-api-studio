@@ -55,29 +55,37 @@ export function SidebarProjectsSection({
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
 
   const handleCopyCliCommand = React.useCallback(
-    (slug: string, id: string, e: React.MouseEvent) => {
+    async (slug: string, id: string, e: React.MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
       const cmd = `fack dev --project ${slug}`;
-      void navigator.clipboard.writeText(cmd);
-      setCopiedId(`cli-${id}`);
-      toast.success("CLI command copied to clipboard", { description: cmd });
-      setTimeout(() => setCopiedId(null), 1500);
+      try {
+        await navigator.clipboard.writeText(cmd);
+        setCopiedId(`cli-${id}`);
+        toast.success("CLI command copied to clipboard", { description: cmd });
+        setTimeout(() => setCopiedId(null), 1500);
+      } catch {
+        toast.error("Failed to copy to clipboard");
+      }
     },
     [],
   );
 
   const handleCopyMockUrl = React.useCallback(
-    (slug: string, id: string, e: React.MouseEvent) => {
+    async (slug: string, id: string, e: React.MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
       const origin =
         typeof window !== "undefined" ? window.location.origin : "";
       const url = `${origin}/api/mock/${slug}`;
-      void navigator.clipboard.writeText(url);
-      setCopiedId(`url-${id}`);
-      toast.success("Mock URL copied to clipboard", { description: url });
-      setTimeout(() => setCopiedId(null), 1500);
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopiedId(`url-${id}`);
+        toast.success("Mock URL copied to clipboard", { description: url });
+        setTimeout(() => setCopiedId(null), 1500);
+      } catch {
+        toast.error("Failed to copy to clipboard");
+      }
     },
     [],
   );
@@ -247,13 +255,13 @@ export function SidebarProjectsSection({
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        onClick={(e) =>
-                          handleCopyMockUrl(
+                        onClick={(e) => {
+                          void handleCopyMockUrl(
                             activeProjWithStats.slug,
                             activeProjWithStats.id,
                             e,
-                          )
-                        }
+                          );
+                        }}
                         className="text-muted-foreground hover:bg-background hover:text-foreground border-border/40 flex h-6.5 items-center gap-1 rounded border px-2 text-xs font-medium transition-colors"
                         title="Copy Mock URL"
                         aria-label="Copy Mock URL"
@@ -311,13 +319,13 @@ export function SidebarProjectsSection({
                     </span>
                     <button
                       type="button"
-                      onClick={(e) =>
-                        handleCopyCliCommand(
+                      onClick={(e) => {
+                        void handleCopyCliCommand(
                           activeProjWithStats.slug,
                           activeProjWithStats.id,
                           e,
-                        )
-                      }
+                        );
+                      }}
                       className="text-muted-foreground hover:bg-background hover:text-foreground border-border/40 flex h-6.5 items-center gap-1 rounded border px-2 text-xs font-medium transition-colors"
                       title="Copy CLI command"
                       aria-label="Copy CLI command"

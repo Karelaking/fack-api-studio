@@ -351,6 +351,16 @@
   );
 }
 
+/* Modal dialog scroll chaining containment per modern-web-guidance */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
 /* React Flow theme integration */
 .react-flow {
   --xy-background-color: transparent;

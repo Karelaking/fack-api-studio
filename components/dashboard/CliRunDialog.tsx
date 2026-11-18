@@ -55,29 +55,41 @@ export const CliRunDialog = ({
     }
   }, [open, projectId, cliDetails]);
 
-  const handleCopyKey = (): void => {
+  const handleCopyKey = async (): Promise<void> => {
     if (cliDetails?.secretKey) {
-      void navigator.clipboard.writeText(cliDetails.secretKey);
-      setCopiedKey(true);
-      toast.success("Project secret key copied!");
-      setTimeout(() => setCopiedKey(false), 2000);
+      try {
+        await navigator.clipboard.writeText(cliDetails.secretKey);
+        setCopiedKey(true);
+        toast.success("Project secret key copied!");
+        setTimeout(() => setCopiedKey(false), 2000);
+      } catch {
+        toast.error("Failed to copy to clipboard");
+      }
     }
   };
 
-  const handleCopyPull = (): void => {
+  const handleCopyPull = async (): Promise<void> => {
     if (cliDetails?.pullCommand) {
-      void navigator.clipboard.writeText(cliDetails.pullCommand);
-      setCopiedPull(true);
-      toast.success("Pull command copied!");
-      setTimeout(() => setCopiedPull(false), 2000);
+      try {
+        await navigator.clipboard.writeText(cliDetails.pullCommand);
+        setCopiedPull(true);
+        toast.success("Pull command copied!");
+        setTimeout(() => setCopiedPull(false), 2000);
+      } catch {
+        toast.error("Failed to copy to clipboard");
+      }
     }
   };
 
-  const handleCopyDev = (): void => {
-    void navigator.clipboard.writeText("fack dev");
-    setCopiedDev(true);
-    toast.success("Dev command copied!");
-    setTimeout(() => setCopiedDev(false), 2000);
+  const handleCopyDev = async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText("fack dev");
+      setCopiedDev(true);
+      toast.success("Dev command copied!");
+      setTimeout(() => setCopiedDev(false), 2000);
+    } catch {
+      toast.error("Failed to copy to clipboard");
+    }
   };
 
   return (
@@ -162,7 +174,9 @@ export const CliRunDialog = ({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={handleCopyKey}
+                onClick={() => {
+                  void handleCopyKey();
+                }}
               >
                 {copiedKey ? (
                   <>
@@ -195,7 +209,9 @@ export const CliRunDialog = ({
                 </span>
                 <button
                   type="button"
-                  onClick={handleCopyPull}
+                  onClick={() => {
+                    void handleCopyPull();
+                  }}
                   className="text-primary flex items-center gap-1 text-xs hover:underline"
                 >
                   {copiedPull ? (
@@ -214,7 +230,10 @@ export const CliRunDialog = ({
                   )}
                 </button>
               </div>
-              <pre className="text-foreground/90 selection:bg-primary/20 scrollbar-subtle overflow-x-auto font-mono text-xs">
+              <pre
+                aria-label="Pull encrypted bundle command"
+                className="text-foreground/90 selection:bg-primary/20 scrollbar-subtle overflow-x-auto font-mono text-xs focus-visible:ring-1 focus-visible:outline-none"
+              >
                 <code>
                   {cliDetails?.pullCommand ||
                     `fack pull ${projectSlug} --key <KEY>`}
@@ -229,7 +248,9 @@ export const CliRunDialog = ({
                 </span>
                 <button
                   type="button"
-                  onClick={handleCopyDev}
+                  onClick={() => {
+                    void handleCopyDev();
+                  }}
                   className="text-primary flex items-center gap-1 text-xs hover:underline"
                 >
                   {copiedDev ? (
@@ -248,7 +269,10 @@ export const CliRunDialog = ({
                   )}
                 </button>
               </div>
-              <pre className="text-foreground/90 scrollbar-subtle overflow-x-auto font-mono text-xs">
+              <pre
+                aria-label="Start local mock server command"
+                className="text-foreground/90 scrollbar-subtle overflow-x-auto font-mono text-xs focus-visible:ring-1 focus-visible:outline-none"
+              >
                 <code>fack dev</code>
               </pre>
             </div>

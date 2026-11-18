@@ -44,9 +44,13 @@ export const InspectorTryResponseConsole = ({
           type="button"
           variant="ghost"
           size="xs"
-          onClick={() => {
-            void navigator.clipboard.writeText(tryResponse.body);
-            toast.success("Response body copied to clipboard");
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(tryResponse.body);
+              toast.success("Response body copied to clipboard");
+            } catch {
+              toast.error("Failed to copy to clipboard");
+            }
           }}
           className="h-6 gap-1 px-1.5 text-xs"
           title="Copy response body"
@@ -57,9 +61,9 @@ export const InspectorTryResponseConsole = ({
       </div>
       <pre
         aria-label="Response payload"
-        className="bg-muted/60 text-foreground scrollbar-subtle max-h-48 overflow-auto rounded p-2.5 font-mono text-xs"
+        className="bg-muted/60 text-foreground scrollbar-subtle max-h-48 overflow-auto rounded p-2.5 font-mono text-xs focus-visible:ring-1 focus-visible:outline-none"
       >
-        {tryResponse.body}
+        <code>{tryResponse.body}</code>
       </pre>
     </div>
   );

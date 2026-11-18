@@ -120,8 +120,11 @@ export const ApiRoutePreviewRow = ({
               <summary className="text-muted-foreground hover:text-foreground text-caption cursor-pointer">
                 View Generated JSON Schema
               </summary>
-              <pre className="bg-muted/80 text-foreground scrollbar-subtle text-mini mt-1 max-h-48 overflow-auto rounded p-2 font-mono">
-                {JSON.stringify(jsonSchemaDoc, null, 2)}
+              <pre
+                aria-label="Generated JSON Schema"
+                className="bg-muted/80 text-foreground scrollbar-subtle text-mini mt-1 max-h-48 overflow-auto rounded p-2 font-mono focus-visible:ring-1 focus-visible:outline-none"
+              >
+                <code>{JSON.stringify(jsonSchemaDoc, null, 2)}</code>
               </pre>
             </details>
           </div>

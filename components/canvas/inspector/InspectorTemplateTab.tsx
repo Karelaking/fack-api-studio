@@ -304,11 +304,15 @@ export const InspectorTemplateTab = ({
     path,
   ]);
 
-  const handleCopyPreview = (): void => {
-    void navigator.clipboard.writeText(previewResult.output);
-    setCopied(true);
-    toast.success("Preview output copied");
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyPreview = async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(previewResult.output);
+      setCopied(true);
+      toast.success("Preview output copied");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy to clipboard");
+    }
   };
 
   return (
@@ -428,7 +432,7 @@ export const InspectorTemplateTab = ({
 
             {/* Variable chips palette */}
             <div className="bg-muted/40 border-border/60 space-y-1.5 rounded-lg border p-2">
-              <div className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
+              <div className="text-muted-foreground text-caption font-semibold tracking-wider uppercase">
                 Quick Insert Palette
               </div>
               <div className="flex max-h-24 flex-wrap gap-1 overflow-y-auto">
@@ -437,7 +441,7 @@ export const InspectorTemplateTab = ({
                     key={chip.label}
                     type="button"
                     onClick={() => insertVariable(chip.code)}
-                    className="bg-background hover:bg-accent text-foreground border-border/40 hover:border-primary/40 rounded border px-1.5 py-0.5 font-mono text-[11px] transition-colors"
+                    className="bg-background hover:bg-accent text-foreground border-border/40 hover:border-primary/40 text-caption rounded border px-1.5 py-0.5 font-mono transition-colors"
                     title={`Insert ${chip.code}`}
                   >
                     {chip.label}
@@ -457,7 +461,7 @@ export const InspectorTemplateTab = ({
                   Syntax Error
                 </div>
                 {validation.errors.map((err, i) => (
-                  <div key={i} className="pl-5 font-mono text-[11px]">
+                  <div key={i} className="text-caption pl-5 font-mono">
                     {err.line ? `Line ${err.line}, Col ${err.column}: ` : ""}
                     {err.message}
                   </div>
@@ -471,13 +475,13 @@ export const InspectorTemplateTab = ({
             ) : null}
 
             {/* Code Editor Area */}
-            <div className="flex min-h-[280px] flex-1 flex-col">
+            <div className="flex min-h-70 flex-1 flex-col">
               <Textarea
                 ref={textareaRef}
                 value={template}
                 onChange={(e) => setTemplate(e.target.value)}
                 placeholder='Write your response template here, e.g.:&#10;{&#10;  "id": "{{request.params.id}}",&#10;  "name": "{{faker.person.fullName}}",&#10;  "status": "{{default request.body.status \"active\"}}"&#10;}'
-                className="border-border/80 focus-visible:ring-primary/40 h-[300px] flex-1 resize-none p-3 font-mono text-xs leading-relaxed"
+                className="border-border/80 focus-visible:ring-primary/40 h-75 flex-1 resize-none p-3 font-mono text-xs leading-relaxed"
                 spellCheck={false}
               />
             </div>
@@ -495,7 +499,7 @@ export const InspectorTemplateTab = ({
                     onClick={() =>
                       setSampleSeed(Math.floor(Math.random() * 100000))
                     }
-                    className="text-primary flex items-center gap-1 text-[11px] hover:underline"
+                    className="text-primary text-caption flex items-center gap-1 hover:underline"
                   >
                     <PikaIcon icon={RefreshIcon} className="size-3" />
                     Re-roll
@@ -518,7 +522,7 @@ export const InspectorTemplateTab = ({
                 <div className="bg-muted/40 flex h-8 items-center gap-2 rounded border px-2.5 font-mono text-xs">
                   <span className="text-primary font-bold">{method}</span>
                   <span className="text-muted-foreground truncate">{path}</span>
-                  <Badge variant="outline" className="ml-auto text-[10px]">
+                  <Badge variant="outline" className="text-mini ml-auto">
                     {statusCode}
                   </Badge>
                 </div>
@@ -538,7 +542,7 @@ export const InspectorTemplateTab = ({
                   id="sample-body-input"
                   value={sampleBody}
                   onChange={(e) => setSampleBody(e.target.value)}
-                  className="h-24 resize-none font-mono text-[11px]"
+                  className="text-caption h-24 resize-none font-mono"
                 />
               </div>
               <div className="space-y-1">
@@ -552,7 +556,7 @@ export const InspectorTemplateTab = ({
                   id="sample-query-input"
                   value={sampleQuery}
                   onChange={(e) => setSampleQuery(e.target.value)}
-                  className="h-24 resize-none font-mono text-[11px]"
+                  className="text-caption h-24 resize-none font-mono"
                 />
               </div>
             </div>
@@ -566,7 +570,9 @@ export const InspectorTemplateTab = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleCopyPreview}
+                  onClick={() => {
+                    void handleCopyPreview();
+                  }}
                   className="h-6 gap-1 text-xs"
                 >
                   <PikaIcon
@@ -577,13 +583,14 @@ export const InspectorTemplateTab = ({
                 </Button>
               </div>
               <pre
-                className={`max-h-[300px] overflow-x-auto rounded-lg border p-3 font-mono text-xs leading-relaxed ${
+                aria-label="Template live preview output"
+                className={`max-h-75 overflow-x-auto rounded-lg border p-3 font-mono text-xs leading-relaxed focus-visible:ring-1 focus-visible:outline-none ${
                   previewResult.isError
                     ? "bg-destructive/10 border-destructive/30 text-destructive"
                     : "bg-muted/30 border-border/80 text-foreground"
                 }`}
               >
-                {previewResult.output}
+                <code>{previewResult.output}</code>
               </pre>
             </div>
           </div>
