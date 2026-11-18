@@ -36,19 +36,18 @@ export class FakerRegistryService {
     this.providers = staticProviderDefinitions;
     this.providerMap = new Map<string, FakerProvider>();
 
-    const categoryMap = new Map<string, FakerProvider[]>();
-
     for (const provider of this.providers) {
       this.providerMap.set(provider.value, provider);
-
-      const existing = categoryMap.get(provider.category) ?? [];
-      existing.push(provider);
-      categoryMap.set(provider.category, existing);
     }
 
+    const categoryMap = Map.groupBy(
+      this.providers,
+      (provider) => provider.category,
+    );
+
     this.groupedCategories = Array.from(categoryMap.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([name, providers]) => ({ name, providers }));
+      .toSorted(([a], [b]) => a.localeCompare(b))
+      .map(([name, providers]) => ({ name, providers: providers ?? [] }));
   }
 
   /**

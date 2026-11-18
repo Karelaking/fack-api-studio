@@ -60,14 +60,7 @@ function clonePayload<T>(value: T): T {
   if (value === null || typeof value !== "object") {
     return value;
   }
-  if (typeof structuredClone === "function") {
-    try {
-      return structuredClone(value);
-    } catch {
-      // Fall back to JSON serialization if structuredClone cannot clone
-    }
-  }
-  return JSON.parse(JSON.stringify(value)) as T;
+  return structuredClone(value);
 }
 
 /**

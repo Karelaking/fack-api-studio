@@ -74,7 +74,7 @@ export const ProviderPaletteSearch = ({
   return (
     <div className="flex flex-col gap-2">
       {/* Search input */}
-      <div className="relative">
+      <search className="relative">
         <PikaIcon
           icon={SearchIcon}
           size={14}
@@ -87,6 +87,10 @@ export const ProviderPaletteSearch = ({
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Search providers…  /"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck={false}
           className={cn(
             "bg-muted/50 border-border/60 text-foreground placeholder:text-muted-foreground",
             "h-9 w-full rounded-lg border py-1.5 pr-8 pl-8 text-xs outline-none",
@@ -108,7 +112,7 @@ export const ProviderPaletteSearch = ({
             />
           </button>
         )}
-      </div>
+      </search>
 
       {/* Category filter strip with edge fade indicators */}
       <div className="relative">

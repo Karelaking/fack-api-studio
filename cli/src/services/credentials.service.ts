@@ -117,7 +117,7 @@ export function getSession(studioUrl: string): StoredCliSession | undefined {
 
 export function getAnySession(): StoredCliSession | undefined {
   const sessions = Object.values(readStore().sessions);
-  return sessions.sort((left, right) =>
+  return sessions.toSorted((left, right) =>
     right.createdAt.localeCompare(left.createdAt),
   )[0];
 }

@@ -36,8 +36,10 @@ export class RouteMatcher {
     // Sort routes in each method by specificity:
     // Higher score = more static/specific segments, matched first.
     for (const [method, compiledRoutes] of this.routesByMethod.entries()) {
-      compiledRoutes.sort((a, b) => b.score - a.score);
-      this.routesByMethod.set(method, compiledRoutes);
+      this.routesByMethod.set(
+        method,
+        compiledRoutes.toSorted((a, b) => b.score - a.score),
+      );
     }
   }
 

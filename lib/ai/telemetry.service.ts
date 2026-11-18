@@ -259,7 +259,7 @@ export function trackAgentToolExecuted(params: {
  */
 export function getRecentAgentEvents(limit = 50): AgentTelemetryEvent[] {
   const boundedLimit = Math.max(1, Math.min(limit, MAX_EVENT_BUFFER_SIZE));
-  return eventBuffer.slice(-boundedLimit).reverse();
+  return eventBuffer.slice(-boundedLimit).toReversed();
 }
 
 /**

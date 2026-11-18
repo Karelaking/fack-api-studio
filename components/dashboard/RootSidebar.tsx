@@ -117,39 +117,27 @@ export function RootSidebar({
             </SidebarMenuItem>
           </SidebarMenu>
 
-          <div
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
             aria-label="Open command menu"
             aria-keyshortcuts="Control+K Meta+K"
-            className="focus-visible:ring-ring focus-visible:ring-offset-background group relative cursor-pointer rounded-md px-2 group-data-[collapsible=icon]:hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+            className="focus-visible:ring-ring focus-visible:ring-offset-background group relative flex w-full cursor-pointer items-center rounded-md px-2 text-left group-data-[collapsible=icon]:hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             onClick={() =>
               window.dispatchEvent(new CustomEvent("open-command-menu"))
             }
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                window.dispatchEvent(new CustomEvent("open-command-menu"));
-              }
-            }}
           >
-            <PikaIcon
-              icon={SearchIcon}
-              aria-hidden="true"
-              className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2"
-            />
-            <input
-              type="text"
-              tabIndex={-1}
-              aria-hidden="true"
-              readOnly
-              placeholder="Find"
-              className="border-border/50 bg-background text-foreground placeholder:text-muted-foreground group-hover:border-border pointer-events-none h-11 w-full cursor-pointer rounded-md border py-1 pr-10 pl-9 text-sm transition-colors md:h-9"
-            />
-            <div className="border-border/50 bg-muted/50 text-muted-foreground text-mini pointer-events-none absolute top-1/2 right-3 flex h-5 items-center justify-center rounded-sm border px-1.5 font-mono font-medium">
-              ⌘K
+            <div className="border-border/50 bg-background text-muted-foreground group-hover:border-border relative flex h-11 w-full items-center rounded-md border py-1 pr-10 pl-9 text-sm transition-colors md:h-9">
+              <PikaIcon
+                icon={SearchIcon}
+                aria-hidden="true"
+                className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
+              />
+              <span>Find</span>
+              <div className="border-border/50 bg-muted/50 text-muted-foreground text-mini pointer-events-none absolute top-1/2 right-2 flex h-5 -translate-y-1/2 items-center justify-center rounded-sm border px-1.5 font-mono font-medium">
+                ⌘K
+              </div>
             </div>
-          </div>
+          </button>
         </div>
       </SidebarHeader>
 

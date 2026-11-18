@@ -680,6 +680,7 @@ export const UnifiedSettingsView = ({
             accept="application/json"
             onChange={handleImportFile}
             className="hidden"
+            aria-label="Import workspace bundle JSON"
           />
           <div className="flex flex-wrap items-center gap-2">
             <Button

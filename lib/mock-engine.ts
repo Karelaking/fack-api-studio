@@ -317,7 +317,7 @@ export function processQueryParameters(
         searchParams.get("_order") ||
         "asc"
       ).toLowerCase();
-      filteredItems.sort((a, b) => {
+      filteredItems = filteredItems.toSorted((a, b) => {
         const leftValue =
           a && typeof a === "object"
             ? (a as Record<string, unknown>)[sortBy]

@@ -988,7 +988,7 @@ export function syncRoutePathSchema(
 
   // Sort properties canonically: id first, other fields in middle, createdAt/updatedAt at end
   const sortedProps: Record<string, Record<string, unknown>> = {};
-  const sortedKeys = Object.keys(properties).sort((a, b) => {
+  const sortedKeys = Object.keys(properties).toSorted((a, b) => {
     return getFieldOrderWeight(a) - getFieldOrderWeight(b);
   });
   for (const k of sortedKeys) {
@@ -996,12 +996,10 @@ export function syncRoutePathSchema(
   }
 
   // Sort required list in same canonical order
-  requiredList.sort((a, b) => {
+  cloned.properties = sortedProps;
+  cloned.required = requiredList.toSorted((a, b) => {
     return getFieldOrderWeight(a) - getFieldOrderWeight(b);
   });
-
-  cloned.properties = sortedProps;
-  cloned.required = requiredList;
 
   return {
     schema: cloned,
