@@ -9,6 +9,7 @@
 import {
   NextResponse,
   type NextFetchEvent,
+  type NextMiddleware,
   type NextRequest,
 } from "next/server";
 import { LoggerRegistry } from "@/lib/logger-registry";
@@ -317,24 +318,52 @@ const PUBLIC_PATHS = new Set([
  * keeps unauthenticated redirects inside the app instead of bouncing to the
  * prebuilt Account Portal pages.
  */
-const withClerk = clerkMiddleware(
-  async (_auth: ClerkMiddlewareAuth, request: NextRequest) =>
-    handleRequest(request),
-  {
-    signInUrl: "/sign-in",
-    signUpUrl: "/sign-up",
-  },
+const hasClerkKeys = Boolean(
+  process.env.CLERK_SECRET_KEY && process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
 );
 
-export const proxy = (
+let cachedClerkMiddleware: NextMiddleware | undefined;
+
+function getClerkMiddleware(): NextMiddleware | undefined {
+  if (!hasClerkKeys) {
+    return undefined;
+  }
+  if (!cachedClerkMiddleware) {
+    cachedClerkMiddleware = clerkMiddleware(
+      async (_auth: ClerkMiddlewareAuth, request: NextRequest) =>
+        handleRequest(request),
+      {
+        signInUrl: "/sign-in",
+        signUpUrl: "/sign-up",
+      },
+    );
+  }
+  return cachedClerkMiddleware;
+}
+
+export const proxy = async (
   request: NextRequest,
   event: NextFetchEvent,
-): ReturnType<typeof withClerk> => {
+): Promise<NextResponse | Response> => {
   if (PUBLIC_PATHS.has(request.nextUrl.pathname)) {
     return handleRequest(request);
   }
 
-  return withClerk(request, event);
+  const clerkHandler = getClerkMiddleware();
+  if (!clerkHandler) {
+    return handleRequest(request);
+  }
+
+  try {
+    const response = await clerkHandler(request, event);
+    return response ?? (await handleRequest(request));
+  } catch (error) {
+    proxyTrace.traceError(
+      "proxy (Clerk middleware error, falling back to handleRequest)",
+      error,
+    );
+    return handleRequest(request);
+  }
 };
 
 /**

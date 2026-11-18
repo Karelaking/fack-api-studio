@@ -34,6 +34,11 @@ export function resolveDataDir(): string {
     return path.resolve(override);
   }
 
+  // Serverless/Vercel functions only have write permissions in /tmp
+  if (process.env.VERCEL) {
+    return path.join(os.tmpdir(), "fack-api");
+  }
+
   if (process.platform === "win32") {
     const roaming =
       process.env.APPDATA ?? path.join(os.homedir(), "AppData", "Roaming");
@@ -58,7 +63,11 @@ export function resolveDataDir(): string {
 /** Creates the data directory (and its parents) if missing and returns it. */
 export function ensureDataDir(): string {
   const dir = resolveDataDir();
-  fs.mkdirSync(dir, { recursive: true });
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+  } catch {
+    // In read-only serverless filesystems, ignore directory creation errors
+  }
   return dir;
 }
 
