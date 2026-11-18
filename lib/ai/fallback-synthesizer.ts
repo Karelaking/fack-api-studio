@@ -880,7 +880,7 @@ export function synthesizeFallbackApi(prompt: string): GeneratedApi {
     normalizedInput.includes("menu") ||
     normalizedInput.includes("deliver")
   ) {
-    return JSON.parse(JSON.stringify(FOOD_DELIVERY_TEMPLATE));
+    return structuredClone(FOOD_DELIVERY_TEMPLATE);
   }
 
   if (
@@ -891,7 +891,7 @@ export function synthesizeFallbackApi(prompt: string): GeneratedApi {
     normalizedInput.includes("tweet") ||
     normalizedInput.includes("comment")
   ) {
-    return JSON.parse(JSON.stringify(SOCIAL_TEMPLATE));
+    return structuredClone(SOCIAL_TEMPLATE);
   }
 
   if (
@@ -903,7 +903,7 @@ export function synthesizeFallbackApi(prompt: string): GeneratedApi {
     normalizedInput.includes("cart") ||
     normalizedInput.includes("order")
   ) {
-    return JSON.parse(JSON.stringify(E_COMMERCE_TEMPLATE));
+    return structuredClone(E_COMMERCE_TEMPLATE);
   }
 
   // Dynamic extraction: extract noun keywords to create custom resources

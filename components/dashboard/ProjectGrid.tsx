@@ -228,8 +228,8 @@ export function ProjectGrid({
 
   const recentProjects = React.useMemo(
     () =>
-      [...projects]
-        .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+      projects
+        .toSorted((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
         .slice(0, 4),
     [projects],
   );
@@ -246,9 +246,9 @@ export function ProjectGrid({
       : projects;
 
     if (sortBy === "name") {
-      return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+      return filtered.toSorted((a, b) => a.name.localeCompare(b.name));
     }
-    return [...filtered].sort(
+    return filtered.toSorted(
       (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
     );
   }, [projects, search, sortBy]);

@@ -216,6 +216,9 @@ export const EndpointGroupCustomizer = ({
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
+                    if (e.nativeEvent.isComposing || e.keyCode === 229) {
+                      return;
+                    }
                     e.preventDefault();
                     void handleSave();
                   }
@@ -234,6 +237,9 @@ export const EndpointGroupCustomizer = ({
                 onChange={(e) => setBasePath(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
+                    if (e.nativeEvent.isComposing || e.keyCode === 229) {
+                      return;
+                    }
                     e.preventDefault();
                     void handleSave();
                   }

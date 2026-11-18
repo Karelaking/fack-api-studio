@@ -169,6 +169,7 @@ export async function expandUserPrompt(
       console.error("[Fack AI] LLM prompt expansion failed:", llmError);
       throw new Error(
         `LLM expansion failed: ${llmError instanceof Error ? llmError.message : String(llmError)}`,
+        { cause: llmError },
       );
     }
   }
@@ -349,6 +350,7 @@ When modifying, preserve existing resource conventions where appropriate, avoid 
         console.error("[Fack AI] LLM call failed:", llmError);
         throw new Error(
           `LLM generation failed: ${llmError instanceof Error ? llmError.message : String(llmError)}`,
+          { cause: llmError },
         );
       }
     } else {

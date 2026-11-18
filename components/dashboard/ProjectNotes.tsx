@@ -28,7 +28,7 @@ interface ProjectNotesProps {
 type NotePatch = Partial<Pick<Note, "title" | "content" | "pinned">>;
 
 function sortNotes(list: Note[]): Note[] {
-  return [...list].sort(
+  return list.toSorted(
     (a, b) =>
       Number(b.pinned) - Number(a.pinned) ||
       b.updatedAt.getTime() - a.updatedAt.getTime(),

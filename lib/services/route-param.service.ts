@@ -484,7 +484,7 @@ export function remapSchemaParameters(
     return schema;
   }
 
-  const cloned = JSON.parse(JSON.stringify(schema)) as Record<string, unknown>;
+  const cloned = structuredClone(schema) as Record<string, unknown>;
 
   // 1. Remap x-fack-params dictionary
   const rawParams = cloned["x-fack-params"];
@@ -825,7 +825,7 @@ export function insertFieldInCanonicalOrder(
  * Preserves the relative order of fields within the same weight tier.
  */
 export function sortFieldsCanonically(fields: SchemaField[]): SchemaField[] {
-  return [...fields].sort((a, b) => {
+  return fields.toSorted((a, b) => {
     return getFieldOrderWeight(a.name) - getFieldOrderWeight(b.name);
   });
 }
@@ -934,10 +934,8 @@ export function syncRoutePathSchema(
     declaredParamNames,
   );
 
-  const cloned = JSON.parse(
-    JSON.stringify(
-      reconciledSchema ?? { type: "object", properties: {}, required: [] },
-    ),
+  const cloned = structuredClone(
+    reconciledSchema ?? { type: "object", properties: {}, required: [] },
   ) as Record<string, unknown>;
 
   if (!cloned.properties || typeof cloned.properties !== "object") {
