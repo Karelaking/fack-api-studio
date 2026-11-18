@@ -21,10 +21,14 @@ export const SignInWorkbench = (): React.JSX.Element => {
   );
   const [hasCopied, setHasCopied] = React.useState<boolean>(false);
 
-  const handleCopyCommand = (): void => {
-    void navigator.clipboard.writeText("fack dev --port 4000");
-    setHasCopied(true);
-    setTimeout((): void => setHasCopied(false), 2000);
+  const handleCopyCommand = async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText("fack dev --port 4000");
+      setHasCopied(true);
+      setTimeout((): void => setHasCopied(false), 2000);
+    } catch {
+      // User or browser rejected clipboard write permission
+    }
   };
 
   return (

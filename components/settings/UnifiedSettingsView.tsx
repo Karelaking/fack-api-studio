@@ -498,13 +498,17 @@ export const UnifiedSettingsView = ({
     }
   };
 
-  const copyToClipboard = (
+  const copyToClipboard = async (
     text: string,
     setter: (val: boolean) => void,
-  ): void => {
-    void navigator.clipboard.writeText(text);
-    setter(true);
-    setTimeout(() => setter(false), 2000);
+  ): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setter(true);
+      setTimeout(() => setter(false), 2000);
+    } catch {
+      toast.error("Failed to copy to clipboard");
+    }
   };
 
   const isLocal = status.mode === "local";
@@ -729,13 +733,13 @@ export const UnifiedSettingsView = ({
                 Database Target
               </dt>
               <dd className="text-caption flex items-center gap-1.5 font-mono">
-                <span className="max-w-[220px] truncate" title={status.target}>
+                <span className="max-w-55 truncate" title={status.target}>
                   {status.target}
                 </span>
                 <button
                   type="button"
                   onClick={() =>
-                    copyToClipboard(status.target, setCopiedDbPath)
+                    void copyToClipboard(status.target, setCopiedDbPath)
                   }
                   className="text-muted-foreground hover:text-foreground"
                   title="Copy path"
@@ -756,7 +760,7 @@ export const UnifiedSettingsView = ({
                 Data Directory
               </dt>
               <dd
-                className="text-caption max-w-[240px] truncate font-mono"
+                className="text-caption max-w-60 truncate font-mono"
                 title={status.dataDir}
               >
                 {status.dataDir}
@@ -977,7 +981,7 @@ export const UnifiedSettingsView = ({
                   <button
                     type="button"
                     onClick={() =>
-                      copyToClipboard(
+                      void copyToClipboard(
                         `/api/mock/${projectSlug || "default"}`,
                         setCopiedMockBase,
                       )
@@ -1319,7 +1323,7 @@ export const UnifiedSettingsView = ({
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    copyToClipboard(cliDetails.secretKey, setCopiedKey)
+                    void copyToClipboard(cliDetails.secretKey, setCopiedKey)
                   }
                   className="h-9 shrink-0 gap-1 text-xs"
                 >
@@ -1363,7 +1367,7 @@ export const UnifiedSettingsView = ({
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  copyToClipboard(
+                  void copyToClipboard(
                     cliDetails?.devCommand ??
                       `fack dev --project ${projectSlug}`,
                     setCopiedDev,
@@ -1405,7 +1409,7 @@ export const UnifiedSettingsView = ({
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  copyToClipboard(
+                  void copyToClipboard(
                     `curl -H "x-fack-key: ${cliDetails?.secretKey ?? ""}" http://localhost:3000/api/mock/${projectSlug}`,
                     setCopiedCurl,
                   )
@@ -1898,7 +1902,7 @@ export const UnifiedSettingsView = ({
                 size="sm"
                 variant="outline"
                 onClick={() =>
-                  copyToClipboard(
+                  void copyToClipboard(
                     cliDetails?.devCommand ??
                       `fack dev --project ${projectSlug}`,
                     setCopiedDev,
