@@ -21,20 +21,7 @@ const nextConfig: NextConfig = {
     ],
   },
   outputFileTracingIncludes: {
-    "/*": ["./drizzle/**/*"],
-  },
-  outputFileTracingExcludes: {
-    "**/*": [
-      "./v11/**/*",
-      "./v11",
-      "./docs/**/*",
-      "./coverage/**/*",
-      "./data/**/*",
-      "./dist/**/*",
-      "./graphify-out/**/*",
-      "./.opencode/**/*",
-      "./.git/**/*",
-    ],
+    "**/*": ["./drizzle/**/*"],
   },
   experimental: {
     // Barrel icon packages: only bundle the icons that are actually imported.
