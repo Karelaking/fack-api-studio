@@ -203,13 +203,17 @@ export function ProjectSettings({
     });
   };
 
-  const copyToClipboard = (
+  const copyToClipboard = async (
     text: string,
     setter: (val: boolean) => void,
-  ): void => {
-    void navigator.clipboard.writeText(text);
-    setter(true);
-    setTimeout(() => setter(false), 2000);
+  ): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setter(true);
+      setTimeout(() => setter(false), 2000);
+    } catch {
+      toast.error("Failed to copy to clipboard");
+    }
   };
 
   return (
@@ -260,7 +264,7 @@ export function ProjectSettings({
                 variant="ghost"
                 size="sm"
                 onClick={() =>
-                  copyToClipboard(
+                  void copyToClipboard(
                     `/api/mock/${watchedSlug || project.slug}`,
                     setCopiedEndpoint,
                   )
@@ -767,7 +771,7 @@ export function ProjectSettings({
                           size="sm"
                           onClick={() => {
                             if (cliDetails?.secretKey) {
-                              copyToClipboard(
+                              void copyToClipboard(
                                 cliDetails.secretKey,
                                 setCopiedKey,
                               );
@@ -816,7 +820,7 @@ export function ProjectSettings({
                         size="sm"
                         onClick={() => {
                           if (cliDetails?.pullCommand) {
-                            copyToClipboard(
+                            void copyToClipboard(
                               cliDetails.pullCommand,
                               setCopiedPull,
                             );
@@ -859,7 +863,7 @@ export function ProjectSettings({
                         variant="outline"
                         size="sm"
                         onClick={() =>
-                          copyToClipboard(
+                          void copyToClipboard(
                             cliDetails?.devCommand || "fack dev",
                             setCopiedDev,
                           )

@@ -25,10 +25,14 @@ export const SignUpWorkbench = (): React.JSX.Element => {
 
   const sampleTypeScript = `export interface UserProfile {\n  id: string;\n  name: string;\n  role: "Lead Architect" | "Engineer";\n  active: boolean;\n}`;
 
-  const handleCopyCode = (): void => {
-    void navigator.clipboard.writeText(sampleTypeScript);
-    setHasCopied(true);
-    setTimeout((): void => setHasCopied(false), 2000);
+  const handleCopyCode = async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(sampleTypeScript);
+      setHasCopied(true);
+      setTimeout((): void => setHasCopied(false), 2000);
+    } catch {
+      // User or browser rejected clipboard write permission
+    }
   };
 
   return (

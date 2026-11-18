@@ -17,6 +17,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
  */
 export const viewport: Viewport = {
   viewportFit: "cover",
+  colorScheme: "light dark",
 };
 
 const inter = Inter({
