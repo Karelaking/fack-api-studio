@@ -38,7 +38,7 @@ export function getDefaultProjectsDirectory(): string {
 export async function openProjectFile(
   filePath: string,
 ): Promise<{ project: schema.Project; fackFile: FackProjectFile }> {
-  const resolvedPath = path.resolve(filePath);
+  const resolvedPath = path.resolve(/*turbopackIgnore: true*/ filePath);
   if (!resolvedPath.endsWith(".fack")) {
     throw new Error(
       "Invalid file format: Only .fack project files can be opened.",
@@ -71,7 +71,7 @@ export async function saveProjectToFile(
     getProjectFilePath(projectId) ||
     path.join(getDefaultProjectsDirectory(), `${projectId}.fack`);
 
-  const fullPath = path.resolve(resolvedPath);
+  const fullPath = path.resolve(/*turbopackIgnore: true*/ resolvedPath);
   if (!fullPath.endsWith(".fack")) {
     throw new Error(
       "Invalid file format: Projects must be saved with a .fack extension.",

@@ -107,11 +107,14 @@ export function resolveLocalDatabasePath(
     options.allowMigration ??
     (process.env.NODE_ENV !== "test" && !process.env.FACK_DATA_DIR?.trim());
 
-  if (!allowMigration || !fs.existsSync(legacy)) {
+  if (!allowMigration || !fs.existsSync(/*turbopackIgnore: true*/ legacy)) {
     return { databasePath: destination };
   }
 
-  if (legacy === destination || fs.existsSync(destination)) {
+  if (
+    legacy === destination ||
+    fs.existsSync(/*turbopackIgnore: true*/ destination)
+  ) {
     // Same file, or the new location already exists: leave the legacy file
     // alone and keep using the destination.
     return { databasePath: destination };
@@ -121,8 +124,8 @@ export function resolveLocalDatabasePath(
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.copyFileSync(legacy, destination);
 
-    const legacySize = fs.statSync(legacy).size;
-    const copiedSize = fs.statSync(destination).size;
+    const legacySize = fs.statSync(/*turbopackIgnore: true*/ legacy).size;
+    const copiedSize = fs.statSync(/*turbopackIgnore: true*/ destination).size;
     if (legacySize !== copiedSize) {
       fs.rmSync(destination, { force: true });
       return {
@@ -134,7 +137,7 @@ export function resolveLocalDatabasePath(
     // Carry over SQLite sidecar files (WAL/journal) if present.
     for (const suffix of ["-journal", "-wal", "-shm"]) {
       const sidecar = `${legacy}${suffix}`;
-      if (fs.existsSync(sidecar)) {
+      if (fs.existsSync(/*turbopackIgnore: true*/ sidecar)) {
         fs.copyFileSync(sidecar, `${destination}${suffix}`);
       }
     }
